@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>VARprog</string>
+   <string>VarModemStudy </string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout_5">
