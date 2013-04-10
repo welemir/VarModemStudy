@@ -37,7 +37,6 @@ public:
 public slots:
     void slotRunCommandFromUI(const CUICommand UIcommand);
     void slotProcessDataFromPipeOfCommand(QByteArray baData, unsigned short usSenderID);
-    void slotUploadRouteTable();
     void slotResetConnection();
 
 signals:

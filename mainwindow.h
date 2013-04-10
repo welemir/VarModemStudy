@@ -6,6 +6,10 @@
 
 #include "ckernel.h"
 
+#include "dialogaboutprogram.h"
+//#include "dialogsettings.h"
+#include "dialogdiagnostics.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -23,14 +27,16 @@ signals:
     void signalRunCommandFromUI(const CUICommand UIcommand);
 
 private slots:
-    void on_tableWidgetRoutes_cellActivated(int row, int column);   // —мена активного устройства пользователем
-    void on_lineEdiGateway_textChanged(const QString &arg1);
-
-    void on_tableWidgetRoutes_clicked(const QModelIndex &index);
+    void showAboutWindow();
+//    void showSettingsWindow();
+    void showDiagWindow();
 
 private:
     Ui::MainWindow *ui;
     CKernel* m_pKernel;
+    DialogAboutProgram *m_aboutProgramWindow;
+//    DialogSettings *m_settingsWindow;
+    DialogDiagnostics *m_diagnosticsWindow;
 };
 
 #endif // MAINWINDOW_H

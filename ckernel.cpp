@@ -74,11 +74,6 @@ void CKernel::slotRunCommandFromUI(const CUICommand UIcommand)
 
         }break;
 
-        case CUICommand::eCmdSetGateway:
-        {
-            m_usGateway = UIcommand.qsArguments.toUShort();
-            slotUploadRouteTable();
-        }break;
 
         default:
         {
@@ -99,32 +94,6 @@ void CKernel::slotProcessDataFromPipeOfCommand(QByteArray baData, unsigned short
 
         }// switch
     }
-}
-
-void CKernel::slotUploadRouteTable()
-{
-    qDebug() <<  " Route table sending started";
-
-    ProgramSettings settings;
-    TRouteTable table = settings.RouteTable();
-    QMapIterator<ushort, uchar> i(table);
-    QByteArray data;
-    while (i.hasNext())
-    {
-        i.next();
-
-        data.append(0x32);//eCAN_RouteAdd
-        unsigned short usAddr = i.key();
-        data.append((char*)&usAddr, sizeof(usAddr));
-        data.append(i.value());
-        if(28 <= data.size())
-        {
-            m_pPipeCmd->WriteData(data, m_usGateway);
-            data.clear();
-        }
-    }
-    if(0 < data.size())
-        m_pPipeCmd->WriteData(data, m_usGateway);
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

@@ -19,9 +19,9 @@ public:
     void attachUI(QObject *pUIObject);
     
 signals:
-    void setRSPortList(QList<QString> listRSPorts, QString strSelected);
+ //   void setRSPortList(QList<QString> listRSPorts, QString strSelected);
     void setNetworkDevicesList(QList<QString> listDevicesID, QString strSelected);
-    void setRSPortActive(QString strPortName);
+//    void setRSPortActive(QString strPortName);
     void setNetworkDeviceActive(QString strDeviceID);
     void resetConnection();
 

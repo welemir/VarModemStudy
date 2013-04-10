@@ -3,9 +3,9 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-//#include "BitBusPipes/USB_Communicator.h"
 #include "programsettings.h"
 #include "connectioncontrol.h"
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,43 +13,22 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // создание окон
+    m_aboutProgramWindow = new DialogAboutProgram(this);
+//    m_settingsWindow     = new DialogSettings(this);
+    m_diagnosticsWindow  = new DialogDiagnostics(this);
+
+    // подключение пунктов главного меню
+    QObject::connect(ui->actionShowAboutWindow, SIGNAL(triggered()), this, SLOT(showAboutWindow()));
+    QObject::connect(ui->actionShowSettings,    SIGNAL(triggered()), this, SLOT(showSettingsWindow()));
+    QObject::connect(ui->actionShowDiag,        SIGNAL(triggered()), this, SLOT(showDiagWindow()));
+
+
     m_pKernel = CKernel::GetInstance();
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
     QObject::connect(m_pKernel, SIGNAL(signalNewMessageToUI(const CUICommand)), this, SLOT(slotNewMessageToUI(const CUICommand)));
 
-    CConnectionControl::GetInstance(this)->attachUI(ui->widget_ConnectionControlUI);
-
-    // загрузка таблицы маршрутизации при нажатии на кнопку
-    QObject::connect(ui->pushButtonRouteUpload, SIGNAL(clicked()), m_pKernel, SLOT(slotUploadRouteTable()));
-
-    // Загрузка настроек маршрутизации
-    ProgramSettings settings;
-    ui->lineEdiGateway->setText(settings.value("Route/Gate").toString());
-
-    TRouteTable table = settings.RouteTable();
-    QMapIterator<ushort, uchar> i(table);
-    while (i.hasNext())
-    {
-        i.next();
-
-        int rowIndex = ui->tableWidgetRoutes->rowCount();
-        ui->tableWidgetRoutes->insertRow(rowIndex);
-
-        // Отображение ID устройства (ключевое поле)
-        QTableWidgetItem *pItem = new QTableWidgetItem(QString("%1").arg(i.key()));
-        pItem->setTextAlignment(Qt::AlignHCenter);
-        ui->tableWidgetRoutes->setItem(rowIndex, 0, pItem);
-
-        // Отображение CAN-адреса (поле значения)
-        pItem = new QTableWidgetItem(QString("%1").arg(i.value()));
-        pItem->setTextAlignment(Qt::AlignHCenter);
-        ui->tableWidgetRoutes->setItem(rowIndex, 1, pItem);
-    }
-
-    //  установка текущего шлюза
-    CUICommand NewCommand(CUICommand::eCmdSetGateway);
-    NewCommand.qsArguments = ui->lineEdiGateway->text();
-    emit signalRunCommandFromUI(NewCommand);
+//    CConnectionControl::GetInstance(this)->attachUI(ui->widget_ConnectionControlUI);
 }
 
 MainWindow::~MainWindow()
@@ -71,29 +50,18 @@ void MainWindow::slotNewMessageToUI(const CUICommand UIcommand)
 
 }
 
-void MainWindow::on_tableWidgetRoutes_cellActivated(int row, int column)
+void MainWindow::showAboutWindow()
 {
-    CUICommand NewCommand(CUICommand::eCmdConnect);
-    QString IDtext = ui->tableWidgetRoutes->item(row, 0)->text();
-    NewCommand.qsArguments = IDtext;
-
-    emit signalRunCommandFromUI(NewCommand);
+    m_aboutProgramWindow->show();
 }
 
-void MainWindow::on_lineEdiGateway_textChanged(const QString &arg1)
-{
-    CUICommand NewCommand(CUICommand::eCmdSetGateway);
-    NewCommand.qsArguments = arg1;
+//void MainWindow::showSettingsWindow()
+//{
+//    m_settingsWindow->show();
+//}
 
-    emit signalRunCommandFromUI(NewCommand);
+void MainWindow::showDiagWindow()
+{
+    m_diagnosticsWindow->show();
 }
 
-void MainWindow::on_tableWidgetRoutes_clicked(const QModelIndex &index)
-{
-    CUICommand NewCommand(CUICommand::eCmdConnect);
-    int row = ui->tableWidgetRoutes->currentRow();
-    QString IDtext = ui->tableWidgetRoutes->item(row, 0)->text();
-    NewCommand.qsArguments = IDtext;
-
-    emit signalRunCommandFromUI(NewCommand);
-}

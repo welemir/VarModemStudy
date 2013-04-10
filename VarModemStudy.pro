@@ -25,7 +25,10 @@ SOURCES += main.cpp\
     BitBusPipes/ctcp_client_communicator.cpp \
     BitBusPipes/CCommunicator.cpp \
     connectioncontrol_ui.cpp \
-    connectioncontrol.cpp
+    connectioncontrol.cpp \
+    dialogaboutprogram.cpp \
+    dialogsettings.cpp \
+    dialogdiagnostics.cpp
 
 HEADERS  += mainwindow.h \
     ckernel.h \
@@ -37,10 +40,16 @@ HEADERS  += mainwindow.h \
     BitBusPipes/ctcp_client_communicator.h \
     BitBusPipes/CCommunicator.h \
     connectioncontrol_ui.h \
-    connectioncontrol.h
+    connectioncontrol.h \
+    dialogaboutprogram.h \
+    dialogsettings.h \
+    dialogdiagnostics.h
 
 FORMS    += mainwindow.ui \
-    connectioncontrol_ui.ui
+    connectioncontrol_ui.ui \
+    dialogaboutprogram.ui \
+    dialogsettings.ui \
+    dialogdiagnostics.ui
 
 RESOURCES += \
     VarControl.qrc
