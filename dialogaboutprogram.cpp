@@ -6,6 +6,8 @@ DialogAboutProgram::DialogAboutProgram(QWidget *parent) :
     ui(new Ui::DialogAboutProgram)
 {
     ui->setupUi(this);
+    ui->labelVersion->setText(VER);
+
 }
 
 DialogAboutProgram::~DialogAboutProgram()

@@ -53,3 +53,8 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     VarControl.qrc
+
+VERSION = 01.01.01
+
+VERSTR = '\\"$${VERSION}\\"'  # кавычки
+DEFINES += VER=\"$${VERSTR}\" # макрос

@@ -6,37 +6,66 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>562</width>
-    <height>472</height>
+    <width>530</width>
+    <height>328</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Диагностика</string>
   </property>
-  <widget class="QTextBrowser" name="textBrowser">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>40</y>
-     <width>541</width>
-     <height>421</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButtonClearLog">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>171</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Очистить историю событий</string>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetFixedSize</enum>
+     </property>
+     <item>
+      <widget class="QPushButton" name="pushButtonClearLog">
+       <property name="text">
+        <string>Очистить историю событий</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTextBrowser" name="textBrowser"/>
+   </item>
+  </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButtonClearLog</sender>
+   <signal>clicked()</signal>
+   <receiver>textBrowser</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>84</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>264</x>
+     <y>179</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

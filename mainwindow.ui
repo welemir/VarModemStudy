@@ -48,13 +48,13 @@
        </size>
       </property>
       <property name="title">
-       <string>Передача</string>
+       <string>Управление радиоканалом</string>
       </property>
       <widget class="QLabel" name="labelTxSpeed">
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>30</y>
+         <y>20</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -67,7 +67,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>50</y>
+         <y>40</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -77,7 +77,7 @@
        <property name="geometry">
         <rect>
          <x>100</x>
-         <y>30</y>
+         <y>20</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -90,7 +90,7 @@
        <property name="geometry">
         <rect>
          <x>100</x>
-         <y>50</y>
+         <y>40</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -100,7 +100,7 @@
        <property name="geometry">
         <rect>
          <x>180</x>
-         <y>30</y>
+         <y>20</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -113,7 +113,7 @@
        <property name="geometry">
         <rect>
          <x>180</x>
-         <y>50</y>
+         <y>40</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -123,7 +123,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>100</y>
+         <y>90</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -136,7 +136,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>120</y>
+         <y>110</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -146,7 +146,7 @@
        <property name="geometry">
         <rect>
          <x>110</x>
-         <y>100</y>
+         <y>90</y>
          <width>81</width>
          <height>16</height>
         </rect>
@@ -159,7 +159,7 @@
        <property name="geometry">
         <rect>
          <x>110</x>
-         <y>120</y>
+         <y>110</y>
          <width>81</width>
          <height>22</height>
         </rect>
@@ -169,7 +169,7 @@
        <property name="geometry">
         <rect>
          <x>210</x>
-         <y>100</y>
+         <y>90</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -182,7 +182,7 @@
        <property name="geometry">
         <rect>
          <x>210</x>
-         <y>120</y>
+         <y>110</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -192,7 +192,7 @@
        <property name="geometry">
         <rect>
          <x>300</x>
-         <y>100</y>
+         <y>90</y>
          <width>61</width>
          <height>16</height>
         </rect>
@@ -205,7 +205,7 @@
        <property name="geometry">
         <rect>
          <x>300</x>
-         <y>120</y>
+         <y>110</y>
          <width>69</width>
          <height>22</height>
         </rect>
@@ -215,7 +215,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>170</y>
+         <y>150</y>
          <width>101</width>
          <height>16</height>
         </rect>
@@ -228,7 +228,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>190</y>
+         <y>170</y>
          <width>91</width>
          <height>22</height>
         </rect>
@@ -238,7 +238,7 @@
        <property name="geometry">
         <rect>
          <x>200</x>
-         <y>190</y>
+         <y>200</y>
          <width>75</width>
          <height>23</height>
         </rect>
@@ -251,7 +251,7 @@
        <property name="geometry">
         <rect>
          <x>290</x>
-         <y>190</y>
+         <y>200</y>
          <width>75</width>
          <height>23</height>
         </rect>
@@ -277,25 +277,25 @@
        </size>
       </property>
       <property name="title">
-       <string>Прием</string>
+       <string>Статистика приема</string>
       </property>
       <widget class="QLabel" name="labelRxSpeed">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>20</y>
-         <width>61</width>
+         <width>101</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
-        <string>Скорость</string>
+        <string>Скорость приема</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditRxSpeed">
        <property name="geometry">
         <rect>
-         <x>70</x>
+         <x>110</x>
          <y>20</y>
          <width>61</width>
          <height>20</height>
@@ -497,7 +497,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>Использование канала связи</string>
+        <string>Использование канала связи:</string>
        </property>
       </widget>
       <widget class="QLabel" name="labelRxErrorDetectionAndCorrection">
