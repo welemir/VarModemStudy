@@ -36,8 +36,7 @@ public:
   friend class CPipe;
 
 public:
-  static  CPipeMgr* GetInstance(){return st_pThis;};
-  static  CPipeMgr* GetInstance(unsigned short usDeviceId); // Метод принимает Id системы для заполнения соответствующего поля пакета
+  CPipeMgr(unsigned short usDeviceId);
 
   /* Методы управления пайпами */
   CPipe* CreatePipe(TPipeType PipeAddress, TPipeMode mode=eTwoDirections);
@@ -49,7 +48,6 @@ public slots:
   virtual int SendPacket(TPacket packet);
   virtual void ReceiveNewData(TPacket packet);
 private:
-  CPipeMgr(unsigned short usDeviceId);
   CPipeMgr(const CPipeMgr &); // hide copy constructor
   CPipeMgr& operator=(const CPipeMgr &); // hide assign op
 
@@ -90,11 +88,12 @@ public slots:
   virtual void WriteData(QByteArray baData, unsigned short usRecipientID);
 
 private:
-  CPipe(CPipeMgr::TPipeType PipeIndex, CPipeMgr::TPipeMode mode);
+  CPipe(CPipeMgr::TPipeType PipeIndex, CPipeMgr::TPipeMode mode, CPipeMgr* pipeManager);
   ~CPipe(void);
 
 private:
   const CPipeMgr::TPipeType m_PipeIndex;
+  CPipeMgr* m_pipeManager;
 };
 
 #endif //_PIPE_MGR_H_

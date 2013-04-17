@@ -3,8 +3,48 @@
 
 #include "BitBusPipes/CCommunicator.h"
 #include "BitBusPipes/PipeMgr.h"
+#include "BitBusPipes/USB_Communicator.h"
 
 #include <QObject>
+#include <QTimer>
+
+#define CONNECTION_TIMEOUT 1000
+class CConnectionDescriptor : public QObject
+{
+    Q_OBJECT
+public:
+    typedef enum{ // состояния порта
+      eStateConnectionTimeout, // устройство на порту не ответило
+      eStateConnecting,        // ожидание ответа
+      eStateConnected          // ответ получен, устройство идентифицировно
+    }T_ConnectionState;
+
+public:
+    static int FindIndexByPortName( QList<CConnectionDescriptor*> descrList, QString portName );
+    static CConnectionDescriptor* Create(QString portName);
+
+signals:
+    void signalNewDeviceFound( CConnectionDescriptor* );
+
+private:
+    CConnectionDescriptor();
+
+public:
+    ~CConnectionDescriptor();
+
+private slots:
+    void slotParceCommand(QByteArray baData, unsigned short usSenderID);
+    void slotTimeout();
+
+public:
+    CUSB_Communicator   *m_serialCommunicator;
+    CPipeMgr            *m_pipeMgr;
+    T_ConnectionState    m_state;
+    QByteArray           m_DeviceUID;
+
+private:
+    QTimer               m_timer;
+};
 
 class CConnectionControl : public QObject
 {
@@ -12,36 +52,25 @@ class CConnectionControl : public QObject
 
 public:
     static CConnectionControl* GetInstance(QObject *parent = 0);
-public:
+private:
     explicit CConnectionControl(QObject *parent = 0);
-
-    // Подключение интерфейса пользователя для упавления соединениями
-    void attachUI(QObject *pUIObject);
     
 signals:
- //   void setRSPortList(QList<QString> listRSPorts, QString strSelected);
-    void setNetworkDevicesList(QList<QString> listDevicesID, QString strSelected);
-//    void setRSPortActive(QString strPortName);
-    void setNetworkDeviceActive(QString strDeviceID);
-    void resetConnection();
+    // внутренние сигналы для отработки подключения-отключения портов
+    void serialPortConnected(QString);
+    void serialPortDisconnected(QString);
 
-public slots:
-    void slotSetNetworkDeviceID(QString strDeviceID);
-    void selectCommunicatorRS();
-    void selectCommunicatorTCP();
-    void slotDisonnected(); // Разорвано соединение с назначенным портом
-    void slotParceCommand(QByteArray baData, unsigned short usSenderID);
-
-private:
-    void switchCommunicator(CCommunicator *pCommunicatorOld, CCommunicator *pCommunicatorNew);
-
+private slots:
+  void slotUpdate();  // Слот для таймера обновления информации о портах в системе
+  void slotPortConnected(QString portName);
+  void slotPortDisconnected(QString portName);
+  void slotNewDeviceFound( CConnectionDescriptor* connDescr );
 private:
     static CConnectionControl *st_pThis;
-    QObject *m_pUIObject;               // Ссылка на пользовательский интерфейс для управления соединениями
-    QList<QString> m_listDevicesID;     // Список устройств доступных для присоединения
-    CPipe *m_pPipeCmd;
-    unsigned short m_usTCPServerID;     // Идентификатор сервера для формирования командных пакетов
-    QString m_strTCPDeviceIMEICurent;   // Идентификатор устройства для соединения через удалённый сервер
+    QList<QString> m_listDevicesID;     // Список имен устройств доступных для присоединения
+    QTimer m_timerUpdate;
+    QList<QString> m_listPortsNames;  // Список доступных в системе портов
+    CConnectionDescriptor* m_connectionDescriptor;
 };
 
 #endif // CONNECTIONCONTROL_H

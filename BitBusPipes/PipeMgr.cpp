@@ -10,23 +10,6 @@
 CPipeMgr* CPipeMgr::st_pThis = 0;
 
 //==============================================================================
-CPipeMgr* CPipeMgr::GetInstance(unsigned short usDeviceId)
-{
-  if(st_pThis)
-    return st_pThis;
-
-  static QMutex mutex;
-
-  mutex.lock();
-  if (!st_pThis)
-      st_pThis = new CPipeMgr(usDeviceId);
-
-  mutex.unlock();
-
-  return st_pThis;
-}
-
-//==============================================================================
 CPipeMgr::CPipeMgr(unsigned short usDeviceId):
   m_usDeviceID(usDeviceId)
 {
@@ -53,7 +36,7 @@ CPipe* CPipeMgr::CreatePipe(TPipeType PipeAddress, TPipeMode mode/*=eTwoDirectio
     mutex.lock();
 
     if(!m_arrPipes[PipeAddress])
-      m_arrPipes[PipeAddress] = new CPipe(PipeAddress, mode);
+      m_arrPipes[PipeAddress] = new CPipe(PipeAddress, mode, this);
 
     mutex.unlock();
   }
@@ -89,8 +72,9 @@ int CPipeMgr::SendPacket(TPacket packet)
 *******************************************************************************/
 
 //==============================================================================
-CPipe::CPipe(CPipeMgr::TPipeType PipeIndex, CPipeMgr::TPipeMode mode):
-  m_PipeIndex(PipeIndex)
+CPipe::CPipe(CPipeMgr::TPipeType PipeIndex, CPipeMgr::TPipeMode mode, CPipeMgr* pipeManager):
+  m_PipeIndex(PipeIndex),
+  m_pipeManager(pipeManager)
 {
 
   if(CPipeMgr::eReadOnly != mode)
@@ -125,18 +109,17 @@ void CPipe::SendNewData(QByteArray baData, unsigned short usSenderID)
 //==============================================================================
 void CPipe::WriteData(QByteArray baData, unsigned short usRecipientID)
 {
-  CPipeMgr *pipeManager = CPipeMgr::GetInstance();
 
   /* Заполням служебные поля пакета */
   TPacket packetWork;
   packetWork.ucLength = baData.length() + TPacket::ServiceHeaderSize();
   packetWork.usID_Recipient = usRecipientID;
-  packetWork.usID_Sender = pipeManager->m_usDeviceID;
+  packetWork.usID_Sender = m_pipeManager->m_usDeviceID;
   packetWork.ucPipeAddress = m_PipeIndex;
   memcpy(packetWork.ucData, baData.constData(), baData.length());
 
   // Отправляем пакет в очередь
-  pipeManager->ReceiveNewData(packetWork);
+  m_pipeManager->ReceiveNewData(packetWork);
 }
 
 //==============================================================================

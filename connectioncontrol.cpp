@@ -1,9 +1,101 @@
 #include "connectioncontrol.h"
-#include "BitBusPipes/USB_Communicator.h"
+
 #include "BitBusPipes/ctcp_client_communicator.h"
-
+#include "serialportinfo.h"
+#include "BitBusPipes/PipeMgr.h"
 #include <QMutex>
+#include <QList>
 
+//==============================================================================
+CConnectionDescriptor::CConnectionDescriptor()
+{
+    m_serialCommunicator= new CUSB_Communicator(CUSB_Communicator::eDevID_Usb);
+    m_pipeMgr           = new CPipeMgr(100);
+    connect(m_serialCommunicator, SIGNAL(ReceivePacket(TPacket)), m_pipeMgr, SLOT(SendPacket(TPacket)));
+    connect(m_pipeMgr, SIGNAL(ReceivePacket(TPacket)), m_serialCommunicator, SLOT(SendPacket(TPacket)));
+
+    CPipe *pPipeCmd = m_pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
+    connect(pPipeCmd, SIGNAL(ReadData(QByteArray, unsigned short)), this, SLOT(slotParceCommand(QByteArray, unsigned short)));
+    m_state = eStateConnecting;
+
+    qDebug() << "CConnectionDescriptor() ";
+
+}
+
+//==============================================================================
+CConnectionDescriptor::~CConnectionDescriptor()
+{
+    delete m_pipeMgr;
+    delete m_serialCommunicator;
+
+    qDebug() << "~CConnectionDescriptor() ";
+}
+
+//==============================================================================
+CConnectionDescriptor *CConnectionDescriptor::Create(QString portName)
+{
+    CConnectionDescriptor *newDescriptor = new CConnectionDescriptor();
+    newDescriptor->m_serialCommunicator->slotSetPortName(portName);
+
+    QByteArray baRequest;
+    baRequest.append(0x24);
+//    newDescriptor->m_pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand)->WriteData(baRequest, MODEM_DEV_ID);
+    newDescriptor->m_pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand)->WriteData(baRequest, 21);
+
+    return newDescriptor;
+}
+
+//==============================================================================
+int CConnectionDescriptor::FindIndexByPortName(QList<CConnectionDescriptor*> descrList, QString portName)
+{
+    for(int i = 0; i < descrList.length(); i++ )
+    {
+        QString currentPortName = descrList[i]->m_serialCommunicator->getPortName();
+        if ( portName == currentPortName)
+            return i;
+    }
+    return -1;
+}
+
+//==============================================================================
+void CConnectionDescriptor::slotParceCommand(QByteArray baData, unsigned short usSenderID)
+{
+    qDebug() << "CConnectionDescriptor::slotParceCommand ";
+    int iSeek = 0;
+
+    while ( iSeek < baData.length() )
+    {
+        unsigned char ucCommand = baData[iSeek++];
+        switch(ucCommand)
+        {
+            case 0xA4:  // разбор ответа и оповещение
+            {
+                if(16 <= (baData.length()- iSeek))
+                {
+                    m_DeviceUID =  baData.mid(iSeek, 16);
+                    iSeek += 16;
+                    m_state = eStateConnected;
+                    emit signalNewDeviceFound(this);
+                }
+            }break;
+
+            default:
+            {
+                return;
+            }break;
+        }// switch
+    }
+
+}
+
+//==============================================================================
+void CConnectionDescriptor::slotTimeout()
+{
+    m_state = eStateConnectionTimeout;
+}
+
+//==============================================================================
+//==============================================================================
 CConnectionControl *CConnectionControl::st_pThis=0;
 CConnectionControl* CConnectionControl::GetInstance(QObject *parent/* = 0*/)
 {
@@ -19,139 +111,92 @@ CConnectionControl* CConnectionControl::GetInstance(QObject *parent/* = 0*/)
     return st_pThis;
 }
 
-
+//==============================================================================
 CConnectionControl::CConnectionControl(QObject *parent) :
     QObject(parent)
 {
-    selectCommunicatorRS();
+    m_connectionDescriptor = 0;
+
+    connect(this, SIGNAL(serialPortConnected(QString)), this, SLOT(slotPortConnected(QString)));
+    connect(this, SIGNAL(serialPortDisconnected(QString)), this, SLOT(slotPortDisconnected(QString)));
+    // Запуск мониторинга наличия портов в системе
+    connect(&m_timerUpdate, SIGNAL(timeout()), SLOT(slotUpdate()));
+    m_timerUpdate.setInterval(1000);
+    m_timerUpdate.start();
+
 }
 
-void CConnectionControl::attachUI(QObject *pUIObject)
+//==============================================================================
+void CConnectionControl::slotUpdate()
 {
-    m_pUIObject = pUIObject;
+    // Получение списка имеющихся в системе последовательных портов
+    QList<SerialPortInfo> serialPortInfoList = SerialPortInfo::availablePorts();
 
-    CUSB_Communicator *pCommunicatorUSB = CUSB_Communicator::GetInstance(CUSB_Communicator::eDevID_Unknown);
-    // Присоединение сигнала о выборе пользователем порта для связи
-    connect(m_pUIObject, SIGNAL(signalSetRSPort(QString)), pCommunicatorUSB, SLOT(slotSetPortName(QString)));
-    connect(pCommunicatorUSB, SIGNAL(signalPortSelected(QString)), m_pUIObject, SLOT(slotSetRSPortActive(QString)));
-    // Присоединение сигнала оповещения о изменении списка подключённых портов
-    connect(pCommunicatorUSB, SIGNAL(signalPortListUpdated(QList<QString>,QString)), m_pUIObject, SLOT(slotSetRSPortList(QList<QString>, QString)));
+    QList<QString> listPortsNamesNew;  // Обновленный список доступных в системе портов
 
-    CCommunicator *pCommunicatorTCP = CTCP_Client_Communicator::GetInstance("", 2323);
-    connect(m_pUIObject, SIGNAL(signalSetServerName(QString)), pCommunicatorTCP, SLOT(slotSetHost(QString)));
-    connect(this, SIGNAL(setNetworkDevicesList(QList<QString>, QString)), pUIObject, SLOT(slotSetNetworkDevicesList(QList<QString>, QString)));
-
-    connect(m_pUIObject, SIGNAL(signalSetConnectionTypeUSB()), this, SLOT(selectCommunicatorRS()));
-    connect(m_pUIObject, SIGNAL(signalSetConnectionTypeTCP()), this, SLOT(selectCommunicatorTCP()));
-
-    CPipeMgr *pPipeMgr = CPipeMgr::GetInstance();
-    m_pPipeCmd = pPipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
-    connect(m_pPipeCmd, SIGNAL(ReadData(QByteArray, unsigned short)), this, SLOT(slotParceCommand(QByteArray, unsigned short)));
-
-    connect(m_pUIObject, SIGNAL(signalSetNetworkDeviceID(QString)), this, SLOT(slotSetNetworkDeviceID(QString)));
-}
-
-void CConnectionControl::slotSetNetworkDeviceID(QString strDeviceID)
-{
-    emit resetConnection();
-
-    QByteArray data;
-    if(!m_strTCPDeviceIMEICurent.isEmpty())
-    {
-        // Отпарвке команды на отключение от теккщего устройства
-        data.append(0x73/*eDisconnectFromDevice*/);
-        data.append(m_strTCPDeviceIMEICurent);
-        m_pPipeCmd->WriteData(data, m_usTCPServerID);
+    // Копирование в локальный список толко портов пригодных для работы
+    foreach (const SerialPortInfo &serialPortInfo, serialPortInfoList) {
+        if( !serialPortInfo.description().contains("AT91SAM"))
+          continue;
+        listPortsNamesNew.append(serialPortInfo.portName());  // Добавление порта
     }
 
-    m_strTCPDeviceIMEICurent = strDeviceID;
+    // Обновленный список доступных в системе портов
+    QList<QString> listPortsNamesCmpNew = listPortsNamesNew;
+    // Предыдущий список доступных в системе портов
+    QList<QString> listPortsNamesCmpPrev = m_listPortsNames;
 
-    // Отпарвке команды на подключение к новому устройству
-    data.clear();
-    data.append(0x72/*eConnectToDevice*/);
-    data.append(m_strTCPDeviceIMEICurent);
-    m_pPipeCmd->WriteData(data, m_usTCPServerID);
-}
-
-void CConnectionControl::selectCommunicatorRS()
-{
-    CCommunicator *pCommunicatorOld = CTCP_Client_Communicator::GetInstance("", 2323);
-    CCommunicator *pCommunicatorNew = CUSB_Communicator::GetInstance(CUSB_Communicator::eDevID_Unknown);
-    switchCommunicator(pCommunicatorOld, pCommunicatorNew);
-}
-
-void CConnectionControl::selectCommunicatorTCP()
-{
-//    if(bIsTCP)
+    foreach(const QString &name, m_listPortsNames )
     {
-        CUSB_Communicator *pCommunicatorOld = CUSB_Communicator::GetInstance(CUSB_Communicator::eDevID_Unknown);
-        pCommunicatorOld->slotSetPortName("");
-        CCommunicator *pCommunicatorNew = CTCP_Client_Communicator::GetInstance("", 2323);
-        switchCommunicator(pCommunicatorOld, pCommunicatorNew);
-    }
-}
-
-void CConnectionControl::slotDisonnected()
-{
-    emit resetConnection();
-}
-
-void CConnectionControl::slotParceCommand(QByteArray baData, unsigned short usSenderID)
-{
-    int iSeek = 0;
-
-    while ( iSeek < baData.length() )
-    {
-        unsigned char ucCommand = baData[iSeek++];
-        switch(ucCommand)
+        if (listPortsNamesCmpNew.contains(name))
         {
-            case 0x20:
-            {
-                QByteArray baAnswer;
-                baAnswer.append(0xa0);
-                baAnswer.append(0x81);
-                m_pPipeCmd->WriteData(baAnswer, usSenderID);
-                m_usTCPServerID = usSenderID;
-            }break;
-        case /*eRegistered*/0x70:
-            {
-                QByteArray baAnswer;
-                baAnswer.append(0x71/*eGetDevicesAvailable*/);
-                m_pPipeCmd->WriteData(baAnswer, usSenderID);
-
-                m_listDevicesID.clear();
-            }break;
-        case /**/0xf1:
-            {
-                QByteArray baDevID(baData.constData()+iSeek, baData.length() - iSeek);
-
-                m_listDevicesID.append(QString(baDevID));
-                emit setNetworkDevicesList(m_listDevicesID, m_listDevicesID[0]);
-            }break;
-
-            case 81: // пакеты FWupdater-a, нам не интересны
-            case 82:
-            {
-                return;
-            }break;
-
-
-        }// switch
+            listPortsNamesCmpNew.removeOne(name);
+            listPortsNamesCmpPrev.removeOne(name);
+        }
     }
-}
 
-void CConnectionControl::switchCommunicator(CCommunicator *pCommunicatorOld, CCommunicator *pCommunicatorNew)
-{
-    CPipeMgr *pPipeMgr = CPipeMgr::GetInstance();
-
-    if(0 != pCommunicatorOld)
+    foreach(const QString &name, listPortsNamesCmpNew )
     {
-        QObject::disconnect(pCommunicatorOld, SIGNAL(ReceivePacket(TPacket)), pPipeMgr, SLOT(SendPacket(TPacket)));
-        QObject::disconnect(pPipeMgr, SIGNAL(ReceivePacket(TPacket)), pCommunicatorOld, SLOT(SendPacket(TPacket)));
-        QObject::disconnect(pCommunicatorOld, SIGNAL(signalDisonnected()), this, SLOT(slotDisonnected()));
+        emit serialPortConnected(name);
+        qDebug() << QObject::tr("+ Port: ") << name;
     }
 
-    QObject::connect(pCommunicatorNew, SIGNAL(ReceivePacket(TPacket)), pPipeMgr, SLOT(SendPacket(TPacket)));
-    QObject::connect(pPipeMgr, SIGNAL(ReceivePacket(TPacket)), pCommunicatorNew, SLOT(SendPacket(TPacket)));
-    QObject::connect(pCommunicatorNew, SIGNAL(signalDisonnected()), this, SLOT(slotDisonnected()));
+    foreach(const QString &name, listPortsNamesCmpPrev )
+    {
+        emit serialPortDisconnected(name);
+        qDebug() << QObject::tr("- Port: ") << name;
+    }
+
+    if ( ( 0 != listPortsNamesCmpNew.length() ) ||
+         ( 0 != listPortsNamesCmpPrev.length() ))
+    {
+        m_listPortsNames = listPortsNamesNew;
+    }
 }
+
+//==============================================================================
+void CConnectionControl::slotPortConnected(QString portName)
+{
+    m_connectionDescriptor = CConnectionDescriptor::Create(portName);
+    connect(m_connectionDescriptor, SIGNAL(signalNewDeviceFound(CConnectionDescriptor*)),
+                              this, SLOT(slotNewDeviceFound(CConnectionDescriptor*)));
+}
+
+//==============================================================================
+void CConnectionControl::slotPortDisconnected(QString portName)
+{
+    if (m_connectionDescriptor)
+    {
+        delete m_connectionDescriptor;
+        m_connectionDescriptor = 0;
+    }
+}
+
+//==============================================================================
+void CConnectionControl::slotNewDeviceFound(CConnectionDescriptor *connDescr)
+{
+    QString strData(connDescr->m_DeviceUID.toHex());
+    qDebug()<< "New device connected, UID =" << strData ;
+}
+
+

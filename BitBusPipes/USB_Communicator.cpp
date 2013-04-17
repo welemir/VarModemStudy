@@ -24,32 +24,10 @@ bool operator==(const SerialPortInfo &first, const SerialPortInfo &second)
 CUSB_Communicator* CUSB_Communicator::st_pThis;
 
 //==============================================================================
-CUSB_Communicator* CUSB_Communicator::GetInstance(unsigned short usDeviceID_Usb/* = eDevID_Usb*/)
-{
-    if(st_pThis)
-      return st_pThis;
-
-    static QMutex mutex;
-
-    mutex.lock();
-    if (!st_pThis)
-        st_pThis = new CUSB_Communicator(usDeviceID_Usb);
-
-    mutex.unlock();
-
-    return st_pThis;
-  }
-
-//==============================================================================
 CUSB_Communicator::CUSB_Communicator(unsigned short usDeviceID_Usb):
   m_usDeviceID(usDeviceID_Usb),
   m_pSerialPort(0)
 {
-  // Запуск мониторинга наличия портов в системе
-  connect(&m_timerUpdate, SIGNAL(timeout()), SLOT(stotUpdate()));
-  m_timerUpdate.setInterval(1000);
-  m_timerUpdate.start();
-
   // Последовательный порт для работы USB
   m_pSerialPort = new SerialPort(this);
   m_pIODevice = m_pSerialPort;
@@ -57,76 +35,11 @@ CUSB_Communicator::CUSB_Communicator(unsigned short usDeviceID_Usb):
   connect(m_pSerialPort, SIGNAL(readyRead()), this, SLOT(slotReadyRead()));
 }
 
-//==============================================================================
-QList<QString> CUSB_Communicator::availablePorts()
+CUSB_Communicator::~CUSB_Communicator()
 {
-  return QList<QString>(m_listPortsNames);
-}
+    m_pSerialPort->close();
+    qDebug() << "    m_pSerialPort->close();";
 
-//==============================================================================
-void CUSB_Communicator::stotUpdate()
-{
-  // Получение списка имеющихся в системе последовательных портов
-  QList<SerialPortInfo> serialPortInfoList = SerialPortInfo::availablePorts();
-
-    QList<QString> listPortsNamesNew;  // Список доступных в системе портов
-
-    // Копирование в локальный список толко портов пригодных для работы
-    foreach (const SerialPortInfo &serialPortInfo, serialPortInfoList) {
-        if( !serialPortInfo.description().contains("AT91SAM"))
-          continue;
-
-    listPortsNamesNew.append(serialPortInfo.portName());  // Добавление порта
-  }
-
-  // Проверка списка на изменение
-  bool bUpdated = true;
-  if(listPortsNamesNew.length() == m_listPortsNames.length())
-    { // Размер совпадает, проверяем изменился ли состав
-      bUpdated = false;
-      foreach(const QString &name, listPortsNamesNew )
-        {
-          if (!m_listPortsNames.contains(name))
-            { // Есть несовпадение имён - список изменился
-              bUpdated = true;
-              break;
-            }
-        }
-    }
-
-  if(bUpdated)
-    {
-      // сохраняем обновлённый список
-      m_listPortsNames = listPortsNamesNew;
-
-      // Вывод нового спска портов для отладки
-      qDebug() << endl << "Ports list updated:";
-      foreach(const QString &name, listPortsNamesNew )
-        {
-          qDebug() << QObject::tr("Port: ") << name;
-        }
-
-      // Отправка сообщения об изменении списка портов
-      emit(signalPortListUpdated(m_listPortsNames, m_pSerialPort->portName()));
-
-      // Если порт подключён и его больше нет в списке - отключаем
-      if((0 > m_listPortsNames.indexOf(m_pSerialPort->portName())) && m_pSerialPort->isOpen())
-      {
-        m_pSerialPort->close();
-        emit signalDisonnected();
-
-        qDebug() << QObject::tr("Disconnected from ") << m_pSerialPort->portName();
-      }
-
-       // Если порт присутствует и не подключён - подключаем
-      if((0 <= m_listPortsNames.indexOf(m_pSerialPort->portName())) && !m_pSerialPort->isOpen())
-      {
-        m_pSerialPort->open(QIODevice::ReadWrite);
-        emit signalConnected();
-
-        qDebug() << QObject::tr("Connected to ") << m_pSerialPort->portName() << m_pSerialPort->isOpen();
-      }
-    }
 }
 
 //==============================================================================
@@ -145,14 +58,13 @@ void CUSB_Communicator::slotSetPortName(const QString &strPortName)
   // Установка нового имени порта
   m_pSerialPort->setPort(strPortName);
 
-  // Подключение нового порта, при возможности
-  if((0 <= m_listPortsNames.indexOf(m_pSerialPort->portName())) && !m_pSerialPort->isOpen())
-  {
-    m_pSerialPort->open(QIODevice::ReadWrite);
-    emit signalConnected();
+  m_pSerialPort->open(QIODevice::ReadWrite);
 
-    qDebug() << QObject::tr("Connected to ") << m_pSerialPort->portName() << m_pSerialPort->isOpen();
-  }
+}
+
+QString CUSB_Communicator::getPortName()
+{
+    return m_pSerialPort->portName();
 }
 
 //==============================================================================

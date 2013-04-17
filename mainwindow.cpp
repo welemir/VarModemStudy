@@ -28,7 +28,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
     QObject::connect(m_pKernel, SIGNAL(signalNewMessageToUI(const CUICommand)), this, SLOT(slotNewMessageToUI(const CUICommand)));
 
-//    CConnectionControl::GetInstance(this)->attachUI(ui->widget_ConnectionControlUI);
 }
 
 MainWindow::~MainWindow()

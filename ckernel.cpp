@@ -29,9 +29,6 @@ CKernel::CKernel():
     m_pPipeCmd(0),
     m_ProgrammState(eDisconnected)
 {
-    CPipeMgr *pPipeMgr = CPipeMgr::GetInstance(CUSB_Communicator::eDevID_Usb);
-    m_pPipeCmd = pPipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
-    QObject::connect(m_pPipeCmd, SIGNAL(ReadData(QByteArray, unsigned short)), this, SLOT(slotProcessDataFromPipeOfCommand(QByteArray, unsigned short)));
 
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(resetConnection()), this, SLOT(slotResetConnection()));
