@@ -67,10 +67,9 @@ private slots:
   void slotNewDeviceFound( CConnectionDescriptor* connDescr );
 private:
     static CConnectionControl *st_pThis;
-    QList<QString> m_listDevicesID;     // Список имен устройств доступных для присоединения
     QTimer m_timerUpdate;
     QList<QString> m_listPortsNames;  // Список доступных в системе портов
-    CConnectionDescriptor* m_connectionDescriptor;
+    QList<CConnectionDescriptor*> m_connectionsList;
 };
 
 #endif // CONNECTIONCONTROL_H

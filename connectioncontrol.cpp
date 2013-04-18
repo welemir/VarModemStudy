@@ -115,7 +115,7 @@ CConnectionControl* CConnectionControl::GetInstance(QObject *parent/* = 0*/)
 CConnectionControl::CConnectionControl(QObject *parent) :
     QObject(parent)
 {
-    m_connectionDescriptor = 0;
+    //m_connectionDescriptor = 0;
 
     connect(this, SIGNAL(serialPortConnected(QString)), this, SLOT(slotPortConnected(QString)));
     connect(this, SIGNAL(serialPortDisconnected(QString)), this, SLOT(slotPortDisconnected(QString)));
@@ -177,19 +177,20 @@ void CConnectionControl::slotUpdate()
 //==============================================================================
 void CConnectionControl::slotPortConnected(QString portName)
 {
-    m_connectionDescriptor = CConnectionDescriptor::Create(portName);
-    connect(m_connectionDescriptor, SIGNAL(signalNewDeviceFound(CConnectionDescriptor*)),
-                              this, SLOT(slotNewDeviceFound(CConnectionDescriptor*)));
+    CConnectionDescriptor *connDescr;
+
+    connDescr = CConnectionDescriptor::Create(portName);
+    connect(connDescr, SIGNAL(signalNewDeviceFound(CConnectionDescriptor*)),
+                 this, SLOT(slotNewDeviceFound(CConnectionDescriptor*)));
+    m_connectionsList.append(connDescr);
 }
 
 //==============================================================================
 void CConnectionControl::slotPortDisconnected(QString portName)
 {
-    if (m_connectionDescriptor)
-    {
-        delete m_connectionDescriptor;
-        m_connectionDescriptor = 0;
-    }
+    int iInd = CConnectionDescriptor::FindIndexByPortName(m_connectionsList, portName);
+    delete m_connectionsList[iInd];
+    m_connectionsList.removeAt(iInd);
 }
 
 //==============================================================================
