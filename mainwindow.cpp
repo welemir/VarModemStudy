@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pKernel = CKernel::GetInstance();
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
     QObject::connect(m_pKernel, SIGNAL(signalNewMessageToUI(const CUICommand)), this, SLOT(slotNewMessageToUI(const CUICommand)));
-
+    QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 }
 
 MainWindow::~MainWindow()

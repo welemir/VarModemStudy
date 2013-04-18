@@ -14,6 +14,8 @@ class DialogDiagnostics : public QDialog
 public:
     explicit DialogDiagnostics(QWidget *parent = 0);
     ~DialogDiagnostics();
+public slots:
+    void slotPrintDiagMeaasge(QString message);
     
 private:
     Ui::DialogDiagnostics *ui;

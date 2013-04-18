@@ -12,3 +12,8 @@ DialogDiagnostics::~DialogDiagnostics()
 {
     delete ui;
 }
+
+void DialogDiagnostics::slotPrintDiagMeaasge(QString message)
+{
+    ui->textBrowser->append(message);
+}

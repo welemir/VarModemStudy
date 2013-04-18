@@ -43,6 +43,7 @@ signals:
     void signalNewMessageToUI(const CUICommand UIcommand);
     void signalWriteDataToPipe(const QByteArray buff, unsigned short usDestAddr,
                                CBitBusPipes::TPipeType PipeID);
+    void signalPrintDiagMeaasge(QString);
 private:
     CKernel();
     CKernel(const CKernel &);
