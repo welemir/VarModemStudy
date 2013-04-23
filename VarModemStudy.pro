@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     connectioncontrol.cpp \
     dialogaboutprogram.cpp \
     dialogsettings.cpp \
-    dialogdiagnostics.cpp
+    dialogdiagnostics.cpp \
+    ctransceiver.cpp
 
 HEADERS  += mainwindow.h \
     ckernel.h \
@@ -41,7 +42,8 @@ HEADERS  += mainwindow.h \
     connectioncontrol.h \
     dialogaboutprogram.h \
     dialogsettings.h \
-    dialogdiagnostics.h
+    dialogdiagnostics.h \
+    ctransceiver.h
 
 FORMS    += mainwindow.ui \
     dialogaboutprogram.ui \

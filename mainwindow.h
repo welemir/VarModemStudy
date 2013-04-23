@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QModelIndex>
+#include <QtGui>
 
 #include "ckernel.h"
 
@@ -22,6 +23,9 @@ public:
     ~MainWindow();
 public slots:
     void slotNewMessageToUI(const CUICommand UIcommand);
+    void slotSetTxStatus( bool isOn);
+    void slotSetRxStatus( bool isOn);
+    void slotConnectKernelToUI( QObject* kernel );
 
 signals:
     void signalRunCommandFromUI(const CUICommand UIcommand);
@@ -37,6 +41,9 @@ private:
     DialogAboutProgram *m_aboutProgramWindow;
 //    DialogSettings *m_settingsWindow;
     DialogDiagnostics *m_diagnosticsWindow;
+    QLabel *m_StatusBar_TxLabel;
+    QLabel *m_StatusBar_RxLabel;
+    QProgressBar *m_StatusBar_TxPogressBar;
 };
 
 #endif // MAINWINDOW_H

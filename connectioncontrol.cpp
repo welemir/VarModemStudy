@@ -111,19 +111,28 @@ CConnectionControl* CConnectionControl::GetInstance(QObject *parent/* = 0*/)
     return st_pThis;
 }
 
+CConnectionDescriptor *CConnectionControl::GetTxDescriptor()
+{
+    return m_TxPort;
+}
+
+CConnectionDescriptor *CConnectionControl::GetRxDescriptor()
+{
+    return m_RxPort;
+}
+
 //==============================================================================
 CConnectionControl::CConnectionControl(QObject *parent) :
     QObject(parent)
 {
-    //m_connectionDescriptor = 0;
-
+    m_TxPort = NULL;
+    m_RxPort = NULL;
     connect(this, SIGNAL(serialPortConnected(QString)), this, SLOT(slotPortConnected(QString)));
     connect(this, SIGNAL(serialPortDisconnected(QString)), this, SLOT(slotPortDisconnected(QString)));
     // «апуск мониторинга наличи€ портов в системе
     connect(&m_timerUpdate, SIGNAL(timeout()), SLOT(slotUpdate()));
     m_timerUpdate.setInterval(1000);
     m_timerUpdate.start();
-
 }
 
 //==============================================================================
@@ -186,9 +195,21 @@ void CConnectionControl::slotPortConnected(QString portName)
 }
 
 //==============================================================================
+// временно будем хранить настройки здесь.
+//char ucUIDtx[] = {0x6e,0xcf,0xb0,0xcc,0x3c,0xbd,0x4b,0x40,0x84,0xc3,0xe0,0x5b,0x4d,0xb0,0x82,0xb0};
+char ucUIDtx[] =   {0x36,0xf3,0x01,0xee,0x85,0xb4,0x4f,0x82,0xb6,0xe6,0x7c,0xba,0xc8,0xe4,0xc6,0xa8};
+
+const QByteArray txUID(ucUIDtx, sizeof (ucUIDtx));
+
+
 void CConnectionControl::slotPortDisconnected(QString portName)
 {
     int iInd = CConnectionDescriptor::FindIndexByPortName(m_connectionsList, portName);
+    if( txUID == m_connectionsList[iInd]->m_DeviceUID )
+    {
+        m_TxPort = NULL;
+        emit signalTransmitterDisconnected();
+    }
     delete m_connectionsList[iInd];
     m_connectionsList.removeAt(iInd);
 }
@@ -198,6 +219,13 @@ void CConnectionControl::slotNewDeviceFound(CConnectionDescriptor *connDescr)
 {
     QString strData(connDescr->m_DeviceUID.toHex());
     qDebug()<< "New device connected, UID =" << strData ;
+
+    if( txUID == connDescr->m_DeviceUID )
+    {
+        m_TxPort = connDescr;
+        emit signalTransmitterConnected();
+    }
+
 }
 
 

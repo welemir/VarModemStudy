@@ -72,6 +72,36 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>1200</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2400</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4800</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>9600</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>19200</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>32000</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxModulation">
        <property name="geometry">
@@ -95,6 +125,16 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>OOK</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>FSK</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxOutputPower">
        <property name="geometry">
@@ -118,6 +158,26 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>0</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>6</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>9</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxBitSynch">
        <property name="geometry">
@@ -141,6 +201,26 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxSynch">
        <property name="geometry">
@@ -164,6 +244,21 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxPacketDataLength">
        <property name="geometry">
@@ -176,16 +271,6 @@
        </property>
        <property name="text">
         <string>Данные</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="comboBoxTxPacketDataLength">
-       <property name="geometry">
-        <rect>
-         <x>210</x>
-         <y>110</y>
-         <width>69</width>
-         <height>22</height>
-        </rect>
        </property>
       </widget>
       <widget class="QLabel" name="labelTxCRC">
@@ -210,6 +295,31 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>-</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>1 bit</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>8 bit (Dallas)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>16 bit (IBM)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>16 bit (CCIT)</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="labelTxTotalDataLength">
        <property name="geometry">
@@ -222,16 +332,6 @@
        </property>
        <property name="text">
         <string>Объем пересылки</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="comboBoxTxTotalDataLength">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>170</y>
-         <width>91</width>
-         <height>22</height>
-        </rect>
        </property>
       </widget>
       <widget class="QPushButton" name="pushButtonTxStart">
@@ -258,6 +358,32 @@
        </property>
        <property name="text">
         <string>Стоп</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEditTxPacketDataLength">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>110</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEditTxTotalDataLength">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>170</y>
+         <width>91</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>1000</string>
        </property>
       </widget>
      </widget>

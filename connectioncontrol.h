@@ -52,6 +52,12 @@ class CConnectionControl : public QObject
 
 public:
     static CConnectionControl* GetInstance(QObject *parent = 0);
+    CConnectionDescriptor* GetTxDescriptor();
+    CConnectionDescriptor* GetRxDescriptor();
+signals:
+    void signalTransmitterConnected();
+    void signalTransmitterDisconnected();
+
 private:
     explicit CConnectionControl(QObject *parent = 0);
     
@@ -65,7 +71,10 @@ private slots:
   void slotPortConnected(QString portName);
   void slotPortDisconnected(QString portName);
   void slotNewDeviceFound( CConnectionDescriptor* connDescr );
+
 private:
+    CConnectionDescriptor*     m_TxPort;
+    CConnectionDescriptor*     m_RxPort;
     static CConnectionControl *st_pThis;
     QTimer m_timerUpdate;
     QList<QString> m_listPortsNames;  // Список доступных в системе портов
