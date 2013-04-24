@@ -37,6 +37,7 @@ public:
 
 public:
   CPipeMgr(unsigned short usDeviceId);
+  ~CPipeMgr();
 
   /* Методы управления пайпами */
   CPipe* CreatePipe(TPipeType PipeAddress, TPipeMode mode=eTwoDirections);
@@ -79,8 +80,8 @@ public:
   }TRetCode;
 
 public:
-  void ReleasePipe();
-
+ // void ReleasePipe();
+  ~CPipe(void);
 signals:
   void ReadData(QByteArray baData, unsigned short usSenderID);
 public slots:
@@ -89,7 +90,6 @@ public slots:
 
 private:
   CPipe(CPipeMgr::TPipeType PipeIndex, CPipeMgr::TPipeMode mode, CPipeMgr* pipeManager);
-  ~CPipe(void);
 
 private:
   const CPipeMgr::TPipeType m_PipeIndex;

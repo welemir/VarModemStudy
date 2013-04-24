@@ -20,6 +20,19 @@ CPipeMgr::CPipeMgr(unsigned short usDeviceId):
 }
 
 //==============================================================================
+CPipeMgr::~CPipeMgr()
+{
+    for(int i =0; i<MAX_PIPES; i++)
+    {
+        if (m_arrPipes[i])
+        {
+            delete m_arrPipes[i];
+            m_arrPipes[i] = 0;
+        }
+    }
+}
+
+//==============================================================================
 CPipe* CPipeMgr::CreatePipe(TPipeType PipeAddress, TPipeMode mode/*=eTwoDirections*/)
 { // Проверяем адрес пайпа
   if(MAX_PIPES <= PipeAddress)
@@ -94,11 +107,11 @@ CPipe::~CPipe()
 }
 
 //==============================================================================
-void CPipe::ReleasePipe()
-{ // Удаляем пайп
+//void CPipe::ReleasePipe()
+//{ // Удаляем пайп
 //  CPipeMgr::m_arrPipes[m_PipeIndex] = NULL;
 //  this->~CPipe();
-}
+//}
 
 //==============================================================================
 void CPipe::SendNewData(QByteArray baData, unsigned short usSenderID)
