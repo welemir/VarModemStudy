@@ -57,6 +57,8 @@ public:
 signals:
     void signalTransmitterConnected();
     void signalTransmitterDisconnected();
+    void signalReceiverrConnected();
+    void signalReceiverDisconnected();
 
 private:
     explicit CConnectionControl(QObject *parent = 0);

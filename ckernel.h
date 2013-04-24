@@ -40,6 +40,8 @@ public slots:
     void slotProcessDataFromPipeOfCommand(QByteArray baData, unsigned short usSenderID);
     void slotTransmitterConnected();
     void slotTransmitterDisconnected();
+    void slotReceiverConnected();
+    void slotReceiverDisconnected();
 
     void slotSetConnectionSpeed(QString newSpeed);
     void slotSetOutputPower(QString newPower);

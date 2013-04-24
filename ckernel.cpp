@@ -32,6 +32,8 @@ CKernel::CKernel():
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
     connect(pConnectionControl, SIGNAL(signalTransmitterDisconnected()), this, SLOT(slotTransmitterDisconnected()));
+    connect(pConnectionControl, SIGNAL(signalReceiverrConnected()), this, SLOT(slotReceiverConnected()));
+    connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), this, SLOT(slotReceiverDisconnected()));
 
     connect(&m_Transmitter, SIGNAL(signalNewModulationType( T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
     connect(&m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
@@ -119,6 +121,27 @@ void CKernel::slotTransmitterDisconnected()
     QString msg = " CKernel::slotTransmitterDisconnected()";
     emit signalPrintDiagMeaasge(msg);
     emit signalTxStateUpdated(false);
+}
+
+void CKernel::slotReceiverConnected()
+{
+    QString msg = " CKernel::slotReceiverConnected()";
+    emit signalPrintDiagMeaasge(msg);
+    emit signalRxStateUpdated(true);
+
+    CPipeMgr *pipeMgr = CConnectionControl::GetInstance()->GetRxDescriptor()->m_pipeMgr;
+    CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
+    connect(&m_Receiver, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
+            pipeCmd, SLOT(WriteData(QByteArray,unsigned short)));
+    connect(pipeCmd, SIGNAL(ReadData(QByteArray,unsigned short)),
+            &m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
+}
+
+void CKernel::slotReceiverDisconnected()
+{
+    QString msg = " CKernel::slotTransmitterDisconnected()";
+    emit signalPrintDiagMeaasge(msg);
+    emit signalRxStateUpdated(false);
 }
 
 void CKernel::slotSetConnectionSpeed(QString newSpeed)

@@ -200,14 +200,20 @@ void CConnectionControl::slotPortDisconnected(QString portName)
 {
     int iInd = CConnectionDescriptor::FindIndexByPortName(m_connectionsList, portName);
 
-    QByteArray txUID;
+    QByteArray txUID, rxUID;
     ProgramSettings ps;
     txUID = ps.value("TxUID").toByteArray();
+    rxUID = ps.value("RxUID").toByteArray();
 
     if( txUID == m_connectionsList[iInd]->m_DeviceUID )
     {
         m_TxPort = NULL;
         emit signalTransmitterDisconnected();
+    }
+    if( rxUID == m_connectionsList[iInd]->m_DeviceUID )
+    {
+        m_RxPort = NULL;
+        emit signalReceiverDisconnected();
     }
     delete m_connectionsList[iInd];
     m_connectionsList.removeAt(iInd);
@@ -219,14 +225,21 @@ void CConnectionControl::slotNewDeviceFound(CConnectionDescriptor *connDescr)
     QString strData(connDescr->m_DeviceUID.toHex());
     qDebug()<< "New device connected, UID =" << strData ;
 
-    QByteArray txUID;
+    QByteArray txUID, rxUID;
     ProgramSettings ps;
     txUID = ps.value("TxUID").toByteArray();
+    rxUID = ps.value("RxUID").toByteArray();
 
     if( txUID == connDescr->m_DeviceUID )
     {
         m_TxPort = connDescr;
         emit signalTransmitterConnected();
+    }
+
+    if( rxUID == connDescr->m_DeviceUID )
+    {
+        m_RxPort = connDescr;
+        emit signalReceiverrConnected();
     }
 
 }

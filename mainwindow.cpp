@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
     QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
-    QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
+    QObject::connect(m_pKernel, SIGNAL(signalRxStateUpdated(bool)), this, SLOT(slotSetRxStatus(bool)) );
 }
 
 MainWindow::~MainWindow()
