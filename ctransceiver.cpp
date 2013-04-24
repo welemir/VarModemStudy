@@ -62,7 +62,6 @@ void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
     baPacket.append(0x40);
     // так как T_DeviceModes совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newMode);
-    baPacket.append(0x41);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -72,7 +71,6 @@ void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModul
     baPacket.append(0x42);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newModulaton);
-    baPacket.append(0x43);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -82,7 +80,6 @@ void CTransceiver::slotSetConnectionSpeed(int newSpeed)
     baPacket.append(0x44);
     unsigned short modulationSpeed = newSpeed;
     baPacket.append((char*)&modulationSpeed, sizeof(modulationSpeed));
-    baPacket.append(0x45);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -92,7 +89,6 @@ void CTransceiver::slotSetOutputPower(int newPower)
     baPacket.append(0x46);
     signed short txPower = 2*newPower;
     baPacket.append((char*)&txPower, sizeof(txPower));
-    baPacket.append(0x47);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -101,7 +97,6 @@ void CTransceiver::slotSetBitSynchLength(int newLength)
     QByteArray baPacket;
     baPacket.append(0x48);
     baPacket.append((char) newLength);
-    baPacket.append(0x49);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -110,7 +105,6 @@ void CTransceiver::slotSetSychnroSequence(QByteArray sequence)
     QByteArray baPacket;
     baPacket.append(0x4a);
     baPacket.append(sequence);
-    baPacket.append(0x4b);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -119,7 +113,6 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
     QByteArray baPacket;
     baPacket.append(0x4c);
     baPacket.append((char) newLength);
-    baPacket.append(0x4d);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -129,7 +122,6 @@ void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrc)
     baPacket.append(0x4e);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newCrc);
-    baPacket.append(0x4f);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
