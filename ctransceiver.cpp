@@ -4,7 +4,7 @@
 const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
 const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
 
-CTransceiver::CTransceiver(QObject *parent, T_DeviceModes role) :
+CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
     QObject(parent),
     m_role(role)
 {
@@ -68,6 +68,11 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         }break;
         }// switch
     }
+}
+
+void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
+{
+
 }
 
 void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
@@ -158,7 +163,6 @@ void CTransceiver::slotStopOperation()
     {
         slotTxStop();
     }
-
 }
 
 void CTransceiver::slotAppendRawPacket(QByteArray newPacket)

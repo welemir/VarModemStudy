@@ -38,7 +38,7 @@ public:
     }T_CrcType;
 
 public:
-    explicit CTransceiver(QObject *parent = 0);
+    CTransceiver(T_DeviceModes role, QObject *parent = 0 );
     
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -56,6 +56,7 @@ signals:
 
 public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);
+    void slotParceRadioData(QByteArray baData, unsigned short usSenderID);
 
     void slotSetDeviceMode( T_DeviceModes newMode );
     void slotSetModulationType( T_ModulationType newModulaton );
@@ -80,7 +81,7 @@ private slots:
 private:
    // void updatesettings();
 private:
-    T_DeviceModes m_mode;
+    const T_DeviceModes m_role;
     T_ModulationType m_modulation;
     T_CrcType m_CrcType;
     int m_connectionSpeed;

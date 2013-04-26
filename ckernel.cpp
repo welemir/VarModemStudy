@@ -31,19 +31,22 @@ CKernel::CKernel():
     m_DataToSendLength(1000),
     m_PacketLength(100)
 {
+    m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
+    m_Receiver    = new CTransceiver(CTransceiver::eReceiver, this);
+
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
     connect(pConnectionControl, SIGNAL(signalTransmitterDisconnected()), this, SLOT(slotTransmitterDisconnected()));
     connect(pConnectionControl, SIGNAL(signalReceiverrConnected()), this, SLOT(slotReceiverConnected()));
     connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), this, SLOT(slotReceiverDisconnected()));
 
-    connect(&m_Transmitter, SIGNAL(signalNewModulationType( T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
-    connect(&m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
-    connect(&m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
-//    connect(&m_Transmitter, SIGNAL(signalNewBitSynchLength( int )), this, SLOT();
-//    connect(&m_Transmitter, SIGNAL(signalNewSychnroSequence( QByteArray )), this, SLOT());
-//    connect(&m_Transmitter, SIGNAL(signalNewDataPacketLength( int )), this, SLOT());
-//    connect(&m_Transmitter, SIGNAL(signalNewCrcType( T_CrcType )), this, SLOT()));
+    connect(m_Transmitter, SIGNAL(signalNewModulationType( T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
+    connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
+    connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
+//    connect(m_Transmitter, SIGNAL(signalNewBitSynchLength( int )), this, SLOT();
+//    connect(m_Transmitter, SIGNAL(signalNewSychnroSequence( QByteArray )), this, SLOT());
+//    connect(m_Transmitter, SIGNAL(signalNewDataPacketLength( int )), this, SLOT());
+//    connect(m_Transmitter, SIGNAL(signalNewCrcType( T_CrcType )), this, SLOT()));
 
 
 }
@@ -111,14 +114,14 @@ void CKernel::slotTransmitterConnected()
     CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
     CPipe    *pipeRadioRaw = pipeMgr->CreatePipe(CPipeMgr::ePipeOfDataRaw);
 
-    connect(&m_Transmitter, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
+    connect(m_Transmitter, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
             pipeCmd, SLOT(WriteData(QByteArray,unsigned short)));
     connect(pipeCmd, SIGNAL(ReadData(QByteArray,unsigned short)),
-            &m_Transmitter, SLOT(slotParceCommand(QByteArray,unsigned short)));
-    connect(&m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
+            m_Transmitter, SLOT(slotParceCommand(QByteArray,unsigned short)));
+    connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
-    m_Transmitter.slotSetDeviceMode(CTransceiver::eTransmitter);
+    m_Transmitter->slotSetDeviceMode(CTransceiver::eTransmitter);
 
 }
 
@@ -137,10 +140,13 @@ void CKernel::slotReceiverConnected()
 
     CPipeMgr *pipeMgr = CConnectionControl::GetInstance()->GetRxDescriptor()->m_pipeMgr;
     CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
-    connect(&m_Receiver, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
+    CPipe    *pipeRadioRaw = pipeMgr->CreatePipe(CPipeMgr::ePipeOfDataRaw);
+    connect(m_Receiver, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
             pipeCmd, SLOT(WriteData(QByteArray,unsigned short)));
     connect(pipeCmd, SIGNAL(ReadData(QByteArray,unsigned short)),
-            &m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
+            m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
+    connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
+            m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
 }
 
 void CKernel::slotReceiverDisconnected()
@@ -152,34 +158,34 @@ void CKernel::slotReceiverDisconnected()
 
 void CKernel::slotSetConnectionSpeed(QString newSpeed)
 {
-    m_Transmitter.slotSetConnectionSpeed( newSpeed.toInt() );
+    m_Transmitter->slotSetConnectionSpeed( newSpeed.toInt() );
 }
 
 void CKernel::slotSetOutputPower(QString newPower)
 {
-    m_Transmitter.slotSetOutputPower( newPower.toInt() );
+    m_Transmitter->slotSetOutputPower( newPower.toInt() );
 }
 
 void CKernel::slotSetModulationType(int newModIndex)
 {
-    m_Transmitter.slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
+    m_Transmitter->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
 }
 
 void CKernel::slotSetBitSynchLength(QString newLength)
 {
-    m_Transmitter.slotSetBitSynchLength( newLength.toInt() );
+    m_Transmitter->slotSetBitSynchLength( newLength.toInt() );
 }
 
 void CKernel::slotSetSychnroSequenceLength(QString newLength)
 {
     QByteArray baSequence;
-    m_Transmitter.slotSetSychnroSequence( baSequence );
+    m_Transmitter->slotSetSychnroSequence( baSequence );
 }
 
 void CKernel::slotSetDataPacketLength(QString newLength)
 {
     m_PacketLength = newLength.toInt();
-    m_Transmitter.slotSetDataPacketLength( m_PacketLength );
+    m_Transmitter->slotSetDataPacketLength( m_PacketLength );
 }
 
 void CKernel::slotSetTotalDataLength(QString newLength)
@@ -189,7 +195,7 @@ void CKernel::slotSetTotalDataLength(QString newLength)
 
 void CKernel::slotSetCrcType(int newCrcIndex)
 {
-    m_Transmitter.slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
+    m_Transmitter->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
 }
 
 void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
@@ -219,14 +225,16 @@ void CKernel::slotStartOperation()
 
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
-        m_Transmitter.slotAppendRawPacket(newPacket);
+        m_Transmitter->slotAppendRawPacket(newPacket);
     }
-    m_Transmitter.slotStartOperation();
+    m_Receiver->slotStopOperation();
+    m_Transmitter->slotStartOperation();
 }
 
 void CKernel::slotStopOperation()
 {
-
+    m_Transmitter->slotStopOperation();
+    m_Receiver->slotStartOperation();
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

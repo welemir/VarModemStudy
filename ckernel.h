@@ -90,8 +90,8 @@ private:
     unsigned short m_usDestinationAddress;
     unsigned short m_usGateway;
     CPipe *m_pPipeCmd;
-    CTransceiver m_Transmitter;
-    CTransceiver m_Receiver;
+    CTransceiver *m_Transmitter;
+    CTransceiver *m_Receiver;
 
 private:
     typedef enum
