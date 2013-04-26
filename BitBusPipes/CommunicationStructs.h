@@ -27,7 +27,7 @@
 #pragma pack(1)
 typedef struct PacketStruct
 {
-  static const int c_iMaxDataSize = 108;
+  static const int c_iMaxDataSize = 248;
   unsigned char   ucLength;       // Ќеобходимый пор€док двух первых байт дл€ попадани€
   unsigned char   ucPipeAddress;  // в границу слова при выравнивании
   unsigned short  usID_Recipient;

@@ -8,7 +8,7 @@
 
 #include "CommunicationStructs.h"
 
-#define MAX_PIPES     4
+#define MAX_PIPES     6
 
 /*************************************************************************************
  Класс управления пайпами и обмена пакетами с маршрутизатором
@@ -23,7 +23,9 @@ public:
       ePipeOfCommand = 0,
       ePipeOfSound,
       ePipeOfDiagnostic,
-      ePipeOfUpdating
+      ePipeOfUpdating,
+      ePipeOfData,
+      ePipeOfDataRaw
     }TPipeType;
 
     typedef enum {

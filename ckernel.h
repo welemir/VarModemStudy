@@ -102,6 +102,8 @@ private:
     T_ProgrammState m_ProgrammState;
 
     void setProgrammState(T_ProgrammState newProgrammState);
+    int m_DataToSendLength;
+    int m_PacketLength;
 };
 
 #endif // CKERNEL_H

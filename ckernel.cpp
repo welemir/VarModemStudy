@@ -27,7 +27,9 @@ CKernel::CKernel():
     m_usDestinationAddress(0),
     m_usGateway(0),
     m_pPipeCmd(0),
-    m_ProgrammState(eDisconnected)
+    m_ProgrammState(eDisconnected),
+    m_DataToSendLength(1000),
+    m_PacketLength(100)
 {
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
@@ -107,12 +109,16 @@ void CKernel::slotTransmitterConnected()
 
     CPipeMgr *pipeMgr = CConnectionControl::GetInstance()->GetTxDescriptor()->m_pipeMgr;
     CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
+    CPipe    *pipeRadioRaw = pipeMgr->CreatePipe(CPipeMgr::ePipeOfDataRaw);
+
     connect(&m_Transmitter, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
             pipeCmd, SLOT(WriteData(QByteArray,unsigned short)));
     connect(pipeCmd, SIGNAL(ReadData(QByteArray,unsigned short)),
             &m_Transmitter, SLOT(slotParceCommand(QByteArray,unsigned short)));
+    connect(&m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
+            pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
-  //  m_Transmitter.slotSetDeviceMode(CTransceiver::eTransmitter);
+    m_Transmitter.slotSetDeviceMode(CTransceiver::eTransmitter);
 
 }
 
@@ -172,11 +178,13 @@ void CKernel::slotSetSychnroSequenceLength(QString newLength)
 
 void CKernel::slotSetDataPacketLength(QString newLength)
 {
-    m_Transmitter.slotSetDataPacketLength( newLength.toInt() );
+    m_PacketLength = newLength.toInt();
+    m_Transmitter.slotSetDataPacketLength( m_PacketLength );
 }
 
 void CKernel::slotSetTotalDataLength(QString newLength)
 {
+    m_DataToSendLength = newLength.toInt();
 }
 
 void CKernel::slotSetCrcType(int newCrcIndex)
@@ -204,7 +212,16 @@ void CKernel::slotNewOutputPower(int newPower)
 
 void CKernel::slotStartOperation()
 {
+    QByteArray newPacket;
+    for( int i = 0; i < m_PacketLength; i++)
+        newPacket.append(0x33);
+        //  newPacket.append(qrand());
 
+    for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
+    {
+        m_Transmitter.slotAppendRawPacket(newPacket);
+    }
+    m_Transmitter.slotStartOperation();
 }
 
 void CKernel::slotStopOperation()

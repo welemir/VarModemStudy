@@ -1,8 +1,16 @@
 #include "ctransceiver.h"
+#include"BitBusPipes/CommunicationStructs.h"
 
-CTransceiver::CTransceiver(QObject *parent) :
-    QObject(parent)
+const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
+const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
+
+CTransceiver::CTransceiver(QObject *parent, T_DeviceModes role) :
+    QObject(parent),
+    m_role(role)
 {
+    connect( &m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
+    connect( &m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
+
 }
 
 void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID)
@@ -16,9 +24,9 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         {
         case 0xC1:
         {
-            unsigned char ucNewMode =  baData[iSeek++];
-            m_mode = (CTransceiver::T_DeviceModes) ucNewMode;
-            emit signalNewDeviceMode(m_mode);
+        //    unsigned char ucNewMode =  baData[iSeek++];
+       //     m_mode = (CTransceiver::T_DeviceModes) ucNewMode;
+      //      emit signalNewDeviceMode(m_mode);
         }break;
 
         case 0xC3:
@@ -48,6 +56,12 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             emit signalNewOutputPower(m_TxPower);
         }break;
 
+        case 0xe0: // queue size
+        {
+            unsigned char ucPacketQueueFree = baData[iSeek++];
+//            unsigned char ucPacketRawQueueFree = baData[iSeek++];
+            m_PermitedToTxPacketsCount = ucPacketQueueFree;
+        }break;
         default:
         {
             return;
@@ -131,8 +145,82 @@ void CTransceiver::slotSetCarrierFrequency(int newFrequency)
 
 void CTransceiver::slotStartOperation()
 {
+    if(eTransmitter == m_role)
+    {
+        slotTxStart();
+    }
+    m_SynchroSequence = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
 }
 
 void CTransceiver::slotStopOperation()
 {
+    if(eTransmitter == m_role)
+    {
+        slotTxStop();
+    }
+
+}
+
+void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
+{
+    m_TxQueue.append(newPacket);
+}
+
+void CTransceiver::slotTxTimer()
+{
+    if (0 < m_PermitedToTxPacketsCount)
+    {
+        QByteArray packetToSend = m_TxQueue[0];
+        m_TxQueue.removeFirst();
+
+        m_PermitedToTxPacketsCount--;
+
+
+        CCRC_Checker crc(CCRC_Checker::eCRC8_iButton);
+        for(int iInd = 0; iInd < packetToSend.size(); iInd++)
+        {
+            crc.Add(packetToSend[iInd]);
+        }
+        char cCRC = crc;
+
+        packetToSend.prepend(m_SynchroSequence);
+        packetToSend.append(cCRC);
+        emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
+    }
+
+    if (m_TxQueue.empty())
+    {
+        slotTxStop();
+    }
+}
+
+void CTransceiver::slotStatusTimer()
+{
+    if(m_PermitedToTxPacketsCount == 0)
+    {
+        QByteArray newPacket;
+        newPacket.append(0x60);
+        emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
+    }
+    else
+    {
+      //  m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL);
+    }
+}
+
+void CTransceiver::slotTxStart()
+{
+    // отправить сообщение "начать передачу" на трансивер
+    slotSetDeviceMode(eTransmitter);
+    m_PermitedToTxPacketsCount = 0;
+    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL);
+    m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL);
+}
+
+void CTransceiver::slotTxStop()
+{
+    // выключить трансивер
+    slotSetDeviceMode(ePowerOff);
+    m_TransceiverStatusTimer.stop();
+    m_SenderTimer.stop();
 }

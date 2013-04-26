@@ -2,8 +2,11 @@
 #define CTRANSCEIVER_H
 
 #include <QObject>
+#include <QTimer>
 
 #define MODEM_DEVICE_ID 21
+#define MODEM_RAWPIPE_TX_INTERVAL 10
+#define MODEM_STATUS_INTERVAL 10
 
 class CTransceiver : public QObject
 {
@@ -39,6 +42,7 @@ public:
     
 signals:
     void signalNewCommand(QByteArray, unsigned short);
+    void signalNewRawPacket(QByteArray, unsigned short);
 
     void signalNewDeviceMode( T_DeviceModes );
     void signalNewModulationType( T_ModulationType );
@@ -49,7 +53,6 @@ signals:
     void signalNewDataPacketLength( int );
     void signalNewCrcType( T_CrcType );
     void signalNewCarrierFrequency( int );
-
 
 public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);
@@ -66,13 +69,28 @@ public slots:
 
     void slotStartOperation();
     void slotStopOperation();
+    void slotAppendRawPacket(QByteArray newPacket);
+
+private slots:
+    void slotTxTimer();
+    void slotStatusTimer();
+    void slotTxStart();
+    void slotTxStop();
+
 private:
    // void updatesettings();
 private:
     T_DeviceModes m_mode;
     T_ModulationType m_modulation;
+    T_CrcType m_CrcType;
     int m_connectionSpeed;
     int m_TxPower;
+
+    QByteArray m_SynchroSequence;
+    QTimer m_SenderTimer;
+    QTimer m_TransceiverStatusTimer;
+    QList<QByteArray> m_TxQueue;
+    int m_PermitedToTxPacketsCount;
 
 };
 
