@@ -25,6 +25,8 @@ public slots:
     void slotNewMessageToUI(const CUICommand UIcommand);
     void slotSetTxStatus( bool isOn);
     void slotSetRxStatus( bool isOn);
+    void slotSetTxState( bool isInProgress);
+
     void slotConnectKernelToUI( QObject* kernel );
 
 signals:

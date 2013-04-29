@@ -48,7 +48,8 @@ CKernel::CKernel():
 //    connect(m_Transmitter, SIGNAL(signalNewDataPacketLength( int )), this, SLOT());
 //    connect(m_Transmitter, SIGNAL(signalNewCrcType( T_CrcType )), this, SLOT()));
 
-
+    connect(m_Transmitter, SIGNAL(signalTxInProgress(bool)), this, SIGNAL(signalTxInProgress(bool)));
+    connect(m_Transmitter, SIGNAL(signalTxProgress(int)), this, SIGNAL(signalTxProgress(int)));
 }
 
 void CKernel::slotRunCommandFromUI(const CUICommand UIcommand)
@@ -159,33 +160,38 @@ void CKernel::slotReceiverDisconnected()
 void CKernel::slotSetConnectionSpeed(QString newSpeed)
 {
     m_Transmitter->slotSetConnectionSpeed( newSpeed.toInt() );
+    m_Receiver->slotSetConnectionSpeed( newSpeed.toInt() );
 }
 
 void CKernel::slotSetOutputPower(QString newPower)
 {
     m_Transmitter->slotSetOutputPower( newPower.toInt() );
+    m_Receiver->slotSetOutputPower( newPower.toInt() );
 }
 
 void CKernel::slotSetModulationType(int newModIndex)
 {
     m_Transmitter->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
-}
+    m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );}
 
 void CKernel::slotSetBitSynchLength(QString newLength)
 {
     m_Transmitter->slotSetBitSynchLength( newLength.toInt() );
+    m_Receiver->slotSetBitSynchLength( newLength.toInt() );
 }
 
 void CKernel::slotSetSychnroSequenceLength(QString newLength)
 {
     QByteArray baSequence;
     m_Transmitter->slotSetSychnroSequence( baSequence );
+    m_Receiver->slotSetSychnroSequence( baSequence );
 }
 
 void CKernel::slotSetDataPacketLength(QString newLength)
 {
     m_PacketLength = newLength.toInt();
     m_Transmitter->slotSetDataPacketLength( m_PacketLength );
+    m_Receiver->slotSetDataPacketLength( m_PacketLength );
 }
 
 void CKernel::slotSetTotalDataLength(QString newLength)
@@ -196,6 +202,7 @@ void CKernel::slotSetTotalDataLength(QString newLength)
 void CKernel::slotSetCrcType(int newCrcIndex)
 {
     m_Transmitter->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
+    m_Receiver->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
 }
 
 void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
@@ -234,7 +241,7 @@ void CKernel::slotStartOperation()
 void CKernel::slotStopOperation()
 {
     m_Transmitter->slotStopOperation();
-    m_Receiver->slotStartOperation();
+    m_Receiver->slotStopOperation();
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

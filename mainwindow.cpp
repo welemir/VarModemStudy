@@ -43,6 +43,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
     QObject::connect(m_pKernel, SIGNAL(signalRxStateUpdated(bool)), this, SLOT(slotSetRxStatus(bool)) );
+
+    connect(m_pKernel, SIGNAL(signalTxInProgress(bool)), this, SLOT(slotSetTxState(bool)));
+    connect(m_pKernel, SIGNAL(signalTxProgress(int)), m_StatusBar_TxPogressBar, SLOT(setValue(int)));
 }
 
 MainWindow::~MainWindow()
@@ -100,6 +103,19 @@ void MainWindow::slotSetRxStatus(bool isOn)
 
     m_StatusBar_RxLabel->setStyleSheet(newStyleSheet);
     m_StatusBar_RxLabel->setText(newMessage);
+}
+
+void MainWindow::slotSetTxState(bool isInProgress)
+{
+    bool isLocked = !isInProgress;
+    ui->comboBoxTxSpeed->setEditable( isLocked );
+    ui->comboBoxTxModulation->setEditable( isLocked );
+    ui->comboBoxTxOutputPower->setEditable( isLocked );
+    ui->comboBoxTxBitSynch->setEditable( isLocked );
+    ui->comboBoxTxSynch->setEditable( isLocked );
+    ui->lineEditTxPacketDataLength->setEnabled( isLocked );
+    ui->lineEditTxTotalDataLength->setEnabled( isLocked );
+
 }
 
 void MainWindow::slotConnectKernelToUI(QObject *kernel)

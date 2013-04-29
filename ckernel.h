@@ -70,6 +70,8 @@ signals:
     void signalPrintDiagMeaasge(QString);
     void signalTxStateUpdated(bool);
     void signalRxStateUpdated(bool);
+    void signalTxInProgress(bool inProgress);
+    void signalTxProgress(int percent);
 
     void signalNewConnectionSpeed( QString );
     void signalNewOutputPower( QString );

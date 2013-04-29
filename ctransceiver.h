@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QBitArray>
 
 #define MODEM_DEVICE_ID 21
 #define MODEM_RAWPIPE_TX_INTERVAL 10
@@ -44,6 +45,9 @@ signals:
     void signalNewCommand(QByteArray, unsigned short);
     void signalNewRawPacket(QByteArray, unsigned short);
 
+    void signalTxInProgress(bool inProgress);
+    void signalTxProgress(int percent);
+
     void signalNewDeviceMode( T_DeviceModes );
     void signalNewModulationType( T_ModulationType );
     void signalNewConnectionSpeed( int );
@@ -77,6 +81,8 @@ private slots:
     void slotStatusTimer();
     void slotTxStart();
     void slotTxStop();
+    void slotRxStart();
+    void slotRxStop();
 
 private:
    // void updatesettings();
@@ -92,6 +98,9 @@ private:
     QTimer m_TransceiverStatusTimer;
     QList<QByteArray> m_TxQueue;
     int m_PermitedToTxPacketsCount;
+    bool m_RxEnabled;
+    QBitArray m_RxArray;
+    QBitArray m_RxSynchro;
 
 };
 

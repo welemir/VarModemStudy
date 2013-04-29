@@ -1,12 +1,14 @@
 #include "ctransceiver.h"
 #include"BitBusPipes/CommunicationStructs.h"
+#include <QDataStream>
 
 const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
 const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
 
 CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
     QObject(parent),
-    m_role(role)
+    m_role(role),
+    m_RxEnabled(false)
 {
     connect( &m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
     connect( &m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
@@ -72,6 +74,11 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
 {
+    if (m_role == eReceiver)
+        if (m_RxEnabled)
+        {
+
+        }
 
 }
 
@@ -150,11 +157,16 @@ void CTransceiver::slotSetCarrierFrequency(int newFrequency)
 
 void CTransceiver::slotStartOperation()
 {
+    m_SynchroSequence = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
     if(eTransmitter == m_role)
     {
         slotTxStart();
     }
-    m_SynchroSequence = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
+    if(eReceiver == m_role)
+    {
+        slotRxStart();
+    }
+
 }
 
 void CTransceiver::slotStopOperation()
@@ -169,11 +181,12 @@ void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
 {
     m_TxQueue.append(newPacket);
 }
-
+int iTotalpackets;
 void CTransceiver::slotTxTimer()
 {
     if (0 < m_PermitedToTxPacketsCount)
     {
+        emit signalTxProgress( 100 * (m_TxQueue.length() / iTotalpackets));
         QByteArray packetToSend = m_TxQueue[0];
         m_TxQueue.removeFirst();
 
@@ -191,6 +204,7 @@ void CTransceiver::slotTxTimer()
         packetToSend.append(cCRC);
         emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
     }
+
 
     if (m_TxQueue.empty())
     {
@@ -219,6 +233,8 @@ void CTransceiver::slotTxStart()
     m_PermitedToTxPacketsCount = 0;
     m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL);
     m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL);
+    iTotalpackets = m_TxQueue.length();
+    emit signalTxInProgress(true);
 }
 
 void CTransceiver::slotTxStop()
@@ -227,4 +243,21 @@ void CTransceiver::slotTxStop()
     slotSetDeviceMode(ePowerOff);
     m_TransceiverStatusTimer.stop();
     m_SenderTimer.stop();
+    emit signalTxInProgress(false);
+}
+
+void CTransceiver::slotRxStart()
+{
+    // отправить сообщение "начать прием" на трансивер
+    slotSetDeviceMode(eReceiver);
+    QDataStream synch_read(m_SynchroSequence);
+    m_RxSynchro.clear();
+    //m_RxSynchro << synch_read;
+
+}
+
+void CTransceiver::slotRxStop()
+{
+    // выключить трансивер
+    slotSetDeviceMode(ePowerOff);
 }
