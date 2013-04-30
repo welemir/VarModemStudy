@@ -234,8 +234,8 @@ void CKernel::slotStartOperation()
 {
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
-    newPacket.append(0x33);
-    //  newPacket.append(qrand());
+        newPacket.append(qrand());
+
     txPacket = newPacket;
     m_packets_to_send = 0;
     m_packets_received = 0;
@@ -261,10 +261,14 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     int iPacketLength     = packet.length();
     for(int i = 0; i< iPacketLength; i++ )
     {
-        if (packet[i] != txPacket[i])
-            iErrorCounter++;
+        unsigned int uiErrors = 0xff &(packet[i] ^ txPacket[i]);
+        while(0 != uiErrors){
+            if(1 == (1 & uiErrors))
+                iErrorCounter++;
+            uiErrors >>= 1;
+        }
     }
-    QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
+    QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(++m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
     emit signalPrintDiagMeaasge(packetToDiag);
     packetToDiag = packet.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
