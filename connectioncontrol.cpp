@@ -224,6 +224,7 @@ void CConnectionControl::slotNewDeviceFound(CConnectionDescriptor *connDescr)
 {
     QString strData(connDescr->m_DeviceUID.toHex());
     qDebug()<< "New device connected, UID =" << strData ;
+    emit  signalDiagMsg("Device Connected " + strData);
 
     QByteArray txUID, rxUID;
     ProgramSettings ps;

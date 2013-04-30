@@ -77,6 +77,8 @@ void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSender
     if (m_role == eReceiver)
         if (m_RxEnabled)
         {
+            QString packetToDiag = baData.toHex();
+            emit signalDiagMsg(packetToDiag);
 
         }
 

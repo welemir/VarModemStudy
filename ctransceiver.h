@@ -47,6 +47,7 @@ signals:
 
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
+    void signalDiagMsg(QString);
 
     void signalNewDeviceMode( T_DeviceModes );
     void signalNewModulationType( T_ModulationType );

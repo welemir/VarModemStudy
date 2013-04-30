@@ -108,12 +108,13 @@ void MainWindow::slotSetRxStatus(bool isOn)
 void MainWindow::slotSetTxState(bool isInProgress)
 {
     bool isLocked = !isInProgress;
-    ui->comboBoxTxSpeed->setEditable( isLocked );
-    ui->comboBoxTxModulation->setEditable( isLocked );
-    ui->comboBoxTxOutputPower->setEditable( isLocked );
-    ui->comboBoxTxBitSynch->setEditable( isLocked );
-    ui->comboBoxTxSynch->setEditable( isLocked );
+    ui->comboBoxTxSpeed->setEnabled( isLocked );
+    ui->comboBoxTxModulation->setEnabled( isLocked );
+    ui->comboBoxTxOutputPower->setEnabled( isLocked );
+    ui->comboBoxTxBitSynch->setEnabled( isLocked );
+    ui->comboBoxTxSynch->setEnabled( isLocked );
     ui->lineEditTxPacketDataLength->setEnabled( isLocked );
+    ui->comboBoxTxCRC->setEnabled( isLocked );
     ui->lineEditTxTotalDataLength->setEnabled( isLocked );
 
 }
