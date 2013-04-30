@@ -62,6 +62,7 @@ public slots:
 
     void slotStartOperation();
     void slotStopOperation();
+    void slotNewPacketReceived( QByteArray packet );
 
 signals:
     void signalNewMessageToUI(const CUICommand UIcommand);
@@ -106,6 +107,8 @@ private:
     void setProgrammState(T_ProgrammState newProgrammState);
     int m_DataToSendLength;
     int m_PacketLength;
+    int m_packets_to_send;
+    int m_packets_received;
 };
 
 #endif // CKERNEL_H

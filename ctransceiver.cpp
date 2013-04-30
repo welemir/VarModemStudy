@@ -75,12 +75,13 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
 {
     if (m_role == eReceiver)
+        emit signalNewRawPacketReceived(baData);
 //        if (m_RxEnabled)
-        {
-            QString packetToDiag = baData.toHex();
-            emit signalDiagMsg(packetToDiag);
+//        {
+//            QString packetToDiag = baData.toHex();
+//            emit signalDiagMsg(packetToDiag);
 
-        }
+//        }
 
 }
 

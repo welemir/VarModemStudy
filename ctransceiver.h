@@ -45,6 +45,8 @@ signals:
     void signalNewCommand(QByteArray, unsigned short);
     void signalNewRawPacket(QByteArray, unsigned short);
 
+    void signalNewRawPacketReceived(QByteArray);
+
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
     void signalDiagMsg(QString);

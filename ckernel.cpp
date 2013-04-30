@@ -8,6 +8,8 @@
 #include "BitBusPipes/ctcp_client_communicator.h"
 #include "programsettings.h"
 
+QByteArray txPacket; // тк передаем всегда один и тот же пакет, сохраним его тут
+
 CKernel* CKernel::m_pInstance = NULL;
 
 CKernel* CKernel::GetInstance()
@@ -53,7 +55,7 @@ CKernel::CKernel():
     connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Receiver,    SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
-
+    connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(QByteArray)), this, SLOT(slotNewPacketReceived(QByteArray)));
 
 }
 
@@ -232,21 +234,40 @@ void CKernel::slotStartOperation()
 {
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
-        newPacket.append(0x33);
-        //  newPacket.append(qrand());
-
+    newPacket.append(0x33);
+    //  newPacket.append(qrand());
+    txPacket = newPacket;
+    m_packets_to_send = 0;
+    m_packets_received = 0;
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
+        m_packets_to_send++;
         m_Transmitter->slotAppendRawPacket(newPacket);
     }
-    m_Receiver->slotStopOperation();
+    m_Receiver->slotStartOperation();
     m_Transmitter->slotStartOperation();
+
 }
 
 void CKernel::slotStopOperation()
 {
     m_Transmitter->slotStopOperation();
     m_Receiver->slotStopOperation();
+}
+
+void CKernel::slotNewPacketReceived(QByteArray packet)
+{
+    int iErrorCounter = 0;
+    int iPacketLength     = packet.length();
+    for(int i = 0; i< iPacketLength; i++ )
+    {
+        if (packet[i] != txPacket[i])
+            iErrorCounter++;
+    }
+    QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
+    emit signalPrintDiagMeaasge(packetToDiag);
+    packetToDiag = packet.toHex();
+    emit signalPrintDiagMeaasge( packetToDiag);
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
