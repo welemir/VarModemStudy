@@ -75,7 +75,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
 {
     if (m_role == eReceiver)
-        if (m_RxEnabled)
+//        if (m_RxEnabled)
         {
             QString packetToDiag = baData.toHex();
             emit signalDiagMsg(packetToDiag);
@@ -188,7 +188,7 @@ void CTransceiver::slotTxTimer()
 {
     if (0 < m_PermitedToTxPacketsCount)
     {
-        emit signalTxProgress( 100 * (m_TxQueue.length() / iTotalpackets));
+        emit signalTxProgress( (100 * (iTotalpackets - m_TxQueue.length() + 1)) / iTotalpackets);
         QByteArray packetToSend = m_TxQueue[0];
         m_TxQueue.removeFirst();
 
