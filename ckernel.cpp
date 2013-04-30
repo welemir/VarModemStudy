@@ -290,7 +290,7 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     errorRate = QString("%1").arg(per);
     emit signalShowPER(errorRate);
 
-    int ber = (100 * ((m_bytes_received*8) - m_errors_total)) / (m_bytes_received*8);
+    int ber = (100 *  m_errors_total) / (m_bytes_received*8);
     errorRate = QString("%1").arg(ber);
     emit signalShowBER(errorRate);
 
