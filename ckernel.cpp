@@ -239,6 +239,10 @@ void CKernel::slotStartOperation()
     txPacket = newPacket;
     m_packets_to_send = 0;
     m_packets_received = 0;
+    m_packets_received_ok = 0;
+    m_bytes_received = 0;
+    m_errors_total = 0;
+
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
         m_packets_to_send++;
@@ -247,6 +251,9 @@ void CKernel::slotStartOperation()
     m_Receiver->slotStartOperation();
     m_Transmitter->slotStartOperation();
 
+    QString zero = "0";
+    emit signalShowBER(zero);
+    emit signalShowPER(zero);
 }
 
 void CKernel::slotStopOperation()
@@ -268,10 +275,26 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
             uiErrors >>= 1;
         }
     }
+    if (0==iErrorCounter)
+        m_packets_received_ok++;
+    m_bytes_received += iPacketLength;
+    m_errors_total += iErrorCounter;
+
     QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(++m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
     emit signalPrintDiagMeaasge(packetToDiag);
     packetToDiag = packet.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
+
+    QString  errorRate;
+    int per = (100 * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
+    errorRate = QString("%1").arg(per);
+    emit signalShowPER(errorRate);
+
+    int ber = (100 * ((m_bytes_received*8) - m_errors_total)) / (m_bytes_received*8);
+    errorRate = QString("%1").arg(ber);
+    emit signalShowBER(errorRate);
+
+
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

@@ -73,6 +73,8 @@ signals:
     void signalRxStateUpdated(bool);
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
+    void signalShowBER(QString);
+    void signalShowPER(QString);
 
     void signalNewConnectionSpeed( QString );
     void signalNewOutputPower( QString );
@@ -109,6 +111,9 @@ private:
     int m_PacketLength;
     int m_packets_to_send;
     int m_packets_received;
+    int m_packets_received_ok;
+    int m_bytes_received;
+    int m_errors_total;
 };
 
 #endif // CKERNEL_H

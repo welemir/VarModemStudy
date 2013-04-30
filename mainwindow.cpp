@@ -138,6 +138,8 @@ void MainWindow::slotConnectKernelToUI(QObject *kernel)
     connect(kernel, SIGNAL(signalNewSychnroSequenceLength( QString )), ui->comboBoxTxSynch, SLOT(setEditText(QString)) );
     connect(kernel, SIGNAL(signalNewDataPacketLength( QString )), ui->lineEditTxPacketDataLength, SLOT(setText(QString)));
     connect(kernel, SIGNAL(signalNewTotalDataLength( QString )), ui->lineEditTxTotalDataLength, SLOT(setText(QString)) );
+    connect(kernel, SIGNAL(signalShowBER(QString)), ui->lineEditRxBER, SLOT(setText(QString)) );
+    connect(kernel, SIGNAL(signalShowPER(QString)), ui->lineEditRxPER, SLOT(setText(QString)) );
 }
 
 void MainWindow::showAboutWindow()
