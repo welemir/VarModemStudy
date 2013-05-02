@@ -34,8 +34,8 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         case 0xC3:
         {
             unsigned char ucNewMode =  baData[iSeek++];
-            m_modulation = (CTransceiver::T_ModulationType) ucNewMode;
-            emit signalNewModulationType(m_modulation);
+            T_ModulationType modulation = (CTransceiver::T_ModulationType) ucNewMode;
+            emit signalNewModulationType(modulation);
         }break;
 
         case 0xC5: // speed
@@ -43,9 +43,9 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             unsigned short usCurrentSpeed;
             memcpy(&usCurrentSpeed, baData.data() + iSeek, sizeof(usCurrentSpeed) );
             iSeek += sizeof(usCurrentSpeed);
-            m_connectionSpeed = usCurrentSpeed;
+         //   m_connectionSpeed = usCurrentSpeed;
 
-            emit signalNewConnectionSpeed(m_connectionSpeed);
+            emit signalNewConnectionSpeed(usCurrentSpeed);
         }break;
 
         case 0xC7: // power
@@ -53,9 +53,9 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             unsigned short usCurrentPower;
             memcpy(&usCurrentPower, baData.data() + iSeek, sizeof(usCurrentPower) );
             iSeek += sizeof(usCurrentPower);
-            m_TxPower = usCurrentPower;
+           // m_TxPower = usCurrentPower;
 
-            emit signalNewOutputPower(m_TxPower);
+            emit signalNewOutputPower(usCurrentPower);
         }break;
 
         case 0xe0: // queue size
@@ -78,8 +78,7 @@ void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSender
         emit signalNewRawPacketReceived(baData);
 //        if (m_RxEnabled)
 //        {
-//            QString packetToDiag = baData.toHex();
-//            emit signalDiagMsg(packetToDiag);
+
 
 //        }
 
@@ -96,6 +95,7 @@ void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
 
 void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModulaton)
 {
+    m_modulation = newModulaton;
     QByteArray baPacket;
     baPacket.append(0x42);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
@@ -105,6 +105,7 @@ void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModul
 
 void CTransceiver::slotSetConnectionSpeed(int newSpeed)
 {
+    m_connectionSpeed = newSpeed;
     QByteArray baPacket;
     baPacket.append(0x44);
     unsigned short modulationSpeed = newSpeed;
@@ -114,6 +115,7 @@ void CTransceiver::slotSetConnectionSpeed(int newSpeed)
 
 void CTransceiver::slotSetOutputPower(int newPower)
 {
+    m_TxPower = newPower;
     QByteArray baPacket;
     baPacket.append(0x46);
     signed short txPower = 2*newPower;
@@ -123,6 +125,7 @@ void CTransceiver::slotSetOutputPower(int newPower)
 
 void CTransceiver::slotSetBitSynchLength(int newLength)
 {
+    m_SynchroLength = newLength;
     QByteArray baPacket;
     baPacket.append(0x48);
     baPacket.append((char) newLength);
@@ -139,6 +142,7 @@ void CTransceiver::slotSetSychnroSequence(QByteArray sequence)
 
 void CTransceiver::slotSetDataPacketLength(int newLength)
 {
+    m_Length = newLength;
     QByteArray baPacket;
     baPacket.append(0x4c);
     baPacket.append((char) newLength);
@@ -147,6 +151,7 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
 
 void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrc)
 {
+    m_CrcType = newCrc;
     QByteArray baPacket;
     baPacket.append(0x4e);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
@@ -184,6 +189,17 @@ void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
 {
     m_TxQueue.append(newPacket);
 }
+
+void CTransceiver::slotUploadAllSettingsToModem()
+{
+    slotSetModulationType(m_modulation);
+    slotSetConnectionSpeed(m_connectionSpeed);
+    slotSetOutputPower(m_TxPower);
+    slotSetBitSynchLength(m_SynchroLength);
+    slotSetDataPacketLength(m_Length);
+    slotSetCrcType(m_CrcType);
+}
+
 int iTotalpackets;
 void CTransceiver::slotTxTimer()
 {

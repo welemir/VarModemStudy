@@ -63,6 +63,7 @@ public slots:
     void slotStartOperation();
     void slotStopOperation();
     void slotNewPacketReceived( QByteArray packet );
+    void slotSetDefaultValuesOnStart();
 
 signals:
     void signalNewMessageToUI(const CUICommand UIcommand);

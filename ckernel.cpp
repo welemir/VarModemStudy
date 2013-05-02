@@ -35,6 +35,7 @@ CKernel::CKernel():
 {
     m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
     m_Receiver    = new CTransceiver(CTransceiver::eReceiver, this);
+    slotSetDefaultValuesOnStart();
 
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
@@ -130,6 +131,7 @@ void CKernel::slotTransmitterConnected()
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
     m_Transmitter->slotSetDeviceMode(CTransceiver::eTransmitter);
+    m_Transmitter->slotUploadAllSettingsToModem();
 
 }
 
@@ -155,6 +157,8 @@ void CKernel::slotReceiverConnected()
             m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
+
+    m_Receiver->slotUploadAllSettingsToModem();
 }
 
 void CKernel::slotReceiverDisconnected()
@@ -295,6 +299,18 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     emit signalShowBER(errorRate);
 
 
+}
+
+void CKernel::slotSetDefaultValuesOnStart()
+{
+    slotSetConnectionSpeed( "9600" );
+    slotSetOutputPower( "0" );
+    slotSetModulationType( 1 );
+    slotSetBitSynchLength( "2" );
+    slotSetSychnroSequenceLength( "2" );
+    slotSetDataPacketLength( "10" );
+    slotSetTotalDataLength( "1000" );
+    slotSetCrcType( 0 );
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

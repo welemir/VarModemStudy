@@ -72,6 +72,9 @@
          <height>22</height>
         </rect>
        </property>
+       <property name="currentIndex">
+        <number>3</number>
+       </property>
        <item>
         <property name="text">
          <string>1200</string>
@@ -124,6 +127,9 @@
          <width>69</width>
          <height>22</height>
         </rect>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
        </property>
        <item>
         <property name="text">
@@ -200,6 +206,9 @@
          <width>69</width>
          <height>22</height>
         </rect>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
        </property>
        <item>
         <property name="text">
@@ -370,7 +379,7 @@
         </rect>
        </property>
        <property name="text">
-        <string>100</string>
+        <string>10</string>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditTxTotalDataLength">

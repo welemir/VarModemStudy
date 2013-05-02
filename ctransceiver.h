@@ -78,6 +78,7 @@ public slots:
     void slotStartOperation();
     void slotStopOperation();
     void slotAppendRawPacket(QByteArray newPacket);
+    void slotUploadAllSettingsToModem();
 
 private slots:
     void slotTxTimer();
@@ -88,13 +89,13 @@ private slots:
     void slotRxStop();
 
 private:
-   // void updatesettings();
-private:
     const T_DeviceModes m_role;
     T_ModulationType m_modulation;
     T_CrcType m_CrcType;
     int m_connectionSpeed;
     int m_TxPower;
+    int m_Length;
+    int m_SynchroLength;
 
     QByteArray m_SynchroSequence;
     QTimer m_SenderTimer;
