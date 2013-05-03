@@ -1,6 +1,7 @@
 #include "ctransceiver.h"
 #include"BitBusPipes/CommunicationStructs.h"
 #include <QDataStream>
+#include <QDebug>
 
 const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
 const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
@@ -222,6 +223,12 @@ void CTransceiver::slotTxTimer()
         packetToSend.prepend(m_SynchroSequence);
         packetToSend.append(cCRC);
         emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
+
+        int txInterval = m_tmeTxTmrDelta.elapsed();
+        m_tmeTxTmrDelta.restart();
+        if (m_MaxTxTmrInterval < txInterval)
+            m_MaxTxTmrInterval = txInterval;
+        qDebug() << "slotTxTimer, Interval = " << txInterval;
     }
 
 
@@ -238,6 +245,12 @@ void CTransceiver::slotStatusTimer()
         QByteArray newPacket;
         newPacket.append(0x60);
         emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
+
+        int txReqInterval = m_tmeTxReqDelta.elapsed();
+        m_tmeTxReqDelta.restart();
+        if (m_MaxTxReqInterval < txReqInterval)
+            m_MaxTxReqInterval = txReqInterval;
+        qDebug() << "slotStatusTimer, Interval = " << txReqInterval;
     }
     else
     {
@@ -254,6 +267,10 @@ void CTransceiver::slotTxStart()
     m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL);
     iTotalpackets = m_TxQueue.length();
     emit signalTxInProgress(true);
+
+    m_tmeTxReqDelta.restart();
+    m_tmeTxTmrDelta.restart();
+    m_MaxTxReqInterval = m_MaxTxTmrInterval = 0;
 }
 
 void CTransceiver::slotTxStop()
@@ -263,6 +280,9 @@ void CTransceiver::slotTxStop()
     m_TransceiverStatusTimer.stop();
     m_SenderTimer.stop();
     emit signalTxInProgress(false);
+
+    qDebug() << "MAX Req ask interval = " << m_MaxTxReqInterval;
+    qDebug() << "MAX Tx send interval = " << m_MaxTxTmrInterval;
 }
 
 void CTransceiver::slotRxStart()

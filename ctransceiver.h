@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QTime>
 #include <QBitArray>
 
 #define MODEM_DEVICE_ID 21
@@ -52,7 +53,7 @@ signals:
     void signalDiagMsg(QString);
 
     void signalNewDeviceMode( T_DeviceModes );
-    void signalNewModulationType( T_ModulationType );
+    void signalNewModulationType( CTransceiver::T_ModulationType );
     void signalNewConnectionSpeed( int );
     void signalNewOutputPower( int );
     void signalNewBitSynchLength( int );
@@ -105,6 +106,10 @@ private:
     bool m_RxEnabled;
     QBitArray m_RxArray;
     QBitArray m_RxSynchro;
+    QTime m_tmeTxReqDelta;
+    QTime m_tmeTxTmrDelta;
+    int m_MaxTxReqInterval;
+    int m_MaxTxTmrInterval;
 
 };
 
