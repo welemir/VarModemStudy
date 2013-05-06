@@ -11,8 +11,11 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
     m_role(role),
     m_RxEnabled(false)
 {
-    connect( &m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
-    connect( &m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
+    m_SenderTimer = new QTimer(this);
+    m_TransceiverStatusTimer = new QTimer(this);
+
+    connect( m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
+    connect( m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
 
 }
 
@@ -263,8 +266,8 @@ void CTransceiver::slotTxStart()
     // отправить сообщение "начать передачу" на трансивер
     slotSetDeviceMode(eTransmitter);
     m_PermitedToTxPacketsCount = 0;
-    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL);
-    m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL);
+    m_TransceiverStatusTimer->start(MODEM_STATUS_INTERVAL);
+    m_SenderTimer->start(MODEM_RAWPIPE_TX_INTERVAL);
     iTotalpackets = m_TxQueue.length();
     emit signalTxInProgress(true);
 
@@ -277,8 +280,8 @@ void CTransceiver::slotTxStop()
 {
     // выключить трансивер
     slotSetDeviceMode(ePowerOff);
-    m_TransceiverStatusTimer.stop();
-    m_SenderTimer.stop();
+    m_TransceiverStatusTimer->stop();
+    m_SenderTimer->stop();
     emit signalTxInProgress(false);
 
     qDebug() << "MAX Req ask interval = " << m_MaxTxReqInterval;

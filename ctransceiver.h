@@ -99,8 +99,8 @@ private:
     int m_SynchroLength;
 
     QByteArray m_SynchroSequence;
-    QTimer m_SenderTimer;
-    QTimer m_TransceiverStatusTimer;
+    QTimer *m_SenderTimer;
+    QTimer *m_TransceiverStatusTimer;
     QList<QByteArray> m_TxQueue;
     int m_PermitedToTxPacketsCount;
     bool m_RxEnabled;
