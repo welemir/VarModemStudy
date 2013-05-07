@@ -43,7 +43,7 @@ CKernel::CKernel():
     connect(pConnectionControl, SIGNAL(signalReceiverrConnected()), this, SLOT(slotReceiverConnected()));
     connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), this, SLOT(slotReceiverDisconnected()));
 
-    connect(m_Transmitter, SIGNAL(signalNewModulationType( T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
+    connect(m_Transmitter, SIGNAL(signalNewModulationType( CTransceiver::T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
     connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
 //    connect(m_Transmitter, SIGNAL(signalNewBitSynchLength( int )), this, SLOT();
@@ -258,6 +258,18 @@ void CKernel::slotStartOperation()
     QString zero = "0";
     emit signalShowBER(zero);
     emit signalShowPER(zero);
+
+    int payloadDataSize, serviceDataSize, connectionSpeed;
+    m_Transmitter->getTranscieverStatistics( payloadDataSize, serviceDataSize, connectionSpeed );
+
+    int payloadPercent = (100 * payloadDataSize )/(payloadDataSize + serviceDataSize);
+    int serviceDataPercent = ( 100 * serviceDataSize )/(payloadDataSize + serviceDataSize);
+    QString qsNewMessaage = QString("%1%").arg( payloadPercent );
+    emit signalShowChannelUtilizationPayload(qsNewMessaage);
+    qsNewMessaage = QString("%1%").arg(serviceDataPercent);
+    emit  signalShowChannelUtilizationSerivce(qsNewMessaage);
+    qsNewMessaage = QString("%1").arg( payloadPercent*connectionSpeed/100 );
+    emit  signalShowRxSpeed(qsNewMessaage);
 }
 
 void CKernel::slotStopOperation()

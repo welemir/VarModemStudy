@@ -140,6 +140,9 @@ void MainWindow::slotConnectKernelToUI(QObject *kernel)
     connect(kernel, SIGNAL(signalNewTotalDataLength( QString )), ui->lineEditTxTotalDataLength, SLOT(setText(QString)) );
     connect(kernel, SIGNAL(signalShowBER(QString)), ui->lineEditRxBER, SLOT(setText(QString)) );
     connect(kernel, SIGNAL(signalShowPER(QString)), ui->lineEditRxPER, SLOT(setText(QString)) );
+    connect(kernel, SIGNAL(signalShowChannelUtilizationPayload(QString)), ui->lineEditRxSPayloadInfoSize, SLOT(setText(QString)) );
+    connect(kernel, SIGNAL(signalShowChannelUtilizationSerivce(QString)), ui->lineEditRxServiceInfoSize, SLOT(setText(QString)) );
+    connect(kernel, SIGNAL(signalShowRxSpeed(QString)), ui->lineEditRxSpeed, SLOT(setText(QString)) );
 }
 
 void MainWindow::showAboutWindow()

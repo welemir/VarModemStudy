@@ -76,6 +76,9 @@ signals:
     void signalTxProgress(int percent);
     void signalShowBER(QString);
     void signalShowPER(QString);
+    void signalShowChannelUtilizationPayload(QString);
+    void signalShowChannelUtilizationSerivce(QString);
+    void signalShowRxSpeed(QString);
 
     void signalNewConnectionSpeed( QString );
     void signalNewOutputPower( QString );

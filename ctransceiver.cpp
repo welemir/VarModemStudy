@@ -19,6 +19,13 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
 
 }
 
+void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDataSize, int &connectionSpeed)
+{
+    payloadDataSize = m_Length;
+    serviceDataSize = m_SynchroSequence.length();
+    connectionSpeed = m_connectionSpeed;
+}
+
 void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID)
 {
     int iSeek = 0;

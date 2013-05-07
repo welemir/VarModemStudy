@@ -41,7 +41,8 @@ public:
 
 public:
     CTransceiver(T_DeviceModes role, QObject *parent = 0 );
-    
+    void getTranscieverStatistics( int &payloadDataSize, int &serviceDataSize, int &connectionSpeed);
+
 signals:
     void signalNewCommand(QByteArray, unsigned short);
     void signalNewRawPacket(QByteArray, unsigned short);
