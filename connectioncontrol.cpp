@@ -126,14 +126,15 @@ CConnectionDescriptor *CConnectionControl::GetRxDescriptor()
 CConnectionControl::CConnectionControl(QObject *parent) :
     QObject(parent)
 {
+    m_timerUpdate = new QTimer(this);
     m_TxPort = NULL;
     m_RxPort = NULL;
     connect(this, SIGNAL(serialPortConnected(QString)), this, SLOT(slotPortConnected(QString)));
     connect(this, SIGNAL(serialPortDisconnected(QString)), this, SLOT(slotPortDisconnected(QString)));
     // «апуск мониторинга наличи€ портов в системе
-    connect(&m_timerUpdate, SIGNAL(timeout()), SLOT(slotUpdate()));
-    m_timerUpdate.setInterval(1000);
-    m_timerUpdate.start();
+    connect(m_timerUpdate, SIGNAL(timeout()), SLOT(slotUpdate()));
+    m_timerUpdate->setInterval(1000);
+    m_timerUpdate->start();
 }
 
 //==============================================================================

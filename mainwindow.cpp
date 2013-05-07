@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    bool kernelInPrivateThreadEnabled = false;
     ui->setupUi(this);
 
     // создание окон
@@ -36,6 +37,16 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->actionShowDiag,        SIGNAL(triggered()), this, SLOT(showDiagWindow()));
 
     m_pKernel = CKernel::GetInstance();
+
+    QThread *kernelThread = NULL;
+    if (kernelInPrivateThreadEnabled)
+    {
+        kernelThread = new QThread(this);
+
+        connect(kernelThread, SIGNAL(finished()), m_pKernel, SLOT(deleteLater()));
+        m_pKernel->moveToThread(kernelThread);
+    }
+
     slotConnectKernelToUI(m_pKernel);
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
     QObject::connect(m_pKernel, SIGNAL(signalNewMessageToUI(const CUICommand)), this, SLOT(slotNewMessageToUI(const CUICommand)));
@@ -46,6 +57,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(m_pKernel, SIGNAL(signalTxInProgress(bool)), this, SLOT(slotSetTxState(bool)));
     connect(m_pKernel, SIGNAL(signalTxProgress(int)), m_StatusBar_TxPogressBar, SLOT(setValue(int)));
+
+    if (kernelInPrivateThreadEnabled)
+    {
+        kernelThread->start();
+    }
 }
 
 MainWindow::~MainWindow()

@@ -79,7 +79,7 @@ private:
     CConnectionDescriptor*     m_TxPort;
     CConnectionDescriptor*     m_RxPort;
     static CConnectionControl *st_pThis;
-    QTimer m_timerUpdate;
+    QTimer *m_timerUpdate;
     QList<QString> m_listPortsNames;  // Список доступных в системе портов
     QList<CConnectionDescriptor*> m_connectionsList;
 };
