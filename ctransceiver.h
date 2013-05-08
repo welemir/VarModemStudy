@@ -89,6 +89,8 @@ private slots:
     void slotTxStop();
     void slotRxStart();
     void slotRxStop();
+protected:
+    void processData(QByteArray baData);
 
 private:
     const T_DeviceModes m_role;

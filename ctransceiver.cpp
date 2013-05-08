@@ -85,8 +85,12 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
 {
-    if (m_role == eReceiver)
-        emit signalNewRawPacketReceived(baData);
+    if (m_role == eReceiver){
+//        emit signalNewRawPacketReceived(baData);
+//        return;
+
+        processData(baData);
+    }
 //        if (m_RxEnabled)
 //        {
 
@@ -194,6 +198,10 @@ void CTransceiver::slotStopOperation()
     {
         slotTxStop();
     }
+    if(eReceiver == m_role)
+    {
+        slotRxStop();
+    }
 }
 
 void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
@@ -293,6 +301,7 @@ void CTransceiver::slotTxStop()
 
     qDebug() << "MAX Req ask interval = " << m_MaxTxReqInterval;
     qDebug() << "MAX Tx send interval = " << m_MaxTxTmrInterval;
+    m_TxQueue.clear();
 }
 
 void CTransceiver::slotRxStart()
@@ -303,10 +312,66 @@ void CTransceiver::slotRxStart()
     m_RxSynchro.clear();
     //m_RxSynchro << synch_read;
 
+    // Регистрация себя в качестве получателя "сырого" потока от приемника для разбора
+    QByteArray baPacket;
+    baPacket.append(0x61);
+    baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/);
+    baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/>>8);
+    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
 void CTransceiver::slotRxStop()
 {
     // выключить трансивер
     slotSetDeviceMode(ePowerOff);
+
+    // Отключене трансляции "сырого" потока приёмма
+    QByteArray baPacket;
+    baPacket.append(0x61);
+    baPacket.append((char)0);
+    baPacket.append((char)0);
+    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+
+}
+
+void CTransceiver::processData(QByteArray baData)
+{
+    qDebug() << "FindData02 <======";
+    static QByteArray baDataObtained;
+    static unsigned long st_ulByteNext = 0; // Очередная порция битов из входного буфера
+    static int st_iByteCounter = -1;
+    static unsigned int st_uiOffsetBit = 0;  // Сдвиг для старшей части байта
+    unsigned long ulMarkerPattern = 0x1f350000;
+    int iSourceInd = 0;
+    while(baData.length() > iSourceInd){
+        st_ulByteNext += (((unsigned long)(unsigned char)baData[iSourceInd++])<<8);
+
+        if(0 > st_iByteCounter){
+            st_uiOffsetBit = 8;
+            while(0 < st_uiOffsetBit){
+                st_ulByteNext <<= 1;
+                st_uiOffsetBit--;
+                if(ulMarkerPattern  == (st_ulByteNext & 0xffff0000)){
+                    st_ulByteNext <<= st_uiOffsetBit;
+                    baDataObtained.clear();
+                    st_iByteCounter = 0;
+                    break;
+                }
+            }
+        }else{
+            unsigned char ucNext = st_ulByteNext>>(8 + st_uiOffsetBit);
+            if(0 == ucNext)
+                ucNext = 0;
+            baDataObtained.append(ucNext);
+            st_iByteCounter++;
+            st_ulByteNext <<= 8/*uiOffsetBitRight*/;
+
+            if(st_iByteCounter >= /*m_iDataFieldSize*/m_Length){
+              emit signalNewRawPacketReceived(baDataObtained);
+
+              st_iByteCounter = -1;
+              st_uiOffsetBit = 0;
+            }
+        }
+    }
 }
