@@ -168,16 +168,16 @@ void CKernel::slotReceiverDisconnected()
     emit signalRxStateUpdated(false);
 }
 
-void CKernel::slotSetConnectionSpeed(QString newSpeed)
+void CKernel::slotSetConnectionSpeed(int newSpeed)
 {
-    m_Transmitter->slotSetConnectionSpeed( newSpeed.toInt() );
-    m_Receiver->slotSetConnectionSpeed( newSpeed.toInt() );
+    m_Transmitter->slotSetConnectionSpeed(newSpeed);
+    m_Receiver->slotSetConnectionSpeed(newSpeed);
 }
 
-void CKernel::slotSetOutputPower(QString newPower)
+void CKernel::slotSetOutputPower(int newPower)
 {
-    m_Transmitter->slotSetOutputPower( newPower.toInt() );
-    m_Receiver->slotSetOutputPower( newPower.toInt() );
+    m_Transmitter->slotSetOutputPower(newPower);
+    m_Receiver->slotSetOutputPower(newPower);
 }
 
 void CKernel::slotSetModulationType(int newModIndex)
@@ -185,29 +185,29 @@ void CKernel::slotSetModulationType(int newModIndex)
     m_Transmitter->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
     m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );}
 
-void CKernel::slotSetBitSynchLength(QString newLength)
+void CKernel::slotSetBitSynchLength(int newLength)
 {
-    m_Transmitter->slotSetBitSynchLength( newLength.toInt() );
-    m_Receiver->slotSetBitSynchLength( newLength.toInt() );
+    m_Transmitter->slotSetBitSynchLength(newLength);
+    m_Receiver->slotSetBitSynchLength(newLength);
 }
 
-void CKernel::slotSetSychnroSequenceLength(QString newLength)
+void CKernel::slotSetSychnroSequenceLength(int newLength)
 {
     QByteArray baSequence;
-    m_Transmitter->slotSetSychnroSequence( baSequence );
-    m_Receiver->slotSetSychnroSequence( baSequence );
+    m_Transmitter->slotSetSychnroSequence(baSequence);
+    m_Receiver->slotSetSychnroSequence(baSequence);
 }
 
-void CKernel::slotSetDataPacketLength(QString newLength)
+void CKernel::slotSetDataPacketLength(int newLength)
 {
-    m_PacketLength = newLength.toInt();
-    m_Transmitter->slotSetDataPacketLength( m_PacketLength );
-    m_Receiver->slotSetDataPacketLength( m_PacketLength );
+    m_PacketLength = newLength;
+    m_Transmitter->slotSetDataPacketLength(m_PacketLength);
+    m_Receiver->slotSetDataPacketLength(m_PacketLength);
 }
 
-void CKernel::slotSetTotalDataLength(QString newLength)
+void CKernel::slotSetTotalDataLength(int newLength)
 {
-    m_DataToSendLength = newLength.toInt();
+    m_DataToSendLength = newLength;
 }
 
 void CKernel::slotSetCrcType(int newCrcIndex)
@@ -224,14 +224,12 @@ void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
 
 void CKernel::slotNewConnectionSpeed(int newSpeed)
 {
-    QString qsNewMessaage = QString("%1").arg(newSpeed);
-    emit signalNewConnectionSpeed(qsNewMessaage);
+    emit signalNewConnectionSpeed(newSpeed);
 }
 
 void CKernel::slotNewOutputPower(int newPower)
 {
-    QString qsNewMessaage = QString("%1").arg(newPower);
-    emit signalNewOutputPower(qsNewMessaage);
+    emit signalNewOutputPower(newPower);
 }
 
 void CKernel::slotStartOperation()
@@ -315,14 +313,14 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
 
 void CKernel::slotSetDefaultValuesOnStart()
 {
-    slotSetConnectionSpeed( "9600" );
-    slotSetOutputPower( "0" );
-    slotSetModulationType( 1 );
-    slotSetBitSynchLength( "2" );
-    slotSetSychnroSequenceLength( "2" );
-    slotSetDataPacketLength( "10" );
-    slotSetTotalDataLength( "1000" );
-    slotSetCrcType( 0 );
+    slotSetConnectionSpeed(9600);
+    slotSetOutputPower(0);
+    slotSetModulationType(1);
+    slotSetBitSynchLength(2);
+    slotSetSychnroSequenceLength(2);
+    slotSetDataPacketLength(10);
+    slotSetTotalDataLength(1000);
+    slotSetCrcType(0);
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
@@ -344,10 +342,5 @@ void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
         {
         } break;
     }// switch
-
-    CUICommand NewCommand(CUICommand::eCmdSetStatus);
-    NewCommand.qsArguments = qsMessage;
-    emit signalNewMessageToUI(NewCommand);
-
 }
 

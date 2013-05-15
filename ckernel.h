@@ -43,18 +43,18 @@ public slots:
     void slotReceiverConnected();
     void slotReceiverDisconnected();
 
-    void slotSetConnectionSpeed(QString newSpeed);
-    void slotSetOutputPower(QString newPower);
+    void slotSetConnectionSpeed(int newSpeed);
+    void slotSetOutputPower(int newPower);
     void slotSetModulationType(int newModIndex);
-    void slotSetBitSynchLength( QString newLength );
-    void slotSetSychnroSequenceLength( QString newLength );
-    void slotSetDataPacketLength( QString newLength );
-    void slotSetTotalDataLength( QString newLength );
-    void slotSetCrcType( int newCrcIndex );
+    void slotSetBitSynchLength(int newLength);
+    void slotSetSychnroSequenceLength(int newLength);
+    void slotSetDataPacketLength(int newLength);
+    void slotSetTotalDataLength(int newLength);
+    void slotSetCrcType(int newCrcIndex);
 
     void slotNewModulationType(CTransceiver::T_ModulationType newModulaton );
-    void slotNewConnectionSpeed( int newSpeed );
-    void slotNewOutputPower( int newPower );
+    void slotNewConnectionSpeed(int newSpeed);
+    void slotNewOutputPower(int newPower);
 //    void slotNewBitSynchLength( int newLength );
 //    void slotNewSychnroSequence( QByteArray sequence );
 //    void slotNewDataPacketLength( int newLength );
@@ -66,7 +66,6 @@ public slots:
     void slotSetDefaultValuesOnStart();
 
 signals:
-    void signalNewMessageToUI(const CUICommand UIcommand);
     void signalWriteDataToPipe(const QByteArray buff, unsigned short usDestAddr,
                                CBitBusPipes::TPipeType PipeID);
     void signalPrintDiagMeaasge(QString);
@@ -80,14 +79,14 @@ signals:
     void signalShowChannelUtilizationSerivce(QString);
     void signalShowRxSpeed(QString);
 
-    void signalNewConnectionSpeed( QString );
-    void signalNewOutputPower( QString );
-    void signalNewModulationType( int );
-    void signalNewBitSynchLength( QString  );
-    void signalNewSychnroSequenceLength( QString  );
-    void signalNewDataPacketLength( QString  );
-    void signalNewTotalDataLength( QString  );
-    void signalNewCrcType( int  );
+    void signalNewConnectionSpeed(int);
+    void signalNewOutputPower(int);
+    void signalNewModulationType(int);
+    void signalNewBitSynchLength(int);
+    void signalNewSychnroSequenceLength(int);
+    void signalNewDataPacketLength(int);
+    void signalNewTotalDataLength(int);
+    void signalNewCrcType(int);
 
 private:
     CKernel();
