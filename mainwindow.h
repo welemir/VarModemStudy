@@ -35,7 +35,7 @@ private slots:
 
     void slotSetConnectionSpeed(QString newSpeed);
     void slotSetOutputPower(QString newPower);
-    void slotSetModulationType(QString newModIndex);
+    void slotSetModulationType(int newModIndex);
     void slotSetBitSynchLength(QString newLength);
     void slotSetSychnroSequenceLength(QString newLength);
     void slotSetDataPacketLength(QString newLength);
@@ -48,11 +48,11 @@ private slots:
     void slotNewSychnroSequenceLength(int);
     void slotNewDataPacketLength(int);
     void slotNewTotalDataLength(int);
-    void slotNewBER(int);
-    void slotNewPER(int);
+    void slotNewBER(qreal);
+    void slotNewPER(qreal);
     void slotNewChannelUtilizationPayload(int);
     void slotNewChannelUtilizationSerivce(int);
-    void slotNewRxSpeed(int);
+    void slotNewRxSpeed(qreal);
 
 private:
     Ui::MainWindow *ui;

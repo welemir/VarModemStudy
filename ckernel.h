@@ -73,11 +73,11 @@ signals:
     void signalRxStateUpdated(bool);
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
-    void signalShowBER(QString);
-    void signalShowPER(QString);
-    void signalShowChannelUtilizationPayload(QString);
-    void signalShowChannelUtilizationSerivce(QString);
-    void signalShowRxSpeed(QString);
+    void signalShowBER(qreal);
+    void signalShowPER(qreal);
+    void signalShowChannelUtilizationPayload(int);
+    void signalShowChannelUtilizationSerivce(int);
+    void signalShowRxSpeed(qreal);
 
     void signalNewConnectionSpeed(int);
     void signalNewOutputPower(int);

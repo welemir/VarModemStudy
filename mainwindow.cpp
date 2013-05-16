@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->actionShowDiag,        SIGNAL(triggered()), this, SLOT(showDiagWindow()));
 
     m_pKernel = CKernel::GetInstance();
+<<<<<<< HEAD
 
     QThread *kernelThread = NULL;
     if (kernelInPrivateThreadEnabled)
@@ -49,6 +50,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     slotConnectKernelToUI(m_pKernel);
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
+=======
+    slotConnectKernelToUI();
+>>>>>>> d69aa52... CKernel очищен от сигналов и слотов с QString в параметрах. Остался лишь DebugOutput.
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
     QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
@@ -138,11 +142,11 @@ void MainWindow::slotConnectKernelToUI()
     connect(m_pKernel, SIGNAL(signalNewSychnroSequenceLength(int)), this, SLOT(slotNewSychnroSequenceLength(int)));
     connect(m_pKernel, SIGNAL(signalNewDataPacketLength(int)), this, SLOT(slotNewDataPacketLength(int)));
     connect(m_pKernel, SIGNAL(signalNewTotalDataLength(int)), this, SLOT(slotNewTotalDataLength(int)));
-    connect(m_pKernel, SIGNAL(signalShowBER(int)), this, SLOT(slotNewBER(int)));
-    connect(m_pKernel, SIGNAL(signalShowPER(int)), this, SLOT(slotNewPER(int)));
+    connect(m_pKernel, SIGNAL(signalShowBER(qreal)), this, SLOT(slotNewBER(qreal)));
+    connect(m_pKernel, SIGNAL(signalShowPER(qreal)), this, SLOT(slotNewPER(qreal)));
     connect(m_pKernel, SIGNAL(signalShowChannelUtilizationPayload(int)), this, SLOT(slotNewChannelUtilizationPayload(int)));
     connect(m_pKernel, SIGNAL(signalShowChannelUtilizationSerivce(int)), this, SLOT(slotNewChannelUtilizationSerivce(int)));
-    connect(m_pKernel, SIGNAL(signalShowRxSpeed(int)), this, SLOT(slotNewRxSpeed(int)));
+    connect(m_pKernel, SIGNAL(signalShowRxSpeed(qreal)), this, SLOT(slotNewRxSpeed(qreal)));
 }
 
 void MainWindow::showAboutWindow()
@@ -170,9 +174,9 @@ void MainWindow::slotSetOutputPower(QString newPower)
     m_pKernel->slotSetOutputPower(newPower.toInt());
 }
 
-void MainWindow::slotSetModulationType(QString newModIndex)
+void MainWindow::slotSetModulationType(int newModIndex)
 {
-    m_pKernel->slotSetModulationType(newModIndex.toInt());
+    m_pKernel->slotSetModulationType(newModIndex);
 }
 
 void MainWindow::slotSetBitSynchLength(QString newLength)
@@ -230,14 +234,20 @@ void MainWindow::slotNewTotalDataLength(int newValue)
     ui->lineEditTxTotalDataLength->setText(QString("%1").arg(newValue));
 }
 
-void MainWindow::slotNewBER(int newValue)
+void MainWindow::slotNewBER(qreal newValue)
 {
-    ui->lineEditRxBER->setText(QString("%1").arg(newValue));
+    QString errorRate;
+    errorRate.setNum(newValue, 'g', 5);
+    errorRate.append(" %");
+    ui->lineEditRxBER->setText(errorRate);
 }
 
-void MainWindow::slotNewPER(int newValue)
+void MainWindow::slotNewPER(qreal newValue)
 {
-    ui->lineEditRxPER->setText(QString("%1").arg(newValue));
+    QString errorRate;
+    errorRate.setNum(newValue, 'g', 2);
+    errorRate.append(" %");
+    ui->lineEditRxPER->setText(errorRate);
 }
 
 void MainWindow::slotNewChannelUtilizationPayload(int newValue)
@@ -250,7 +260,7 @@ void MainWindow::slotNewChannelUtilizationSerivce(int newValue)
     ui->lineEditRxServiceInfoSize->setText(QString("%1").arg(newValue));
 }
 
-void MainWindow::slotNewRxSpeed(int newValue)
+void MainWindow::slotNewRxSpeed(qreal newValue)
 {
     ui->lineEditRxSpeed->setText(QString("%1").arg(newValue));
 }

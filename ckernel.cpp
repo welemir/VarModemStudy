@@ -253,21 +253,18 @@ void CKernel::slotStartOperation()
     m_Receiver->slotStartOperation();
     m_Transmitter->slotStartOperation();
 
-    QString zero = "0";
-    emit signalShowBER(zero);
-    emit signalShowPER(zero);
+    emit signalShowBER(0);
+    emit signalShowPER(0);
 
     int payloadDataSize, serviceDataSize, connectionSpeed;
     m_Transmitter->getTranscieverStatistics( payloadDataSize, serviceDataSize, connectionSpeed );
 
     int payloadPercent = (100 * payloadDataSize )/(payloadDataSize + serviceDataSize);
     int serviceDataPercent = ( 100 * serviceDataSize )/(payloadDataSize + serviceDataSize);
-    QString qsNewMessaage = QString("%1%").arg( payloadPercent );
-    emit signalShowChannelUtilizationPayload(qsNewMessaage);
-    qsNewMessaage = QString("%1%").arg(serviceDataPercent);
-    emit  signalShowChannelUtilizationSerivce(qsNewMessaage);
-    qsNewMessaage = QString("%1").arg( payloadPercent*connectionSpeed/100 );
-    emit  signalShowRxSpeed(qsNewMessaage);
+
+    emit signalShowChannelUtilizationPayload(payloadPercent);
+    emit signalShowChannelUtilizationSerivce(serviceDataPercent);
+    emit signalShowRxSpeed(payloadPercent*connectionSpeed/100);
 }
 
 void CKernel::slotStopOperation()
@@ -299,16 +296,11 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     packetToDiag = packet.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
 
-    QString  errorRate;
-    int per = (100 * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
-    errorRate = QString("%1").arg(per);
-    emit signalShowPER(errorRate);
+    float fPer = (100. * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
+    emit signalShowPER(fPer);
 
-    int ber = (100 *  m_errors_total) / (m_bytes_received*8);
-    errorRate = QString("%1").arg(ber);
-    emit signalShowBER(errorRate);
-
-
+    float fBer = (100. *  m_errors_total) / (m_bytes_received*8);
+    emit signalShowBER(fBer);
 }
 
 void CKernel::slotSetDefaultValuesOnStart()
