@@ -22,20 +22,39 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
-    void slotNewMessageToUI(const CUICommand UIcommand);
     void slotSetTxStatus( bool isOn);
     void slotSetRxStatus( bool isOn);
     void slotSetTxState( bool isInProgress);
 
-    void slotConnectKernelToUI( QObject* kernel );
-
-signals:
-    void signalRunCommandFromUI(const CUICommand UIcommand);
 
 private slots:
     void showAboutWindow();
 //    void showSettingsWindow();
     void showDiagWindow();
+
+    void slotSetConnectionSpeed(QString newSpeed);
+    void slotSetOutputPower(QString newPower);
+    void slotSetModulationType(int newModIndex);
+    void slotSetBitSynchLength(QString newLength);
+    void slotSetSychnroSequenceLength(QString newLength);
+    void slotSetDataPacketLength(QString newLength);
+    void slotSetTotalDataLength(QString newLength);
+
+    void slotNewConnectionSpeed(int);
+    void slotNewOutputPower(int);
+    void slotNewModulationType(int);
+    void slotNewBitSynchLength(int);
+    void slotNewSychnroSequenceLength(int);
+    void slotNewDataPacketLength(int);
+    void slotNewTotalDataLength(int);
+    void slotNewBER(qreal);
+    void slotNewPER(qreal);
+    void slotNewChannelUtilizationPayload(int);
+    void slotNewChannelUtilizationSerivce(int);
+    void slotNewRxSpeed(qreal);
+
+private:
+    void connectKernelToUI();
 
 private:
     Ui::MainWindow *ui;

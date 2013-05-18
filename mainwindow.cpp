@@ -47,9 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :
         m_pKernel->moveToThread(kernelThread);
     }
 
-    slotConnectKernelToUI(m_pKernel);
+    connectKernelToUI();
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
-    QObject::connect(m_pKernel, SIGNAL(signalNewMessageToUI(const CUICommand)), this, SLOT(slotNewMessageToUI(const CUICommand)));
+
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
     QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
@@ -67,20 +67,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::slotNewMessageToUI(const CUICommand UIcommand)
-{
-
-    switch(UIcommand.teUIcommand)
-    {
-
-    default:
-    {
-
-    }break;
-    }// switch
-
 }
 
 void MainWindow::slotSetTxStatus(bool isOn)
@@ -132,33 +118,32 @@ void MainWindow::slotSetTxState(bool isInProgress)
     ui->lineEditTxPacketDataLength->setEnabled( isLocked );
     ui->comboBoxTxCRC->setEnabled( isLocked );
     ui->lineEditTxTotalDataLength->setEnabled( isLocked );
-
 }
 
-void MainWindow::slotConnectKernelToUI(QObject *kernel)
+void MainWindow::connectKernelToUI()
 {
-    connect(ui->comboBoxTxSpeed, SIGNAL(activated(QString)), kernel, SLOT(slotSetConnectionSpeed(QString)) );
-    connect(ui->comboBoxTxOutputPower, SIGNAL(activated(QString)), kernel, SLOT(slotSetOutputPower(QString)) );
-    connect(ui->comboBoxTxModulation, SIGNAL(activated(int)), kernel, SLOT(slotSetModulationType(int)) );
-    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), kernel, SLOT(slotSetBitSynchLength(QString)) );
-    connect(ui->comboBoxTxSynch, SIGNAL(activated(QString)), kernel, SLOT(slotSetSychnroSequenceLength(QString)) );
-    connect(ui->lineEditTxPacketDataLength, SIGNAL(textChanged(QString)), kernel, SLOT(slotSetDataPacketLength(QString)) );
-    connect(ui->lineEditTxTotalDataLength, SIGNAL(textChanged(QString)), kernel, SLOT(slotSetTotalDataLength(QString)) );
-    connect(ui->pushButtonTxStart, SIGNAL(clicked()), kernel, SLOT(slotStartOperation()) );
-    connect(ui->pushButtonTxStop, SIGNAL(clicked()), kernel, SLOT(slotStopOperation()) );
+    connect(ui->comboBoxTxSpeed, SIGNAL(activated(QString)), this, SLOT(slotSetConnectionSpeed(QString)));
+    connect(ui->comboBoxTxOutputPower, SIGNAL(activated(QString)), this, SLOT(slotSetOutputPower(QString)));
+    connect(ui->comboBoxTxModulation, SIGNAL(activated(int)), this, SLOT(slotSetModulationType(int)));
+    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), this, SLOT(slotSetBitSynchLength(QString)));
+    connect(ui->comboBoxTxSynch, SIGNAL(activated(QString)), this, SLOT(slotSetSychnroSequenceLength(QString)));
+    connect(ui->lineEditTxPacketDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetDataPacketLength(QString)));
+    connect(ui->lineEditTxTotalDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetTotalDataLength(QString)));
+    connect(ui->pushButtonTxStart, SIGNAL(clicked()), m_pKernel, SLOT(slotStartOperation()));
+    connect(ui->pushButtonTxStop, SIGNAL(clicked()), m_pKernel, SLOT(slotStopOperation()));
 
-    connect(kernel, SIGNAL(signalNewConnectionSpeed(QString)), ui->comboBoxTxSpeed, SLOT(setEditText(QString)));
-    connect(kernel, SIGNAL(signalNewOutputPower( QString )), ui->comboBoxTxOutputPower, SLOT(setEditText(QString)) );
-    connect(kernel, SIGNAL(signalNewModulationType( int )), ui->comboBoxTxModulation, SLOT(setCurrentIndex(int)) );
-    connect(kernel, SIGNAL(signalNewBitSynchLength( QString )), ui->comboBoxTxBitSynch, SLOT(setEditText(QString)) );
-    connect(kernel, SIGNAL(signalNewSychnroSequenceLength( QString )), ui->comboBoxTxSynch, SLOT(setEditText(QString)) );
-    connect(kernel, SIGNAL(signalNewDataPacketLength( QString )), ui->lineEditTxPacketDataLength, SLOT(setText(QString)));
-    connect(kernel, SIGNAL(signalNewTotalDataLength( QString )), ui->lineEditTxTotalDataLength, SLOT(setText(QString)) );
-    connect(kernel, SIGNAL(signalShowBER(QString)), ui->lineEditRxBER, SLOT(setText(QString)) );
-    connect(kernel, SIGNAL(signalShowPER(QString)), ui->lineEditRxPER, SLOT(setText(QString)) );
-    connect(kernel, SIGNAL(signalShowChannelUtilizationPayload(QString)), ui->lineEditRxSPayloadInfoSize, SLOT(setText(QString)) );
-    connect(kernel, SIGNAL(signalShowChannelUtilizationSerivce(QString)), ui->lineEditRxServiceInfoSize, SLOT(setText(QString)) );
-    connect(kernel, SIGNAL(signalShowRxSpeed(QString)), ui->lineEditRxSpeed, SLOT(setText(QString)) );
+    connect(m_pKernel, SIGNAL(signalNewConnectionSpeed(int)), this, SLOT(slotNewConnectionSpeed(int)));
+    connect(m_pKernel, SIGNAL(signalNewOutputPower(int)), this, SLOT(slotNewOutputPower(int)));
+    connect(m_pKernel, SIGNAL(signalNewModulationType(int)), this, SLOT(slotNewModulationType(int)));
+    connect(m_pKernel, SIGNAL(signalNewBitSynchLength(int)), this, SLOT(slotNewBitSynchLength(int)));
+    connect(m_pKernel, SIGNAL(signalNewSychnroSequenceLength(int)), this, SLOT(slotNewSychnroSequenceLength(int)));
+    connect(m_pKernel, SIGNAL(signalNewDataPacketLength(int)), this, SLOT(slotNewDataPacketLength(int)));
+    connect(m_pKernel, SIGNAL(signalNewTotalDataLength(int)), this, SLOT(slotNewTotalDataLength(int)));
+    connect(m_pKernel, SIGNAL(signalShowBER(qreal)), this, SLOT(slotNewBER(qreal)));
+    connect(m_pKernel, SIGNAL(signalShowPER(qreal)), this, SLOT(slotNewPER(qreal)));
+    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationPayload(int)), this, SLOT(slotNewChannelUtilizationPayload(int)));
+    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationSerivce(int)), this, SLOT(slotNewChannelUtilizationSerivce(int)));
+    connect(m_pKernel, SIGNAL(signalShowRxSpeed(qreal)), this, SLOT(slotNewRxSpeed(qreal)));
 }
 
 void MainWindow::showAboutWindow()
@@ -176,3 +161,103 @@ void MainWindow::showDiagWindow()
     m_diagnosticsWindow->show();
 }
 
+void MainWindow::slotSetConnectionSpeed(QString newSpeed)
+{
+    m_pKernel->slotSetConnectionSpeed(newSpeed.toInt());
+}
+
+void MainWindow::slotSetOutputPower(QString newPower)
+{
+    m_pKernel->slotSetOutputPower(newPower.toInt());
+}
+
+void MainWindow::slotSetModulationType(int newModIndex)
+{
+    m_pKernel->slotSetModulationType(newModIndex);
+}
+
+void MainWindow::slotSetBitSynchLength(QString newLength)
+{
+    m_pKernel->slotSetBitSynchLength(newLength.toInt());
+}
+
+void MainWindow::slotSetSychnroSequenceLength(QString newLength)
+{
+    m_pKernel->slotSetSychnroSequenceLength(newLength.toInt());
+}
+
+void MainWindow::slotSetDataPacketLength(QString newLength)
+{
+    m_pKernel->slotSetDataPacketLength(newLength.toInt());
+}
+
+void MainWindow::slotSetTotalDataLength(QString newLength)
+{
+    m_pKernel->slotSetTotalDataLength(newLength.toInt());
+}
+
+void MainWindow::slotNewConnectionSpeed(int newValue)
+{
+    ui->comboBoxTxSpeed->setEditText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewOutputPower(int newValue)
+{
+   ui->comboBoxTxOutputPower->setEditText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewModulationType(int newValue)
+{
+    ui->comboBoxTxModulation->setCurrentIndex(newValue);
+}
+
+void MainWindow::slotNewBitSynchLength(int newValue)
+{
+    ui->comboBoxTxBitSynch->setEditText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewSychnroSequenceLength(int newValue)
+{
+    ui->comboBoxTxSynch->setEditText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewDataPacketLength(int newValue)
+{
+    ui->lineEditTxPacketDataLength->setText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewTotalDataLength(int newValue)
+{
+    ui->lineEditTxTotalDataLength->setText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewBER(qreal newValue)
+{
+    QString errorRate;
+    errorRate.setNum(newValue, 'g', 5);
+    errorRate.append(" %");
+    ui->lineEditRxBER->setText(errorRate);
+}
+
+void MainWindow::slotNewPER(qreal newValue)
+{
+    QString errorRate;
+    errorRate.setNum(newValue, 'g', 2);
+    errorRate.append(" %");
+    ui->lineEditRxPER->setText(errorRate);
+}
+
+void MainWindow::slotNewChannelUtilizationPayload(int newValue)
+{
+    ui->lineEditRxSPayloadInfoSize->setText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewChannelUtilizationSerivce(int newValue)
+{
+    ui->lineEditRxServiceInfoSize->setText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotNewRxSpeed(qreal newValue)
+{
+    ui->lineEditRxSpeed->setText(QString("%1").arg(newValue));
+}
