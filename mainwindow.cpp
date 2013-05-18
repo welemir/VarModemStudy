@@ -47,10 +47,8 @@ MainWindow::MainWindow(QWidget *parent) :
         m_pKernel->moveToThread(kernelThread);
     }
 
-    slotConnectKernelToUI(m_pKernel);
+    connectKernelToUI();
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
-=======
-    slotConnectKernelToUI();
 
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
