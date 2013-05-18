@@ -26,7 +26,6 @@ public slots:
     void slotSetRxStatus( bool isOn);
     void slotSetTxState( bool isInProgress);
 
-    void slotConnectKernelToUI();
 
 private slots:
     void showAboutWindow();
@@ -53,6 +52,9 @@ private slots:
     void slotNewChannelUtilizationPayload(int);
     void slotNewChannelUtilizationSerivce(int);
     void slotNewRxSpeed(qreal);
+
+private:
+    void connectKernelToUI();
 
 private:
     Ui::MainWindow *ui;

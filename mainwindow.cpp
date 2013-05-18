@@ -37,7 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->actionShowDiag,        SIGNAL(triggered()), this, SLOT(showDiagWindow()));
 
     m_pKernel = CKernel::GetInstance();
-<<<<<<< HEAD
 
     QThread *kernelThread = NULL;
     if (kernelInPrivateThreadEnabled)
@@ -52,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
 =======
     slotConnectKernelToUI();
->>>>>>> d69aa52... CKernel очищен от сигналов и слотов с QString в параметрах. Остался лишь DebugOutput.
+
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
     QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
@@ -123,7 +122,7 @@ void MainWindow::slotSetTxState(bool isInProgress)
     ui->lineEditTxTotalDataLength->setEnabled( isLocked );
 }
 
-void MainWindow::slotConnectKernelToUI()
+void MainWindow::connectKernelToUI()
 {
     connect(ui->comboBoxTxSpeed, SIGNAL(activated(QString)), this, SLOT(slotSetConnectionSpeed(QString)));
     connect(ui->comboBoxTxOutputPower, SIGNAL(activated(QString)), this, SLOT(slotSetOutputPower(QString)));
