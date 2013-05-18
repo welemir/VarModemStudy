@@ -43,7 +43,11 @@ HEADERS  += mainwindow.h \
     dialogaboutprogram.h \
     dialogsettings.h \
     dialogdiagnostics.h \
-    ctransceiver.h
+    ctransceiver.h \
+    CommandCode_RadioModem.h \
+    CommandCode.h \
+    CommandCode.h \
+    CommandCode_RadioModem.h
 
 FORMS    += mainwindow.ui \
     dialogaboutprogram.ui \

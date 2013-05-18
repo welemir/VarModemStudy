@@ -114,6 +114,7 @@ private:
     int m_MaxTxReqInterval;
     int m_MaxTxTmrInterval;
 
+    int m_iPacketsToSend;
 };
 
 #endif // CTRANSCEIVER_H

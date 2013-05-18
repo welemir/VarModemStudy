@@ -183,7 +183,8 @@ void CKernel::slotSetOutputPower(int newPower)
 void CKernel::slotSetModulationType(int newModIndex)
 {
     m_Transmitter->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
-    m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );}
+    m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
+}
 
 void CKernel::slotSetBitSynchLength(int newLength)
 {
@@ -218,8 +219,7 @@ void CKernel::slotSetCrcType(int newCrcIndex)
 
 void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
 {
-    int newModulatonInd = newModulaton;
-    emit signalNewModulationType(newModulatonInd);
+    emit signalNewModulationType(static_cast<int>(newModulaton));
 }
 
 void CKernel::slotNewConnectionSpeed(int newSpeed)

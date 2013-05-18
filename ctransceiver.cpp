@@ -3,6 +3,8 @@
 #include <QDataStream>
 #include <QDebug>
 
+#include "CommandCode_RadioModem.h"
+
 const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
 const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
 
@@ -35,21 +37,21 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         unsigned char ucCommand = baData[iSeek++];
         switch(ucCommand)
         {
-        case 0xC1:
+        case eAnsWorkMode:
         {
         //    unsigned char ucNewMode =  baData[iSeek++];
        //     m_mode = (CTransceiver::T_DeviceModes) ucNewMode;
       //      emit signalNewDeviceMode(m_mode);
         }break;
 
-        case 0xC3:
+        case eAnsModulationType:
         {
             unsigned char ucNewMode =  baData[iSeek++];
             T_ModulationType modulation = (CTransceiver::T_ModulationType) ucNewMode;
             emit signalNewModulationType(modulation);
         }break;
 
-        case 0xC5: // speed
+        case eAnsModulationSpeed: // speed
         {
             unsigned short usCurrentSpeed;
             memcpy(&usCurrentSpeed, baData.data() + iSeek, sizeof(usCurrentSpeed) );
@@ -59,7 +61,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             emit signalNewConnectionSpeed(usCurrentSpeed);
         }break;
 
-        case 0xC7: // power
+        case eAnsTxPower: // power
         {
             unsigned short usCurrentPower;
             memcpy(&usCurrentPower, baData.data() + iSeek, sizeof(usCurrentPower) );
@@ -69,7 +71,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             emit signalNewOutputPower(usCurrentPower);
         }break;
 
-        case 0xe0: // queue size
+        case eAnsModemStatusGet: // queue size
         {
             unsigned char ucPacketQueueFree = baData[iSeek++];
 //            unsigned char ucPacketRawQueueFree = baData[iSeek++];
@@ -102,7 +104,7 @@ void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSender
 void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
 {
     QByteArray baPacket;
-    baPacket.append(0x40);
+    baPacket.append(eWorkModeSet);
     // так как T_DeviceModes совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newMode);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -112,7 +114,7 @@ void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModul
 {
     m_modulation = newModulaton;
     QByteArray baPacket;
-    baPacket.append(0x42);
+    baPacket.append(eModulationTypeSet);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newModulaton);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -122,7 +124,7 @@ void CTransceiver::slotSetConnectionSpeed(int newSpeed)
 {
     m_connectionSpeed = newSpeed;
     QByteArray baPacket;
-    baPacket.append(0x44);
+    baPacket.append(eModulationSpeedSet);
     unsigned short modulationSpeed = newSpeed;
     baPacket.append((char*)&modulationSpeed, sizeof(modulationSpeed));
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -132,7 +134,7 @@ void CTransceiver::slotSetOutputPower(int newPower)
 {
     m_TxPower = newPower;
     QByteArray baPacket;
-    baPacket.append(0x46);
+    baPacket.append(eTxPowerSet);
     signed short txPower = 2*newPower;
     baPacket.append((char*)&txPower, sizeof(txPower));
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -142,7 +144,7 @@ void CTransceiver::slotSetBitSynchLength(int newLength)
 {
     m_SynchroLength = newLength;
     QByteArray baPacket;
-    baPacket.append(0x48);
+    baPacket.append(ePreambleLengthSet);
     baPacket.append((char) newLength);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
@@ -150,7 +152,7 @@ void CTransceiver::slotSetBitSynchLength(int newLength)
 void CTransceiver::slotSetSychnroSequence(QByteArray sequence)
 {
     QByteArray baPacket;
-    baPacket.append(0x4a);
+    baPacket.append(eSyncroStartParamSet);
     baPacket.append(sequence);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
@@ -159,7 +161,7 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
 {
     m_Length = newLength;
     QByteArray baPacket;
-    baPacket.append(0x4c);
+    baPacket.append(eDataFieldSizeSet);
     baPacket.append((char) newLength);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
@@ -168,7 +170,7 @@ void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrc)
 {
     m_CrcType = newCrc;
     QByteArray baPacket;
-    baPacket.append(0x4e);
+    baPacket.append(eCrcModeSet);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newCrc);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -219,12 +221,11 @@ void CTransceiver::slotUploadAllSettingsToModem()
     slotSetCrcType(m_CrcType);
 }
 
-int iTotalpackets;
 void CTransceiver::slotTxTimer()
 {
     if (0 < m_PermitedToTxPacketsCount)
     {
-        emit signalTxProgress( (100 * (iTotalpackets - m_TxQueue.length() + 1)) / iTotalpackets);
+        emit signalTxProgress( (100 * (m_iPacketsToSend - m_TxQueue.length() + 1)) / m_iPacketsToSend);
         QByteArray packetToSend = m_TxQueue[0];
         m_TxQueue.removeFirst();
 
@@ -258,10 +259,12 @@ void CTransceiver::slotTxTimer()
 
 void CTransceiver::slotStatusTimer()
 {
+    // в Poll режиме опрашивается трансивер. Запрашиваем статус модема
+    // статус модема содаржит 1 char  количество свободных на отправку мест в очереди
     if(m_PermitedToTxPacketsCount == 0)
     {
         QByteArray newPacket;
-        newPacket.append(0x60);
+        newPacket.append(eModemStatusGet);
         emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
 
         int txReqInterval = m_tmeTxReqDelta.elapsed();
@@ -281,9 +284,9 @@ void CTransceiver::slotTxStart()
     // отправить сообщение "начать передачу" на трансивер
     slotSetDeviceMode(eTransmitter);
     m_PermitedToTxPacketsCount = 0;
-    m_TransceiverStatusTimer->start(MODEM_STATUS_INTERVAL);
-    m_SenderTimer->start(MODEM_RAWPIPE_TX_INTERVAL);
-    iTotalpackets = m_TxQueue.length();
+    m_TransceiverStatusTimer->start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
+    m_SenderTimer->start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
+    m_iPacketsToSend = m_TxQueue.length();
     emit signalTxInProgress(true);
 
     m_tmeTxReqDelta.restart();
@@ -314,7 +317,7 @@ void CTransceiver::slotRxStart()
 
     // Регистрация себя в качестве получателя "сырого" потока от приемника для разбора
     QByteArray baPacket;
-    baPacket.append(0x61);
+    baPacket.append(eSubmitRawData);
     baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/);
     baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/>>8);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
@@ -327,7 +330,7 @@ void CTransceiver::slotRxStop()
 
     // Отключене трансляции "сырого" потока приёмма
     QByteArray baPacket;
-    baPacket.append(0x61);
+    baPacket.append(eSubmitRawData);
     baPacket.append((char)0);
     baPacket.append((char)0);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);

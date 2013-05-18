@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QList>
 #include "programsettings.h"
+#include "CommandCode_RadioModem.h"
 
 //==============================================================================
 CConnectionDescriptor::CConnectionDescriptor()
@@ -69,7 +70,7 @@ void CConnectionDescriptor::slotParceCommand(QByteArray baData, unsigned short u
         unsigned char ucCommand = baData[iSeek++];
         switch(ucCommand)
         {
-            case 0xA4:  // разбор ответа и оповещение
+            case eAnsUUID:  // разбор ответа и оповещение
             {
                 if(16 <= (baData.length()- iSeek))
                 {
