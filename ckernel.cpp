@@ -302,12 +302,14 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     emit signalPrintDiagMeaasge( packetToDiag);
 
     QString  errorRate;
-    int per = (100 * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
-    errorRate = QString("%1").arg(per);
+    float fPer = (100. * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
+    errorRate.setNum(fPer, 'g', 2);
+    errorRate.append(" %");
     emit signalShowPER(errorRate);
 
-    int ber = (100 *  m_errors_total) / (m_bytes_received*8);
-    errorRate = QString("%1").arg(ber);
+    float fBer = (100. *  m_errors_total) / (m_bytes_received*8);
+    errorRate.setNum(fBer, 'g', 5);
+    errorRate.append(" %");
     emit signalShowBER(errorRate);
 
 
