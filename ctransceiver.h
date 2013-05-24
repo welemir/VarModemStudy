@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QTime>
 #include <QBitArray>
+#include <QQueue>
 
 #define MODEM_DEVICE_ID 21
 #define MODEM_RAWPIPE_TX_INTERVAL 10
@@ -42,6 +43,7 @@ public:
 public:
     CTransceiver(T_DeviceModes role, QObject *parent = 0 );
     void getTranscieverStatistics( int &payloadDataSize, int &serviceDataSize, int &connectionSpeed);
+    int packetsToSend();
 
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -51,6 +53,7 @@ signals:
 
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
+    void signalTxFinished();
     void signalDiagMsg(QString);
 
     void signalNewDeviceMode( T_DeviceModes );
@@ -93,6 +96,9 @@ protected:
     void processData(QByteArray baData);
 
 private:
+    void TxSendPacket();
+
+private:
     const T_DeviceModes m_role;
     T_ModulationType m_modulation;
     T_CrcType m_CrcType;
@@ -102,9 +108,9 @@ private:
     int m_SynchroLength;
 
     QByteArray m_SynchroSequence;
-    QTimer *m_SenderTimer;
-    QTimer *m_TransceiverStatusTimer;
-    QList<QByteArray> m_TxQueue;
+    QTimer m_SenderTimer;
+    QTimer m_TransceiverStatusTimer;
+    QQueue<QByteArray> m_TxQueue;
     int m_PermitedToTxPacketsCount;
     bool m_RxEnabled;
     QBitArray m_RxArray;
@@ -115,6 +121,9 @@ private:
     int m_MaxTxTmrInterval;
 
     int m_iPacketsToSend;
+
+    bool m_bStopThread;
+
 };
 
 #endif // CTRANSCEIVER_H
