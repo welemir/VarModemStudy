@@ -2,6 +2,7 @@
 #include"BitBusPipes/CommunicationStructs.h"
 #include <QDataStream>
 #include <QDebug>
+#include <QCoreApplication>
 
 #include "CommandCode_RadioModem.h"
 
@@ -13,12 +14,10 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
     m_role(role),
     m_RxEnabled(false)
 {
-    m_SenderTimer = new QTimer(this);
-    m_TransceiverStatusTimer = new QTimer(this);
 
-    connect( m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
-    connect( m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
 
+    connect(&m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
+    connect(&m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
 }
 
 void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDataSize, int &connectionSpeed)
@@ -26,6 +25,11 @@ void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDa
     payloadDataSize = m_iDataFieldSize;
     serviceDataSize = m_SynchroSequence.length();
     connectionSpeed = m_connectionSpeed;
+}
+
+int CTransceiver::packetsToSend()
+{
+    return m_TxQueue.length();
 }
 
 void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID)
@@ -71,11 +75,23 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             emit signalNewOutputPower(usCurrentPower);
         }break;
 
-        case eAnsModemStatusGet: // queue size
+        case eAnsModemStatusGet:
         {
+            // буфер трансивера способен вместить хотя бы 1 пакет
             unsigned char ucPacketQueueFree = baData[iSeek++];
-//            unsigned char ucPacketRawQueueFree = baData[iSeek++];
-            m_PermitedToTxPacketsCount = ucPacketQueueFree;
+            m_PermitedToTxPacketsCount = ucPacketQueueFree;//(0 < ucPacketQueueFree) ? 1 : 0;
+
+            // передатчик трансивера отправил все переданные ему пакеты и выключился
+            unsigned char TxOn = baData[iSeek++]&0x1;
+
+            // Передачу считаем завершенной, если:
+            // 1. Все пакеты отправлены трансиверу.
+            // 2. Буфер трансивера освободился.
+            // 3. Передача в радиоканал трансивером окончена.
+            if ((0 == packetsToSend()) && (3 == ucPacketQueueFree) && (0 == TxOn))
+                emit signalTxFinished();
+
+
         }break;
         default:
         {
@@ -190,6 +206,9 @@ void CTransceiver::slotSetCarrierFrequency(int newFrequency)
 
 void CTransceiver::slotStartOperation()
 {
+
+    // to do
+    // сгенерировать синхропоследовательность если ее длина изменилась?
     m_SynchroSequence = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
     if(eTransmitter == m_role)
     {
@@ -216,7 +235,7 @@ void CTransceiver::slotStopOperation()
 
 void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
 {
-    m_TxQueue.append(newPacket);
+    m_TxQueue.enqueue(newPacket);
 }
 
 void CTransceiver::slotUploadAllSettingsToModem()
@@ -231,11 +250,16 @@ void CTransceiver::slotUploadAllSettingsToModem()
 
 void CTransceiver::slotTxTimer()
 {
+    TxSendPacket();
+    slotStatusTimer();
+}
+
+void CTransceiver::TxSendPacket()
+{
     if (0 < m_PermitedToTxPacketsCount)
     {
         emit signalTxProgress( (100 * (m_iPacketsToSend - m_TxQueue.length() + 1)) / m_iPacketsToSend);
-        QByteArray packetToSend = m_TxQueue[0];
-        m_TxQueue.removeFirst();
+        QByteArray packetToSend = m_TxQueue.dequeue();
 
         m_PermitedToTxPacketsCount--;
 
@@ -254,7 +278,8 @@ void CTransceiver::slotStatusTimer()
 {
     // в Poll режиме опрашивается трансивер. Запрашиваем статус модема
     // статус модема содаржит 1 char  количество свободных на отправку мест в очереди
-    if(m_PermitedToTxPacketsCount == 0)
+    // и второй char со статусом модема
+    if(0 == m_PermitedToTxPacketsCount)
     {
         QByteArray newPacket;
         newPacket.append(eModemStatusGet);
@@ -266,10 +291,6 @@ void CTransceiver::slotStatusTimer()
             m_MaxTxReqInterval = txReqInterval;
         qDebug() << "slotStatusTimer, Interval = " << txReqInterval;
     }
-    else
-    {
-      //  m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL);
-    }
 }
 
 void CTransceiver::slotTxStart()
@@ -277,31 +298,38 @@ void CTransceiver::slotTxStart()
     // отправить сообщение "начать передачу" на трансивер
     slotSetDeviceMode(eTransmitter);
     m_PermitedToTxPacketsCount = 0;
-    m_TransceiverStatusTimer->start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
-    m_SenderTimer->start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
+//    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
+    m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
+
     m_iPacketsToSend = m_TxQueue.length();
     emit signalTxInProgress(true);
 
     m_tmeTxReqDelta.restart();
     m_tmeTxTmrDelta.restart();
     m_MaxTxReqInterval = m_MaxTxTmrInterval = 0;
+
+    m_bStopThread = false;
 }
 
 void CTransceiver::slotTxStop()
 {
     // выключить трансивер
     slotSetDeviceMode(ePowerOff);
-    m_TransceiverStatusTimer->stop();
-    m_SenderTimer->stop();
+    m_TransceiverStatusTimer.stop();
+    m_SenderTimer.stop();
+    m_bStopThread = true;
     emit signalTxInProgress(false);
 
     qDebug() << "MAX Req ask interval = " << m_MaxTxReqInterval;
     qDebug() << "MAX Tx send interval = " << m_MaxTxTmrInterval;
     m_TxQueue.clear();
+
+    m_bStopThread = true;
 }
 
 void CTransceiver::slotRxStart()
 {
+    m_TxQueue.clear();
     // отправить сообщение "начать прием" на трансивер
     slotSetDeviceMode(eReceiver);
     QDataStream synch_read(m_SynchroSequence);
@@ -385,8 +413,8 @@ void CTransceiver::processData(QByteArray baData)
 
               emit signalNewRawPacketReceived(packetNew);
 
-              st_iByteCounter = -1;
-              st_uiOffsetBit = 0;
+                st_iByteCounter = -1;
+                st_uiOffsetBit = 0;
             }
         }
     }

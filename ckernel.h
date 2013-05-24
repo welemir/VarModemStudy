@@ -93,6 +93,10 @@ signals:
     void signalNewTotalDataLength(int);
     void signalNewCrcType(int);
 
+
+private slots:
+    void slotTxFinished();
+
 private:
     CKernel();
     CKernel(const CKernel &);
@@ -122,6 +126,7 @@ private:
     int m_packets_received;
     int m_packets_received_ok;
     int m_bytes_received;
+    bool m_isLastPacketSent;
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
 };

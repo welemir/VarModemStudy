@@ -33,6 +33,7 @@ CKernel::CKernel():
     m_ProgrammState(eDisconnected),
     m_DataToSendLength(1000),
     m_PacketLength(100),
+    m_isLastPacketSent(false),
     m_crcType(CTransceiver::eCrcNone)
 {
     m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
@@ -131,6 +132,9 @@ void CKernel::slotTransmitterConnected()
             m_Transmitter, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
+
+    connect(m_Transmitter, SIGNAL(signalTxFinished()),
+            this, SLOT(slotTxFinished()));
 
     m_Transmitter->slotSetDeviceMode(CTransceiver::eTransmitter);
     m_Transmitter->slotUploadAllSettingsToModem();
@@ -242,13 +246,14 @@ void CKernel::slotNewOutputPower(int newPower)
 {
     emit signalNewOutputPower(newPower);
 }
-
+bool bTakeNextPacketAndStop = false;
 void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 {
 }
 
 void CKernel::slotStartOperation()
 {
+    bTakeNextPacketAndStop = false;
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
@@ -283,6 +288,7 @@ void CKernel::slotStartOperation()
     m_bytes_received = 0;
     m_iBitErrorsTotal = 0;
     m_iBitErrorsDetected = 0;
+    m_isLastPacketSent = false;
 
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
@@ -308,8 +314,16 @@ void CKernel::slotStartOperation()
 
 void CKernel::slotStopOperation()
 {
+    float fPer = (100. *(m_packets_to_send - m_packets_received)/ m_packets_to_send);
+    emit signalShowPER(fPer);
+
+    float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
+    emit signalShowBER(fBer);
+
     m_Transmitter->slotStopOperation();
     m_Receiver->slotStopOperation();
+    m_isLastPacketSent = false;
+
 }
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
@@ -358,11 +372,16 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
         emit signalPrintDiagMeaasge( packetToDiag);
     }
 
-    float fPer = (100. * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
-    emit signalShowPER(fPer);
-
-    float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
-    emit signalShowBER(fBer);
+    if (m_isLastPacketSent)
+    {
+        if(bTakeNextPacketAndStop || m_packets_to_send == m_packets_received_ok)
+        {
+            slotStopOperation();
+            m_isLastPacketSent = false;
+        }
+        else
+            bTakeNextPacketAndStop = true;
+    }
     emit signalUpdateStatistics();
 }
 
@@ -376,6 +395,12 @@ void CKernel::slotSetDefaultValuesOnStart()
     slotSetDataPacketLength(10);
     slotSetTotalDataLength(1000);
     slotSetCrcType(0);
+}
+
+
+void CKernel::slotTxFinished()
+{
+    m_isLastPacketSent = true;
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
