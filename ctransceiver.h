@@ -10,6 +10,15 @@
 #define MODEM_RAWPIPE_TX_INTERVAL 10
 #define MODEM_STATUS_INTERVAL 10
 
+typedef struct{
+    QByteArray baData;      // Данные пакета извлечённые приёмником
+    int iStartBitNumber;    // Порядковый номер бита в принятой последовательности с момента начала эксперимента
+    int iErrorsBit;         // Количество битовых ошибок в пакете
+    int iErrorsByte;        // Количество байтовых ошибок в пакете
+    bool bCrcOk;            // Флаг правильности контрольной суммы пакета
+    int iTxCorrespondIndex; // Индекс пакета в переданной последовательности соответствующего данному
+}TReceivedPacketDescription;
+
 class CTransceiver : public QObject
 {
     Q_OBJECT
@@ -32,7 +41,7 @@ public:
     typedef enum
     {
         eCrcNone     = 0,
-        eCrcSimple   = 1,
+        eCrcXOR      = 1,
         eCrc8dallas  = 2,
         eCrc16_IBM   = 3,
         eCrc16_CCIT  = 4,
@@ -47,7 +56,7 @@ signals:
     void signalNewCommand(QByteArray, unsigned short);
     void signalNewRawPacket(QByteArray, unsigned short);
 
-    void signalNewRawPacketReceived(QByteArray);
+    void signalNewRawPacketReceived(TReceivedPacketDescription);
 
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
@@ -98,7 +107,8 @@ private:
     T_CrcType m_CrcType;
     int m_connectionSpeed;
     int m_TxPower;
-    int m_Length;
+    int m_iDataFieldSize;
+    int m_iCrcFieldSize;
     int m_SynchroLength;
 
     QByteArray m_SynchroSequence;

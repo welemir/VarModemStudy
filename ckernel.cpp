@@ -4,6 +4,7 @@
 
 #include "ckernel.h"
 #include "BitBusPipes/USB_Communicator.h"
+#include "BitBusPipes/CommunicationStructs.h"
 #include "connectionControl.h"
 #include "BitBusPipes/ctcp_client_communicator.h"
 #include "programsettings.h"
@@ -31,7 +32,8 @@ CKernel::CKernel():
     m_pPipeCmd(0),
     m_ProgrammState(eDisconnected),
     m_DataToSendLength(1000),
-    m_PacketLength(100)
+    m_PacketLength(100),
+    m_crcType(CTransceiver::eCrcNone)
 {
     m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
     m_Receiver    = new CTransceiver(CTransceiver::eReceiver, this);
@@ -56,7 +58,7 @@ CKernel::CKernel():
     connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Receiver,    SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
-    connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(QByteArray)), this, SLOT(slotNewPacketReceived(QByteArray)));
+    connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(TReceivedPacketDescription)), this, SLOT(slotNewPacketReceived(TReceivedPacketDescription)));
 
 }
 
@@ -213,8 +215,17 @@ void CKernel::slotSetTotalDataLength(int newLength)
 
 void CKernel::slotSetCrcType(int newCrcIndex)
 {
-    m_Transmitter->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
-    m_Receiver->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
+  switch(newCrcIndex){
+  case 0:
+      m_crcType = CTransceiver::eCrcNone;
+      break;
+  case 1:
+      m_crcType = CTransceiver::eCrcXOR;
+      break;
+  }
+
+  m_Transmitter->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
+  m_Receiver->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
 }
 
 void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
@@ -232,18 +243,46 @@ void CKernel::slotNewOutputPower(int newPower)
     emit signalNewOutputPower(newPower);
 }
 
+void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
+{
+}
+
 void CKernel::slotStartOperation()
 {
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
 
+    switch(m_crcType){
+    case CTransceiver::eCrcNone:
+        break;
+    case CTransceiver::eCrcXOR:{
+        unsigned char crc = 0;
+        for(int iInd = 0; iInd < newPacket.size(); iInd++){
+            crc = crc ^ newPacket[iInd];
+        }
+
+        newPacket.append((char)crc);
+        }break;
+    case CTransceiver::eCrc8dallas:{
+        CCRC_Checker crc(CCRC_Checker::eCRC8_iButton);
+        for(int iInd = 0; iInd < newPacket.size(); iInd++){
+            crc.Add(newPacket[iInd]);
+        }
+
+        newPacket.append((char)crc);
+        }break;
+    }
+
     txPacket = newPacket;
+
+    // Сброс счётчиков статистики омена
     m_packets_to_send = 0;
     m_packets_received = 0;
     m_packets_received_ok = 0;
     m_bytes_received = 0;
-    m_errors_total = 0;
+    m_iBitErrorsTotal = 0;
+    m_iBitErrorsDetected = 0;
 
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
@@ -273,34 +312,58 @@ void CKernel::slotStopOperation()
     m_Receiver->slotStopOperation();
 }
 
-void CKernel::slotNewPacketReceived(QByteArray packet)
+void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 {
-    int iErrorCounter = 0;
-    int iPacketLength     = packet.length();
+  // Определение коилчества ошибок в пакете
+  int iErrorCounterBits = 0;
+  int iErrorCounterBytes = 0;
+    int iPacketLength = packetNew.baData.length();
     for(int i = 0; i< iPacketLength; i++ )
     {
-        unsigned int uiErrors = 0xff &(packet[i] ^ txPacket[i]);
+        unsigned int uiErrors = 0xff &(packetNew.baData[i] ^ txPacket[i]);
+        if(0 != uiErrors)
+          iErrorCounterBytes++;
         while(0 != uiErrors){
             if(1 == (1 & uiErrors))
-                iErrorCounter++;
+                iErrorCounterBits++;
             uiErrors >>= 1;
         }
     }
-    if (0==iErrorCounter)
+
+    // Заполнение структуры-описателя пакета данными об ошибках
+    packetNew.iErrorsBit = iErrorCounterBits;
+    packetNew.iErrorsByte = iErrorCounterBytes;
+
+    if (0==iErrorCounterBits)
         m_packets_received_ok++;
     m_bytes_received += iPacketLength;
-    m_errors_total += iErrorCounter;
+    m_iBitErrorsTotal += iErrorCounterBits;
+    // Если контроль целостности выявил ошибочность пакета - учитываем все его битовые ошибки как обнаруженные
+    if(!packetNew.bCrcOk)
+      m_iBitErrorsDetected += iErrorCounterBits;
 
-    QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(++m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
+    QString packetToDiag = QString("%1 из %2, ошибок в пакете %3 (%4/%5)")
+                           .arg(++m_packets_received)
+                           .arg(m_packets_to_send)
+                           .arg(iErrorCounterBits)
+                           .arg(iErrorCounterBytes)
+                           .arg(packetNew.baData.length());
+    if(!packetNew.bCrcOk)
+      packetToDiag.append(" Crc Err");
     emit signalPrintDiagMeaasge(packetToDiag);
-    packetToDiag = packet.toHex();
+    packetToDiag = packetNew.baData.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
+    if(0 != iErrorCounterBits){
+        packetToDiag = txPacket.toHex();
+        emit signalPrintDiagMeaasge( packetToDiag);
+    }
 
     float fPer = (100. * (m_packets_to_send - m_packets_received_ok)) / m_packets_to_send;
     emit signalShowPER(fPer);
 
-    float fBer = (100. *  m_errors_total) / (m_bytes_received*8);
+    float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
     emit signalShowBER(fBer);
+    emit signalUpdateStatistics();
 }
 
 void CKernel::slotSetDefaultValuesOnStart()

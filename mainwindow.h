@@ -52,7 +52,7 @@ private slots:
     void slotNewChannelUtilizationPayload(int);
     void slotNewChannelUtilizationSerivce(int);
     void slotNewRxSpeed(qreal);
-
+    void slotUpdateStatistics();  // Запрос на обновление статистики обмена
 private:
     void connectKernelToUI();
 

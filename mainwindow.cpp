@@ -131,6 +131,7 @@ void MainWindow::connectKernelToUI()
     connect(ui->lineEditTxTotalDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetTotalDataLength(QString)));
     connect(ui->pushButtonTxStart, SIGNAL(clicked()), m_pKernel, SLOT(slotStartOperation()));
     connect(ui->pushButtonTxStop, SIGNAL(clicked()), m_pKernel, SLOT(slotStopOperation()));
+    connect(ui->comboBoxTxCRC, SIGNAL(currentIndexChanged(int)), m_pKernel, SLOT(slotSetCrcType(int)));
 
     connect(m_pKernel, SIGNAL(signalNewConnectionSpeed(int)), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_pKernel, SIGNAL(signalNewOutputPower(int)), this, SLOT(slotNewOutputPower(int)));
@@ -144,6 +145,7 @@ void MainWindow::connectKernelToUI()
     connect(m_pKernel, SIGNAL(signalShowChannelUtilizationPayload(int)), this, SLOT(slotNewChannelUtilizationPayload(int)));
     connect(m_pKernel, SIGNAL(signalShowChannelUtilizationSerivce(int)), this, SLOT(slotNewChannelUtilizationSerivce(int)));
     connect(m_pKernel, SIGNAL(signalShowRxSpeed(qreal)), this, SLOT(slotNewRxSpeed(qreal)));
+    connect(m_pKernel, SIGNAL(signalUpdateStatistics()), this, SLOT(slotUpdateStatistics()));
 }
 
 void MainWindow::showAboutWindow()
@@ -259,5 +261,13 @@ void MainWindow::slotNewChannelUtilizationSerivce(int newValue)
 
 void MainWindow::slotNewRxSpeed(qreal newValue)
 {
-    ui->lineEditRxSpeed->setText(QString("%1").arg(newValue));
+  ui->lineEditRxSpeed->setText(QString("%1").arg(newValue));
+}
+
+void MainWindow::slotUpdateStatistics()
+{
+  int iBitErrorsDetected = m_pKernel->getBitErrorsDetected();
+  ui->lineEditRxDetectedErrorsCount->setText(QString("%1").arg(iBitErrorsDetected));
+  int iBitErrorsMissed = m_pKernel->getBitErrorsMissed();
+  ui->lineEditRxMissedErrorsCount->setText(QString("%1").arg(iBitErrorsMissed));
 }

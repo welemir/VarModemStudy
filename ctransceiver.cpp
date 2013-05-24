@@ -23,7 +23,7 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
 
 void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDataSize, int &connectionSpeed)
 {
-    payloadDataSize = m_Length;
+    payloadDataSize = m_iDataFieldSize;
     serviceDataSize = m_SynchroSequence.length();
     connectionSpeed = m_connectionSpeed;
 }
@@ -159,7 +159,7 @@ void CTransceiver::slotSetSychnroSequence(QByteArray sequence)
 
 void CTransceiver::slotSetDataPacketLength(int newLength)
 {
-    m_Length = newLength;
+    m_iDataFieldSize = newLength;
     QByteArray baPacket;
     baPacket.append(eDataFieldSizeSet);
     baPacket.append((char) newLength);
@@ -169,6 +169,14 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
 void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrc)
 {
     m_CrcType = newCrc;
+    switch(m_CrcType){
+      case eCrcXOR:
+          m_iCrcFieldSize = 1;
+          break;
+      case eCrcNone:
+      default:
+        m_iCrcFieldSize = 0;
+    }
     QByteArray baPacket;
     baPacket.append(eCrcModeSet);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
@@ -217,7 +225,7 @@ void CTransceiver::slotUploadAllSettingsToModem()
     slotSetConnectionSpeed(m_connectionSpeed);
     slotSetOutputPower(m_TxPower);
     slotSetBitSynchLength(m_SynchroLength);
-    slotSetDataPacketLength(m_Length);
+    slotSetDataPacketLength(m_iDataFieldSize);
     slotSetCrcType(m_CrcType);
 }
 
@@ -231,23 +239,8 @@ void CTransceiver::slotTxTimer()
 
         m_PermitedToTxPacketsCount--;
 
-
-        CCRC_Checker crc(CCRC_Checker::eCRC8_iButton);
-        for(int iInd = 0; iInd < packetToSend.size(); iInd++)
-        {
-            crc.Add(packetToSend[iInd]);
-        }
-        char cCRC = crc;
-
         packetToSend.prepend(m_SynchroSequence);
-        packetToSend.append(cCRC);
         emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
-
-        int txInterval = m_tmeTxTmrDelta.elapsed();
-        m_tmeTxTmrDelta.restart();
-        if (m_MaxTxTmrInterval < txInterval)
-            m_MaxTxTmrInterval = txInterval;
-        qDebug() << "slotTxTimer, Interval = " << txInterval;
     }
 
 
@@ -369,8 +362,28 @@ void CTransceiver::processData(QByteArray baData)
             st_iByteCounter++;
             st_ulByteNext <<= 8/*uiOffsetBitRight*/;
 
-            if(st_iByteCounter >= /*m_iDataFieldSize*/m_Length){
-              emit signalNewRawPacketReceived(baDataObtained);
+            if(st_iByteCounter >= (m_iDataFieldSize + m_iCrcFieldSize)){
+              TReceivedPacketDescription packetNew;
+              packetNew.baData = baDataObtained;
+              // Проверка Crc
+              switch(m_CrcType){
+                case eCrcNone:
+                  packetNew.bCrcOk = true;
+                  break;
+                case eCrcXOR:
+                  int iCrcValue = 0;
+                  for(int i=0; i<baDataObtained.length() - 1; i++){
+                    iCrcValue ^= baDataObtained[i];
+                  }
+                  if(baDataObtained[baDataObtained.length() - 1] == iCrcValue)
+                    packetNew.bCrcOk = true;
+                  else
+                    packetNew.bCrcOk = false;
+
+                  break;
+              }
+
+              emit signalNewRawPacketReceived(packetNew);
 
               st_iByteCounter = -1;
               st_uiOffsetBit = 0;

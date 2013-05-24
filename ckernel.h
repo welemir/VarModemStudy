@@ -35,6 +35,10 @@ private:
 
 public:
     static CKernel* GetInstance();
+
+    int getBitErrorsDetected(){return m_iBitErrorsDetected;}
+    int getBitErrorsMissed(){return m_iBitErrorsTotal - m_iBitErrorsDetected;}
+
 public slots:
     void slotRunCommandFromUI(const CUICommand UIcommand);
     void slotProcessDataFromPipeOfCommand(QByteArray baData, unsigned short usSenderID);
@@ -58,11 +62,11 @@ public slots:
 //    void slotNewBitSynchLength( int newLength );
 //    void slotNewSychnroSequence( QByteArray sequence );
 //    void slotNewDataPacketLength( int newLength );
-//    void slotNewCrcType( T_CrcType newCrc );
+    void slotNewCrcType(int iCRCTypeIndexNew);
 
     void slotStartOperation();
     void slotStopOperation();
-    void slotNewPacketReceived( QByteArray packet );
+    void slotNewPacketReceived(TReceivedPacketDescription packetNew);
     void slotSetDefaultValuesOnStart();
 
 signals:
@@ -78,6 +82,7 @@ signals:
     void signalShowChannelUtilizationPayload(int);
     void signalShowChannelUtilizationSerivce(int);
     void signalShowRxSpeed(qreal);
+    void signalUpdateStatistics();
 
     void signalNewConnectionSpeed(int);
     void signalNewOutputPower(int);
@@ -111,12 +116,14 @@ private:
 
     void setProgrammState(T_ProgrammState newProgrammState);
     int m_DataToSendLength;
+    CTransceiver::T_CrcType m_crcType;
     int m_PacketLength;
     int m_packets_to_send;
     int m_packets_received;
     int m_packets_received_ok;
     int m_bytes_received;
-    int m_errors_total;
+    int m_iBitErrorsTotal;
+    int m_iBitErrorsDetected;
 };
 
 #endif // CKERNEL_H
