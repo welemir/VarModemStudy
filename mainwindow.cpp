@@ -125,7 +125,7 @@ void MainWindow::connectKernelToUI()
     connect(ui->comboBoxTxSpeed, SIGNAL(activated(QString)), this, SLOT(slotSetConnectionSpeed(QString)));
     connect(ui->comboBoxTxOutputPower, SIGNAL(activated(QString)), this, SLOT(slotSetOutputPower(QString)));
     connect(ui->comboBoxTxModulation, SIGNAL(activated(int)), this, SLOT(slotSetModulationType(int)));
-    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), this, SLOT(slotSetBitSynchLength(QString)));
+    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), this, SLOT(slotSetPatternLength(QString)));
     connect(ui->comboBoxTxSynch, SIGNAL(activated(QString)), this, SLOT(slotSetSychnroSequenceLength(QString)));
     connect(ui->lineEditTxPacketDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetDataPacketLength(QString)));
     connect(ui->lineEditTxTotalDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetTotalDataLength(QString)));
@@ -142,8 +142,8 @@ void MainWindow::connectKernelToUI()
     connect(m_pKernel, SIGNAL(signalNewTotalDataLength(int)), this, SLOT(slotNewTotalDataLength(int)));
     connect(m_pKernel, SIGNAL(signalShowBER(qreal)), this, SLOT(slotNewBER(qreal)));
     connect(m_pKernel, SIGNAL(signalShowPER(qreal)), this, SLOT(slotNewPER(qreal)));
-    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationPayload(int)), this, SLOT(slotNewChannelUtilizationPayload(int)));
-    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationSerivce(int)), this, SLOT(slotNewChannelUtilizationSerivce(int)));
+    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationPayload(qreal)), this, SLOT(slotNewChannelUtilizationPayload(qreal)));
+    connect(m_pKernel, SIGNAL(signalShowChannelUtilizationSerivce(qreal)), this, SLOT(slotNewChannelUtilizationSerivce(qreal)));
     connect(m_pKernel, SIGNAL(signalShowRxSpeed(qreal)), this, SLOT(slotNewRxSpeed(qreal)));
     connect(m_pKernel, SIGNAL(signalUpdateStatistics()), this, SLOT(slotUpdateStatistics()));
 }
@@ -178,9 +178,9 @@ void MainWindow::slotSetModulationType(int newModIndex)
     m_pKernel->slotSetModulationType(newModIndex);
 }
 
-void MainWindow::slotSetBitSynchLength(QString newLength)
+void MainWindow::slotSetPatternLength(QString newLength)
 {
-    m_pKernel->slotSetBitSynchLength(newLength.toInt());
+    m_pKernel->slotSetPatternLength(newLength.toInt());
 }
 
 void MainWindow::slotSetSychnroSequenceLength(QString newLength)
@@ -244,19 +244,25 @@ void MainWindow::slotNewBER(qreal newValue)
 void MainWindow::slotNewPER(qreal newValue)
 {
     QString errorRate;
-    errorRate.setNum(newValue, 'g', 2);
+    errorRate.setNum(newValue, 'g', 5);
     errorRate.append(" %");
     ui->lineEditRxPER->setText(errorRate);
 }
 
-void MainWindow::slotNewChannelUtilizationPayload(int newValue)
+void MainWindow::slotNewChannelUtilizationPayload(qreal newValue)
 {
-    ui->lineEditRxSPayloadInfoSize->setText(QString("%1").arg(newValue));
+  QString utilization;
+  utilization.setNum(newValue, 'g', 4);
+  utilization.append(" %");
+  ui->lineEditRxSPayloadInfoSize->setText(utilization);
 }
 
-void MainWindow::slotNewChannelUtilizationSerivce(int newValue)
+void MainWindow::slotNewChannelUtilizationSerivce(qreal newValue)
 {
-    ui->lineEditRxServiceInfoSize->setText(QString("%1").arg(newValue));
+  QString utilization;
+  utilization.setNum(newValue, 'g', 4);
+  utilization.append(" %");
+  ui->lineEditRxServiceInfoSize->setText(utilization);
 }
 
 void MainWindow::slotNewRxSpeed(qreal newValue)

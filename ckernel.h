@@ -50,7 +50,7 @@ public slots:
     void slotSetConnectionSpeed(int newSpeed);
     void slotSetOutputPower(int newPower);
     void slotSetModulationType(int newModIndex);
-    void slotSetBitSynchLength(int newLength);
+    void slotSetPatternLength(int newLength);
     void slotSetSychnroSequenceLength(int newLength);
     void slotSetDataPacketLength(int newLength);
     void slotSetTotalDataLength(int newLength);
@@ -81,8 +81,8 @@ signals:
     void signalTxProgress(int percent);
     void signalShowBER(qreal);
     void signalShowPER(qreal);
-    void signalShowChannelUtilizationPayload(int);
-    void signalShowChannelUtilizationSerivce(int);
+    void signalShowChannelUtilizationPayload(qreal);
+    void signalShowChannelUtilizationSerivce(qreal);
     void signalShowRxSpeed(qreal);
     void signalUpdateStatistics();
 

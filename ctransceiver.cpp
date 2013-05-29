@@ -10,9 +10,10 @@ const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
 const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
 
 CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
-    QObject(parent),
-    m_role(role),
-    m_RxEnabled(false)
+  QObject(parent),
+  m_role(role),
+  m_RxEnabled(false),
+  m_iPreambleLength(2)
 {
 
 
@@ -23,13 +24,37 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
 void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDataSize, int &connectionSpeed)
 {
     payloadDataSize = m_iDataFieldSize;
-    serviceDataSize = m_SynchroSequence.length();
+    serviceDataSize = getLenghtService();
     connectionSpeed = m_connectionSpeed;
 }
 
 int CTransceiver::packetsToSend()
 {
     return m_TxQueue.length();
+}
+
+int CTransceiver::getFieldSizeCrc()
+{
+  int iSize = 0;
+  switch(m_CrcType){
+    case eCrcNone:
+      iSize = 0;
+      break;
+    case eCrcXOR:
+    case eCrc8dallas:
+      iSize = 1;
+      break;
+    case eCrc16_IBM:
+    case eCrc16_CCIT:
+      iSize = 2;
+      break;
+  }
+  return iSize;
+}
+
+int CTransceiver::getLenghtService()
+{
+  return m_iPreambleLength + m_baStartPattern.length() + getFieldSizeCrc();
 }
 
 void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID)
@@ -156,9 +181,9 @@ void CTransceiver::slotSetOutputPower(int newPower)
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
-void CTransceiver::slotSetBitSynchLength(int newLength)
+void CTransceiver::slotSetPatternLength(int newLength)
 {
-    m_SynchroLength = newLength;
+    m_iPreambleLength = newLength;
     QByteArray baPacket;
     baPacket.append(ePreambleLengthSet);
     baPacket.append((char) newLength);
@@ -182,21 +207,13 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
-void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrc)
+void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrcType)
 {
-    m_CrcType = newCrc;
-    switch(m_CrcType){
-      case eCrcXOR:
-          m_iCrcFieldSize = 1;
-          break;
-      case eCrcNone:
-      default:
-        m_iCrcFieldSize = 0;
-    }
+    m_CrcType = newCrcType;
     QByteArray baPacket;
     baPacket.append(eCrcModeSet);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
-    baPacket.append((char) newCrc);
+    baPacket.append((char) m_CrcType);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -209,7 +226,7 @@ void CTransceiver::slotStartOperation()
 
     // to do
     // сгенерировать синхропоследовательность если ее длина изменилась?
-    m_SynchroSequence = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
+    m_baStartPattern = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
     if(eTransmitter == m_role)
     {
         slotTxStart();
@@ -243,7 +260,7 @@ void CTransceiver::slotUploadAllSettingsToModem()
     slotSetModulationType(m_modulation);
     slotSetConnectionSpeed(m_connectionSpeed);
     slotSetOutputPower(m_TxPower);
-    slotSetBitSynchLength(m_SynchroLength);
+    slotSetPatternLength(m_iPreambleLength);
     slotSetDataPacketLength(m_iDataFieldSize);
     slotSetCrcType(m_CrcType);
 }
@@ -263,7 +280,7 @@ void CTransceiver::TxSendPacket()
 
         m_PermitedToTxPacketsCount--;
 
-        packetToSend.prepend(m_SynchroSequence);
+        packetToSend.prepend(m_baStartPattern);
         emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
     }
 
@@ -332,7 +349,7 @@ void CTransceiver::slotRxStart()
     m_TxQueue.clear();
     // отправить сообщение "начать прием" на трансивер
     slotSetDeviceMode(eReceiver);
-    QDataStream synch_read(m_SynchroSequence);
+    QDataStream synch_read(m_baStartPattern);
     m_RxSynchro.clear();
     //m_RxSynchro << synch_read;
 
@@ -392,7 +409,7 @@ void CTransceiver::processData(QByteArray baData)
             st_iByteCounter++;
             st_ulByteNext <<= 8/*uiOffsetBitRight*/;
 
-            if(st_iByteCounter >= (m_iDataFieldSize + m_iCrcFieldSize)){
+            if(st_iByteCounter >= (m_iDataFieldSize + getFieldSizeCrc())){
               TReceivedPacketDescription packetNew;
               packetNew.baData = baDataObtained;
               // Проверка Crc

@@ -35,7 +35,7 @@ private slots:
     void slotSetConnectionSpeed(QString newSpeed);
     void slotSetOutputPower(QString newPower);
     void slotSetModulationType(int newModIndex);
-    void slotSetBitSynchLength(QString newLength);
+    void slotSetPatternLength(QString newLength);
     void slotSetSychnroSequenceLength(QString newLength);
     void slotSetDataPacketLength(QString newLength);
     void slotSetTotalDataLength(QString newLength);
@@ -49,8 +49,8 @@ private slots:
     void slotNewTotalDataLength(int);
     void slotNewBER(qreal);
     void slotNewPER(qreal);
-    void slotNewChannelUtilizationPayload(int);
-    void slotNewChannelUtilizationSerivce(int);
+    void slotNewChannelUtilizationPayload(qreal);
+    void slotNewChannelUtilizationSerivce(qreal);
     void slotNewRxSpeed(qreal);
     void slotUpdateStatistics();  // Запрос на обновление статистики обмена
 private:

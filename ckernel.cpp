@@ -197,10 +197,10 @@ void CKernel::slotSetModulationType(int newModIndex)
     m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
 }
 
-void CKernel::slotSetBitSynchLength(int newLength)
+void CKernel::slotSetPatternLength(int newLength)
 {
-    m_Transmitter->slotSetBitSynchLength(newLength);
-    m_Receiver->slotSetBitSynchLength(newLength);
+    m_Transmitter->slotSetPatternLength(newLength);
+    m_Receiver->slotSetPatternLength(newLength);
 }
 
 void CKernel::slotSetSychnroSequenceLength(int newLength)
@@ -309,8 +309,8 @@ void CKernel::slotStartOperation()
     int payloadDataSize, serviceDataSize, connectionSpeed;
     m_Transmitter->getTranscieverStatistics( payloadDataSize, serviceDataSize, connectionSpeed );
 
-    int payloadPercent = (100 * payloadDataSize )/(payloadDataSize + serviceDataSize);
-    int serviceDataPercent = ( 100 * serviceDataSize )/(payloadDataSize + serviceDataSize);
+    float payloadPercent = (100. * payloadDataSize )/(payloadDataSize + serviceDataSize);
+    float serviceDataPercent = ( 100. * serviceDataSize )/(payloadDataSize + serviceDataSize);
 
     emit signalShowChannelUtilizationPayload(payloadPercent);
     emit signalShowChannelUtilizationSerivce(serviceDataPercent);
@@ -390,7 +390,7 @@ void CKernel::slotSetDefaultValuesOnStart()
     slotSetConnectionSpeed(9600);
     slotSetOutputPower(0);
     slotSetModulationType(1);
-    slotSetBitSynchLength(2);
+    slotSetPatternLength(2);
     slotSetSychnroSequenceLength(2);
     slotSetDataPacketLength(10);
     slotSetTotalDataLength(1000);

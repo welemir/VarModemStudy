@@ -53,6 +53,8 @@ public:
     CTransceiver(T_DeviceModes role, QObject *parent = 0 );
     void getTranscieverStatistics( int &payloadDataSize, int &serviceDataSize, int &connectionSpeed);
     int packetsToSend();
+    int getFieldSizeCrc();
+    int getLenghtService();
 
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -86,10 +88,10 @@ public slots:
     void slotSetModulationType( T_ModulationType newModulaton );
     void slotSetConnectionSpeed( int newSpeed );
     void slotSetOutputPower( int newPower );
-    void slotSetBitSynchLength( int newLength );
+    void slotSetPatternLength( int newLength );
     void slotSetSychnroSequence( QByteArray sequence );
     void slotSetDataPacketLength( int newLength );
-    void slotSetCrcType( T_CrcType newCrc );
+    void slotSetCrcType( T_CrcType newCrcType );
     void slotSetCarrierFrequency( int newFrequency);
 
     void slotStartOperation();
@@ -117,10 +119,9 @@ private:
     int m_connectionSpeed;
     int m_TxPower;
     int m_iDataFieldSize;
-    int m_iCrcFieldSize;
-    int m_SynchroLength;
+    int m_iPreambleLength;
 
-    QByteArray m_SynchroSequence;
+    QByteArray m_baStartPattern;
     QTimer m_SenderTimer;
     QTimer m_TransceiverStatusTimer;
     QQueue<QByteArray> m_TxQueue;
