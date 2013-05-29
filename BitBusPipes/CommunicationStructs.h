@@ -51,6 +51,8 @@ public:
   enum{ // Стандартные полиномы для подсчёта CRC
     eCRC8_iButton = 0x8cl,
     eCRC16_CRC_16 = 0x8005l,
+    eCrc16_IBM    = 0x8005l,
+    eCrc16_CCIT   = 0x1021l,
     eCRC32_V42    = 0xedb88320l,
     eCRC32_ARCH   = 0x04c11db7l,
   };
