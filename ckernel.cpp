@@ -319,7 +319,7 @@ void CKernel::slotStartOperation()
 
 void CKernel::slotStopOperation()
 {
-    float fPer = (100. *(m_packets_to_send - m_packets_received)/ m_packets_to_send);
+    float fPer = (100. *(m_packets_to_send - m_packets_received_ok)/ m_packets_to_send);
     emit signalShowPER(fPer);
 
     float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
@@ -351,6 +351,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     packetNew.iErrorsBit = iErrorCounterBits;
     packetNew.iErrorsByte = iErrorCounterBytes;
 
+    m_packets_received++;
     if (0==iErrorCounterBits)
         m_packets_received_ok++;
     m_bytes_received += iPacketLength;
@@ -360,7 +361,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
       m_iBitErrorsDetected += iErrorCounterBits;
 
     QString packetToDiag = QString("%1 из %2, ошибок в пакете %3 (%4/%5)")
-                           .arg(++m_packets_received)
+                           .arg(m_packets_received)
                            .arg(m_packets_to_send)
                            .arg(iErrorCounterBits)
                            .arg(iErrorCounterBytes)
