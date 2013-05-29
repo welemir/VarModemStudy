@@ -262,26 +262,7 @@ void CKernel::slotStartOperation()
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
 
-    switch(m_crcType){
-    case CTransceiver::eCrcNone:
-        break;
-    case CTransceiver::eCrcXOR:{
-        unsigned char crc = 0;
-        for(int iInd = 0; iInd < newPacket.size(); iInd++){
-            crc = crc ^ newPacket[iInd];
-        }
-
-        newPacket.append((char)crc);
-        }break;
-    case CTransceiver::eCrc8dallas:{
-        CCRC_Checker crc(CCRC_Checker::eCRC8_iButton);
-        for(int iInd = 0; iInd < newPacket.size(); iInd++){
-            crc.Add(newPacket[iInd]);
-        }
-
-        newPacket.append((char)crc);
-        }break;
-    }
+    m_Transmitter->appendCrc(&newPacket);
 
     txPacket = newPacket;
 

@@ -55,6 +55,8 @@ public:
     int packetsToSend();
     int getFieldSizeCrc();
     int getLenghtService();
+    int calculateCrc(QByteArray baData);
+    void appendCrc(QByteArray *pbaData);
 
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -106,6 +108,7 @@ private slots:
     void slotTxStop();
     void slotRxStart();
     void slotRxStop();
+
 protected:
     void processData(QByteArray baData);
 
@@ -115,7 +118,7 @@ private:
 private:
     const T_DeviceModes m_role;
     T_ModulationType m_modulation;
-    T_CrcType m_CrcType;
+    T_CrcType m_crcType;
     int m_connectionSpeed;
     int m_TxPower;
     int m_iDataFieldSize;

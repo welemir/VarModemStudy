@@ -36,7 +36,7 @@ int CTransceiver::packetsToSend()
 int CTransceiver::getFieldSizeCrc()
 {
   int iSize = 0;
-  switch(m_CrcType){
+  switch(m_crcType){
     case eCrcNone:
       iSize = 0;
       break;
@@ -209,11 +209,11 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
 
 void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrcType)
 {
-    m_CrcType = newCrcType;
+    m_crcType = newCrcType;
     QByteArray baPacket;
     baPacket.append(eCrcModeSet);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
-    baPacket.append((char) m_CrcType);
+    baPacket.append((char) m_crcType);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
@@ -262,7 +262,7 @@ void CTransceiver::slotUploadAllSettingsToModem()
     slotSetOutputPower(m_TxPower);
     slotSetPatternLength(m_iPreambleLength);
     slotSetDataPacketLength(m_iDataFieldSize);
-    slotSetCrcType(m_CrcType);
+    slotSetCrcType(m_crcType);
 }
 
 void CTransceiver::slotTxTimer()
@@ -289,6 +289,61 @@ void CTransceiver::TxSendPacket()
     {
         slotTxStop();
     }
+}
+
+int CTransceiver::calculateCrc(QByteArray baData)
+{
+  switch(m_crcType){
+  case CTransceiver::eCrcNone:
+      return 0;
+  case CTransceiver::eCrcXOR:{
+      unsigned char crc = 0;
+      for(int iInd = 0; iInd < baData.size(); iInd++){
+          crc = crc ^ baData[iInd];
+      }
+      return crc;
+      }break;
+    case CTransceiver::eCrc8dallas:{
+        CCRC_Checker crc(CCRC_Checker::eCRC8_iButton);
+        for(int iInd = 0; iInd < baData.size(); iInd++){
+            crc.Add(baData[iInd]);
+        }
+        return crc;
+        }break;
+    case CTransceiver::eCrc16_IBM:{
+        CCRC_Checker crc(CCRC_Checker::eCrc16_IBM);
+        for(int iInd = 0; iInd < baData.size(); iInd++){
+            crc.Add(baData[iInd]);
+        }
+        return crc;
+        }break;
+    case CTransceiver::eCrc16_CCIT:{
+        CCRC_Checker crc(CCRC_Checker::eCrc16_CCIT);
+        for(int iInd = 0; iInd < baData.size(); iInd++){
+            crc.Add(baData[iInd]);
+        }
+        return crc;
+        }break;
+  }
+  return 0;
+}
+
+void CTransceiver::appendCrc(QByteArray *pbaData)
+{
+  unsigned int uiCrc = calculateCrc(*pbaData);
+  switch(m_crcType){
+    case eCrcNone:
+      break;
+    case eCrcXOR:
+    case eCrc8dallas:
+      pbaData->append(static_cast<char>(uiCrc));
+      break;
+    case eCrc16_IBM:
+    case eCrc16_CCIT:
+      pbaData->append(static_cast<char>(uiCrc>>8));
+      pbaData->append(static_cast<char>(uiCrc));
+      break;
+  }
 }
 
 void CTransceiver::slotStatusTimer()
@@ -413,22 +468,7 @@ void CTransceiver::processData(QByteArray baData)
               TReceivedPacketDescription packetNew;
               packetNew.baData = baDataObtained;
               // Проверка Crc
-              switch(m_CrcType){
-                case eCrcNone:
-                  packetNew.bCrcOk = true;
-                  break;
-                case eCrcXOR:
-                  int iCrcValue = 0;
-                  for(int i=0; i<baDataObtained.length() - 1; i++){
-                    iCrcValue ^= baDataObtained[i];
-                  }
-                  if(baDataObtained[baDataObtained.length() - 1] == iCrcValue)
-                    packetNew.bCrcOk = true;
-                  else
-                    packetNew.bCrcOk = false;
-
-                  break;
-              }
+              packetNew.bCrcOk = ( 0 == calculateCrc(packetNew.baData));
 
               emit signalNewRawPacketReceived(packetNew);
 
