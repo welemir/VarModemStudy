@@ -360,7 +360,9 @@ void CTransceiver::slotRxStop()
 
 void CTransceiver::processData(QByteArray baData)
 {
-    qDebug() << "FindData02 <======";
+    emit signalParceRawDataStart();
+
+    qDebug() << "FindData <======";
     static QByteArray baDataObtained;
     static unsigned long st_ulByteNext = 0; // Очередная порция битов из входного буфера
     static int st_iByteCounter = -1;
@@ -418,4 +420,6 @@ void CTransceiver::processData(QByteArray baData)
             }
         }
     }
+
+    emit signalParceRawDataEnd();
 }

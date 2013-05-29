@@ -68,6 +68,8 @@ public slots:
     void slotStopOperation();
     void slotNewPacketReceived(TReceivedPacketDescription packetNew);
     void slotSetDefaultValuesOnStart();
+    void slotParceRawDataStart();
+    void slotParceRawDataEnd();
 
 signals:
     void signalWriteDataToPipe(const QByteArray buff, unsigned short usDestAddr,
@@ -127,6 +129,7 @@ private:
     int m_packets_received_ok;
     int m_bytes_received;
     bool m_isLastPacketSent;
+    bool m_isLastRawBufferProcessed;
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
 };

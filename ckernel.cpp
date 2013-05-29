@@ -34,6 +34,7 @@ CKernel::CKernel():
     m_DataToSendLength(1000),
     m_PacketLength(100),
     m_isLastPacketSent(false),
+    m_isLastRawBufferProcessed(false),
     m_crcType(CTransceiver::eCrcNone)
 {
     m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
@@ -163,6 +164,10 @@ void CKernel::slotReceiverConnected()
             m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
+    connect(m_Receiver, SIGNAL(signalParceRawDataStart()),
+            this, SLOT(slotParceRawDataStart()) );
+    connect(m_Receiver, SIGNAL(signalParceRawDataEnd()),
+            this, SLOT(slotParceRawDataEnd()) );
 
     m_Receiver->slotUploadAllSettingsToModem();
 }
@@ -246,14 +251,13 @@ void CKernel::slotNewOutputPower(int newPower)
 {
     emit signalNewOutputPower(newPower);
 }
-bool bTakeNextPacketAndStop = false;
+
 void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 {
 }
 
 void CKernel::slotStartOperation()
 {
-    bTakeNextPacketAndStop = false;
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
@@ -289,6 +293,7 @@ void CKernel::slotStartOperation()
     m_iBitErrorsTotal = 0;
     m_iBitErrorsDetected = 0;
     m_isLastPacketSent = false;
+    m_isLastRawBufferProcessed = false;
 
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
@@ -322,8 +327,6 @@ void CKernel::slotStopOperation()
 
     m_Transmitter->slotStopOperation();
     m_Receiver->slotStopOperation();
-    m_isLastPacketSent = false;
-
 }
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
@@ -374,13 +377,10 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 
     if (m_isLastPacketSent)
     {
-        if(bTakeNextPacketAndStop || m_packets_to_send == m_packets_received_ok)
+        if(m_packets_to_send == m_packets_received_ok)
         {
             slotStopOperation();
-            m_isLastPacketSent = false;
         }
-        else
-            bTakeNextPacketAndStop = true;
     }
     emit signalUpdateStatistics();
 }
@@ -397,10 +397,21 @@ void CKernel::slotSetDefaultValuesOnStart()
     slotSetCrcType(0);
 }
 
-
 void CKernel::slotTxFinished()
 {
     m_isLastPacketSent = true;
+}
+
+void CKernel::slotParceRawDataStart()
+{
+  if(m_isLastPacketSent)
+    m_isLastRawBufferProcessed = true;
+}
+
+void CKernel::slotParceRawDataEnd()
+{
+  if(m_isLastRawBufferProcessed)
+    slotStopOperation();
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
