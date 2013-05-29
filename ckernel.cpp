@@ -32,7 +32,8 @@ CKernel::CKernel():
     m_ProgrammState(eDisconnected),
     m_DataToSendLength(1000),
     m_PacketLength(100),
-    m_isLastPacketSent(false)
+    m_isLastPacketSent(false),
+    m_isLastRawBufferProcessed(false)
 {
     m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
     m_Receiver    = new CTransceiver(CTransceiver::eReceiver, this);
@@ -161,6 +162,10 @@ void CKernel::slotReceiverConnected()
             m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
+    connect(m_Receiver, SIGNAL(signalParceRawDataStart()),
+            this, SLOT(slotParceRawDataStart()) );
+    connect(m_Receiver, SIGNAL(signalParceRawDataEnd()),
+            this, SLOT(slotParceRawDataEnd()) );
 
     m_Receiver->slotUploadAllSettingsToModem();
 }
@@ -235,10 +240,9 @@ void CKernel::slotNewOutputPower(int newPower)
 {
     emit signalNewOutputPower(newPower);
 }
-bool bTakeNextPacketAndStop = false;
+
 void CKernel::slotStartOperation()
 {
-    bTakeNextPacketAndStop = false;
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
@@ -248,8 +252,10 @@ void CKernel::slotStartOperation()
     m_packets_received = 0;
     m_packets_received_ok = 0;
     m_bytes_received = 0;
-    m_errors_total = 0;
+    m_iBitErrorsTotal = 0;
+
     m_isLastPacketSent = false;
+    m_isLastRawBufferProcessed = false;
 
     for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
     {
@@ -278,13 +284,11 @@ void CKernel::slotStopOperation()
     float fPer = (100. *(m_packets_to_send - m_packets_received)/ m_packets_to_send);
     emit signalShowPER(fPer);
 
-    float fBer = (100. *  m_errors_total) / (m_bytes_received*8);
+    float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
     emit signalShowBER(fBer);
 
     m_Transmitter->slotStopOperation();
     m_Receiver->slotStopOperation();
-    m_isLastPacketSent = false;
-
 }
 
 void CKernel::slotNewPacketReceived(QByteArray packet)
@@ -303,7 +307,7 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
     if (0==iErrorCounter)
         m_packets_received_ok++;
     m_bytes_received += iPacketLength;
-    m_errors_total += iErrorCounter;
+    m_iBitErrorsTotal += iErrorCounter;
 
     QString packetToDiag = QString("%1 из %2, %3 ошибок в пакете").arg(++m_packets_received).arg(m_packets_to_send).arg(iErrorCounter);
     emit signalPrintDiagMeaasge(packetToDiag);
@@ -312,13 +316,10 @@ void CKernel::slotNewPacketReceived(QByteArray packet)
 
     if (m_isLastPacketSent)
     {
-        if(bTakeNextPacketAndStop || m_packets_to_send == m_packets_received_ok)
+        if(m_packets_to_send == m_packets_received_ok)
         {
             slotStopOperation();
-            m_isLastPacketSent = false;
         }
-        else
-            bTakeNextPacketAndStop = true;
     }
 }
 
@@ -334,10 +335,21 @@ void CKernel::slotSetDefaultValuesOnStart()
     slotSetCrcType(0);
 }
 
-
 void CKernel::slotTxFinished()
 {
     m_isLastPacketSent = true;
+}
+
+void CKernel::slotParceRawDataStart()
+{
+  if(m_isLastPacketSent)
+    m_isLastRawBufferProcessed = true;
+}
+
+void CKernel::slotParceRawDataEnd()
+{
+  if(m_isLastRawBufferProcessed)
+    slotStopOperation();
 }
 
 void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)

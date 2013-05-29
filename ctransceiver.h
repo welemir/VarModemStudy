@@ -65,6 +65,9 @@ signals:
     void signalNewDataPacketLength( int );
     void signalNewCrcType( T_CrcType );
     void signalNewCarrierFrequency( int );
+    // Сигналы начала и окончания разбора буфера приёма для правильной отработки последнего буфера экспериминта
+    void signalParceRawDataStart();
+    void signalParceRawDataEnd();
 
 public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);
