@@ -394,17 +394,8 @@
         </spacer>
        </item>
        <item>
-        <widget class="QSplitter" name="splitter">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <widget class="QWidget" name="">
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <item>
           <layout class="QVBoxLayout" name="verticalLayout_8">
            <item>
             <widget class="QLabel" name="labelTxTotalDataLength">
@@ -427,8 +418,21 @@
             </widget>
            </item>
           </layout>
-         </widget>
-         <widget class="QWidget" name="">
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_7">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
           <layout class="QVBoxLayout" name="verticalLayout_9">
            <item>
             <spacer name="verticalSpacer_2">
@@ -462,8 +466,8 @@
             </layout>
            </item>
           </layout>
-         </widget>
-        </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
