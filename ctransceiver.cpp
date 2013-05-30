@@ -134,12 +134,6 @@ void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSender
 
         processData(baData);
     }
-//        if (m_RxEnabled)
-//        {
-
-
-//        }
-
 }
 
 void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
@@ -181,7 +175,7 @@ void CTransceiver::slotSetOutputPower(int newPower)
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
-void CTransceiver::slotSetPatternLength(int newLength)
+void CTransceiver::slotSetPreambleLength(int newLength)
 {
     m_iPreambleLength = newLength;
     QByteArray baPacket;
@@ -190,12 +184,13 @@ void CTransceiver::slotSetPatternLength(int newLength)
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
-void CTransceiver::slotSetSychnroSequence(QByteArray sequence)
+void CTransceiver::slotSetSyncPattern(QByteArray pattern)
 {
-    QByteArray baPacket;
-    baPacket.append(eSyncroStartParamSet);
-    baPacket.append(sequence);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+  m_baStartPattern = pattern;
+  QByteArray baPacket;
+  baPacket.append(eSyncroStartParamSet);
+  baPacket.append(pattern);
+  emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
 }
 
 void CTransceiver::slotSetDataPacketLength(int newLength)
@@ -223,10 +218,6 @@ void CTransceiver::slotSetCarrierFrequency(int newFrequency)
 
 void CTransceiver::slotStartOperation()
 {
-
-    // to do
-    // сгенерировать синхропоследовательность если ее длина изменилась?
-    m_baStartPattern = QByteArray(syncro_sequence_barker13, sizeof(syncro_sequence_barker13));
     if(eTransmitter == m_role)
     {
         slotTxStart();
@@ -235,7 +226,6 @@ void CTransceiver::slotStartOperation()
     {
         slotRxStart();
     }
-
 }
 
 void CTransceiver::slotStopOperation()
@@ -260,7 +250,7 @@ void CTransceiver::slotUploadAllSettingsToModem()
     slotSetModulationType(m_modulation);
     slotSetConnectionSpeed(m_connectionSpeed);
     slotSetOutputPower(m_TxPower);
-    slotSetPatternLength(m_iPreambleLength);
+    slotSetPreambleLength(m_iPreambleLength);
     slotSetDataPacketLength(m_iDataFieldSize);
     slotSetCrcType(m_crcType);
 }
@@ -439,7 +429,16 @@ void CTransceiver::processData(QByteArray baData)
     static unsigned long st_ulByteNext = 0; // Очередная порция битов из входного буфера
     static int st_iByteCounter = -1;
     static unsigned int st_uiOffsetBit = 0;  // Сдвиг для старшей части байта
-    unsigned long ulMarkerPattern = 0x1f350000;
+
+    unsigned long ulMarkerPattern = static_cast<unsigned char>(m_baStartPattern[0]);
+    unsigned long ulMarkerMask = 0x00ff0000;
+    if(2 == m_baStartPattern.length()){
+      ulMarkerPattern <<= 8;
+      ulMarkerPattern += static_cast<unsigned char>(m_baStartPattern[1]);
+      ulMarkerMask = 0xffff0000;
+    }
+    ulMarkerPattern <<= 16;
+
     int iSourceInd = 0;
     while(baData.length() > iSourceInd){
         st_ulByteNext += (((unsigned long)(unsigned char)baData[iSourceInd++])<<8);
@@ -449,7 +448,7 @@ void CTransceiver::processData(QByteArray baData)
             while(0 < st_uiOffsetBit){
                 st_ulByteNext <<= 1;
                 st_uiOffsetBit--;
-                if(ulMarkerPattern  == (st_ulByteNext & 0xffff0000)){
+                if(ulMarkerPattern  == (st_ulByteNext & ulMarkerMask)){
                     st_ulByteNext <<= st_uiOffsetBit;
                     baDataObtained.clear();
                     st_iByteCounter = 0;

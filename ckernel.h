@@ -50,8 +50,8 @@ public slots:
     void slotSetConnectionSpeed(int newSpeed);
     void slotSetOutputPower(int newPower);
     void slotSetModulationType(int newModIndex);
-    void slotSetPatternLength(int newLength);
-    void slotSetSychnroSequenceLength(int newLength);
+    void slotSetPreambleLength(int newLength);
+    void slotSetSyncPatternLength(int newLength);
     void slotSetDataPacketLength(int newLength);
     void slotSetTotalDataLength(int newLength);
     void slotSetCrcType(int newCrcIndex);

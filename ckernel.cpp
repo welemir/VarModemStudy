@@ -197,17 +197,26 @@ void CKernel::slotSetModulationType(int newModIndex)
     m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
 }
 
-void CKernel::slotSetPatternLength(int newLength)
+void CKernel::slotSetPreambleLength(int newLength)
 {
-    m_Transmitter->slotSetPatternLength(newLength);
-    m_Receiver->slotSetPatternLength(newLength);
+    m_Transmitter->slotSetPreambleLength(newLength);
+    m_Receiver->slotSetPreambleLength(newLength);
 }
 
-void CKernel::slotSetSychnroSequenceLength(int newLength)
+void CKernel::slotSetSyncPatternLength(int newLength)
 {
-    QByteArray baSequence;
-    m_Transmitter->slotSetSychnroSequence(baSequence);
-    m_Receiver->slotSetSychnroSequence(baSequence);
+  QByteArray baSequence;
+  switch(newLength){
+    case 1:
+      baSequence.append(0x2d);  // Синхропосылка рекомендованная для MRF49XA
+      break;
+    case 2:
+      baSequence.append(0xd3);  // Синхропосылка рекомендованная для CC1020
+      baSequence.append(0x91);  //
+      break;
+  }
+    m_Transmitter->slotSetSyncPattern(baSequence);
+    m_Receiver->slotSetSyncPattern(baSequence);
 }
 
 void CKernel::slotSetDataPacketLength(int newLength)
@@ -372,8 +381,8 @@ void CKernel::slotSetDefaultValuesOnStart()
     slotSetConnectionSpeed(9600);
     slotSetOutputPower(0);
     slotSetModulationType(1);
-    slotSetPatternLength(2);
-    slotSetSychnroSequenceLength(2);
+    slotSetPreambleLength(2);
+    slotSetSyncPatternLength(2);
     slotSetDataPacketLength(10);
     slotSetTotalDataLength(1000);
     slotSetCrcType(0);

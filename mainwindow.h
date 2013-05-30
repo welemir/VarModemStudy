@@ -35,8 +35,8 @@ private slots:
     void slotSetConnectionSpeed(QString newSpeed);
     void slotSetOutputPower(QString newPower);
     void slotSetModulationType(int newModIndex);
-    void slotSetPatternLength(QString newLength);
-    void slotSetSychnroSequenceLength(QString newLength);
+    void slotSetPreambleLength(QString newLength);
+    void slotSetSyncPatternLength(QString newLength);
     void slotSetDataPacketLength(QString newLength);
     void slotSetTotalDataLength(QString newLength);
 

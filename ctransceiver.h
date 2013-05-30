@@ -90,8 +90,8 @@ public slots:
     void slotSetModulationType( T_ModulationType newModulaton );
     void slotSetConnectionSpeed( int newSpeed );
     void slotSetOutputPower( int newPower );
-    void slotSetPatternLength( int newLength );
-    void slotSetSychnroSequence( QByteArray sequence );
+    void slotSetPreambleLength( int newLength );
+    void slotSetSyncPattern( QByteArray pattern);
     void slotSetDataPacketLength( int newLength );
     void slotSetCrcType( T_CrcType newCrcType );
     void slotSetCarrierFrequency( int newFrequency);

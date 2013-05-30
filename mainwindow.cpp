@@ -125,8 +125,8 @@ void MainWindow::connectKernelToUI()
     connect(ui->comboBoxTxSpeed, SIGNAL(activated(QString)), this, SLOT(slotSetConnectionSpeed(QString)));
     connect(ui->comboBoxTxOutputPower, SIGNAL(activated(QString)), this, SLOT(slotSetOutputPower(QString)));
     connect(ui->comboBoxTxModulation, SIGNAL(activated(int)), this, SLOT(slotSetModulationType(int)));
-    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), this, SLOT(slotSetPatternLength(QString)));
-    connect(ui->comboBoxTxSynch, SIGNAL(activated(QString)), this, SLOT(slotSetSychnroSequenceLength(QString)));
+    connect(ui->comboBoxTxBitSynch, SIGNAL(activated(QString)), this, SLOT(slotSetPreambleLength(QString)));
+    connect(ui->comboBoxTxSynch, SIGNAL(activated(QString)), this, SLOT(slotSetSyncPatternLength(QString)));
     connect(ui->lineEditTxPacketDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetDataPacketLength(QString)));
     connect(ui->lineEditTxTotalDataLength, SIGNAL(textChanged(QString)), this, SLOT(slotSetTotalDataLength(QString)));
     connect(ui->pushButtonTxStart, SIGNAL(clicked()), m_pKernel, SLOT(slotStartOperation()));
@@ -178,14 +178,14 @@ void MainWindow::slotSetModulationType(int newModIndex)
     m_pKernel->slotSetModulationType(newModIndex);
 }
 
-void MainWindow::slotSetPatternLength(QString newLength)
+void MainWindow::slotSetPreambleLength(QString newLength)
 {
-    m_pKernel->slotSetPatternLength(newLength.toInt());
+  m_pKernel->slotSetPreambleLength(newLength.toInt());
 }
 
-void MainWindow::slotSetSychnroSequenceLength(QString newLength)
+void MainWindow::slotSetSyncPatternLength(QString newLength)
 {
-    m_pKernel->slotSetSychnroSequenceLength(newLength.toInt());
+  m_pKernel->slotSetSyncPatternLength(newLength.toInt());
 }
 
 void MainWindow::slotSetDataPacketLength(QString newLength)
