@@ -15,8 +15,6 @@ CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
   m_RxEnabled(false),
   m_iPreambleLength(2)
 {
-
-
     connect(&m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
     connect(&m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
 }
@@ -114,7 +112,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             // 2. Буфер трансивера освободился.
             // 3. Передача в радиоканал трансивером окончена.
             if ((0 == packetsToSend()) && (3 == ucPacketQueueFree) && (0 == TxOn))
-                emit signalTxFinished();
+                emit signalTxQueueTransmitFinished();
 
 
         }break;
@@ -265,7 +263,7 @@ void CTransceiver::TxSendPacket()
 {
     if (0 < m_PermitedToTxPacketsCount)
     {
-        emit signalTxProgress( (100 * (m_iPacketsToSend - m_TxQueue.length() + 1)) / m_iPacketsToSend);
+       // emit signalTxProgress( (100 * (m_iPacketsToSend - m_TxQueue.length() + 1)) / m_iPacketsToSend);
         QByteArray packetToSend = m_TxQueue.dequeue();
 
         m_PermitedToTxPacketsCount--;

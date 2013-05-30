@@ -79,6 +79,7 @@ signals:
     void signalRxStateUpdated(bool);
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
+    void signalRxProgress(int percent);
     void signalShowBER(qreal);
     void signalShowPER(qreal);
     void signalShowChannelUtilizationPayload(qreal);
@@ -98,6 +99,7 @@ signals:
 
 private slots:
     void slotTxFinished();
+    void slotTransmitterPacketSent(QByteArray,unsigned short);
 
 private:
     CKernel();
@@ -125,6 +127,7 @@ private:
     CTransceiver::T_CrcType m_crcType;
     int m_PacketLength;
     int m_packets_to_send;
+    int m_iPacketsSentByTransmitter;
     int m_packets_received;
     int m_packets_received_ok;
     int m_bytes_received;

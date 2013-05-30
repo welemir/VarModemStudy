@@ -233,6 +233,9 @@ void CConnectionControl::slotNewDeviceFound(CConnectionDescriptor *connDescr)
     txUID = ps.value("TxUID").toByteArray();
     rxUID = ps.value("RxUID").toByteArray();
 
+    qDebug() << txUID.toHex();
+    qDebug() << rxUID.toHex();
+
     if( txUID == connDescr->m_DeviceUID )
     {
         m_TxPort = connDescr;

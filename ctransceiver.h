@@ -66,7 +66,7 @@ signals:
 
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
-    void signalTxFinished();
+    void signalTxQueueTransmitFinished();
     void signalDiagMsg(QString);
 
     void signalNewDeviceMode( T_DeviceModes );

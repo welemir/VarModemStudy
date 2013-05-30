@@ -6,6 +6,7 @@
 #include "ui_mainwindow.h"
 #include "programsettings.h"
 #include "connectioncontrol.h"
+#include "cstatuswidget.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -20,16 +21,9 @@ MainWindow::MainWindow(QWidget *parent) :
 //    m_settingsWindow     = new DialogSettings(this);
     m_diagnosticsWindow  = new DialogDiagnostics(this);
 
-    m_StatusBar_TxLabel = new QLabel(this);
-    m_StatusBar_RxLabel = new QLabel(this);
-    m_StatusBar_TxPogressBar = new QProgressBar(this);
+    m_statusWidget = new CStatusWidget();
 
-    slotSetTxStatus(false);
-    slotSetRxStatus(false);
-
-    ui->statusBar->insertPermanentWidget(0 ,m_StatusBar_TxLabel, 1);
-    ui->statusBar->insertPermanentWidget(2, m_StatusBar_RxLabel, 2);
-    ui->statusBar->insertPermanentWidget(4, m_StatusBar_TxPogressBar, 20);
+    ui->statusBar->insertPermanentWidget(1 , m_statusWidget, 20);
 
     // подключение пунктов главного меню
     QObject::connect(ui->actionShowAboutWindow, SIGNAL(triggered()), this, SLOT(showAboutWindow()));
@@ -48,15 +42,15 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     connectKernelToUI();
-    QObject::connect(this, SIGNAL(signalRunCommandFromUI(const CUICommand )), m_pKernel, SLOT(slotRunCommandFromUI(const CUICommand )));
 
     QObject::connect(m_pKernel, SIGNAL(signalPrintDiagMeaasge(QString)), m_diagnosticsWindow, SLOT(slotPrintDiagMeaasge(QString)));
 
-    QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), this, SLOT(slotSetTxStatus(bool)) );
-    QObject::connect(m_pKernel, SIGNAL(signalRxStateUpdated(bool)), this, SLOT(slotSetRxStatus(bool)) );
+    QObject::connect(m_pKernel, SIGNAL(signalTxStateUpdated(bool)), m_statusWidget, SLOT(slotSetTxStatus(bool)) );
+    QObject::connect(m_pKernel, SIGNAL(signalRxStateUpdated(bool)), m_statusWidget, SLOT(slotSetRxStatus(bool)) );
 
     connect(m_pKernel, SIGNAL(signalTxInProgress(bool)), this, SLOT(slotSetTxState(bool)));
-    connect(m_pKernel, SIGNAL(signalTxProgress(int)), m_StatusBar_TxPogressBar, SLOT(setValue(int)));
+    connect(m_pKernel, SIGNAL(signalTxProgress(int)), m_statusWidget, SLOT(slotSetTxProgress(int)));
+    connect(m_pKernel, SIGNAL(signalRxProgress(int)), m_statusWidget, SLOT(slotSetRxProgress(int)));
 
     if (kernelInPrivateThreadEnabled)
     {
@@ -67,44 +61,6 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::slotSetTxStatus(bool isOn)
-{
-    QString newMessage;
-    QString newStyleSheet;
-    if (isOn)
-    {
-        newMessage = "Tx:On";
-        newStyleSheet   = "QLabel { color : black; }";
-    }
-    else
-    {
-        newMessage = "Tx:Off";
-        newStyleSheet   = "QLabel { color : gray; }";
-    }
-
-    m_StatusBar_TxLabel->setStyleSheet(newStyleSheet);
-    m_StatusBar_TxLabel->setText(newMessage);
-}
-
-void MainWindow::slotSetRxStatus(bool isOn)
-{
-    QString newMessage;
-    QString newStyleSheet;
-    if (isOn)
-    {
-        newMessage = "Rx:On";
-        newStyleSheet   = "QLabel { color : black; }";
-    }
-    else
-    {
-        newMessage = "Rx:Off";
-        newStyleSheet   = "QLabel { color : gray; }";
-    }
-
-    m_StatusBar_RxLabel->setStyleSheet(newStyleSheet);
-    m_StatusBar_RxLabel->setText(newMessage);
 }
 
 void MainWindow::slotSetTxState(bool isInProgress)

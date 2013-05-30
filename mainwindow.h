@@ -10,6 +10,7 @@
 #include "dialogaboutprogram.h"
 //#include "dialogsettings.h"
 #include "dialogdiagnostics.h"
+#include "cstatuswidget.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,8 +23,6 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
-    void slotSetTxStatus( bool isOn);
-    void slotSetRxStatus( bool isOn);
     void slotSetTxState( bool isInProgress);
 
 
@@ -62,9 +61,7 @@ private:
     DialogAboutProgram *m_aboutProgramWindow;
 //    DialogSettings *m_settingsWindow;
     DialogDiagnostics *m_diagnosticsWindow;
-    QLabel *m_StatusBar_TxLabel;
-    QLabel *m_StatusBar_RxLabel;
-    QProgressBar *m_StatusBar_TxPogressBar;
+    CStatusWidget *m_statusWidget;
 };
 
 #endif // MAINWINDOW_H

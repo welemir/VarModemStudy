@@ -134,7 +134,10 @@ void CKernel::slotTransmitterConnected()
     connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
-    connect(m_Transmitter, SIGNAL(signalTxFinished()),
+    connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
+            this, SLOT(slotTransmitterPacketSent(QByteArray,unsigned short)));
+
+    connect(m_Transmitter, SIGNAL(signalTxQueueTransmitFinished()),
             this, SLOT(slotTxFinished()));
 
     m_Transmitter->slotSetDeviceMode(CTransceiver::eTransmitter);
@@ -266,7 +269,10 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 }
 
 void CKernel::slotStartOperation()
-{
+{   
+    if (m_PacketLength <= 50)
+        signalNewDataPacketLength(50);
+
     QByteArray newPacket;
     for( int i = 0; i < m_PacketLength; i++)
         newPacket.append(qrand());
@@ -282,6 +288,8 @@ void CKernel::slotStartOperation()
     m_bytes_received = 0;
     m_iBitErrorsTotal = 0;
     m_iBitErrorsDetected = 0;
+    m_iPacketsSentByTransmitter = 0;
+
     m_isLastPacketSent = false;
     m_isLastRawBufferProcessed = false;
 
@@ -295,6 +303,9 @@ void CKernel::slotStartOperation()
 
     emit signalShowBER(0);
     emit signalShowPER(0);
+    emit signalTxProgress(0);
+    emit signalRxProgress(0);
+    emit signalUpdateStatistics();
 
     int payloadDataSize, serviceDataSize, connectionSpeed;
     m_Transmitter->getTranscieverStatistics( payloadDataSize, serviceDataSize, connectionSpeed );
@@ -366,6 +377,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
         emit signalPrintDiagMeaasge( packetToDiag);
     }
 
+    emit signalRxProgress((100 * (m_packets_received_ok)) / m_packets_to_send);
     if (m_isLastPacketSent)
     {
         if(m_packets_to_send == m_packets_received_ok)
@@ -379,7 +391,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 void CKernel::slotSetDefaultValuesOnStart()
 {
     slotSetConnectionSpeed(9600);
-    slotSetOutputPower(0);
+    slotSetOutputPower(10);
     slotSetModulationType(1);
     slotSetPreambleLength(2);
     slotSetSyncPatternLength(2);
@@ -390,7 +402,13 @@ void CKernel::slotSetDefaultValuesOnStart()
 
 void CKernel::slotTxFinished()
 {
-    m_isLastPacketSent = true;
+    if (m_packets_to_send == m_iPacketsSentByTransmitter)
+        m_isLastPacketSent = true;
+}
+void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
+{
+    m_iPacketsSentByTransmitter++;
+    emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
 }
 
 void CKernel::slotParceRawDataStart()
