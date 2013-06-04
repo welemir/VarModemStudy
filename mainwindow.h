@@ -42,9 +42,6 @@ private slots:
     void slotNewConnectionSpeed(int);
     void slotNewOutputPower(int);
     void slotNewModulationType(int);
-    void slotNewBitSynchLength(int);
-    void slotNewSychnroSequenceLength(int);
-    void slotNewDataPacketLength(int);
     void slotNewTotalDataLength(int);
     void slotNewBER(qreal);
     void slotNewPER(qreal);

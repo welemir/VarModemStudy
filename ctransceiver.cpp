@@ -6,14 +6,10 @@
 
 #include "CommandCode_RadioModem.h"
 
-const char syncro_sequence_barker11[] = {0b00000111, 0b00010010};
-const char syncro_sequence_barker13[] = {0b00011111, 0b00110101};
-
-CTransceiver::CTransceiver( T_DeviceModes role, QObject *parent) :
+CTransceiver::CTransceiver(QObject *parent):
   QObject(parent),
-  m_role(role),
-  m_RxEnabled(false),
-  m_iPreambleLength(2)
+  m_iPreambleLength(2),
+  m_RxEnabled(false)
 {
     connect(&m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
     connect(&m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
@@ -35,9 +31,6 @@ int CTransceiver::getFieldSizeCrc()
 {
   int iSize = 0;
   switch(m_crcType){
-    case eCrcNone:
-      iSize = 0;
-      break;
     case eCrcXOR:
     case eCrc8dallas:
       iSize = 1;
@@ -45,6 +38,10 @@ int CTransceiver::getFieldSizeCrc()
     case eCrc16_IBM:
     case eCrc16_CCIT:
       iSize = 2;
+      break;
+    case eCrcNone:
+    default:
+      iSize = 0;
       break;
   }
   return iSize;
@@ -126,21 +123,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
 {
-    if (m_role == eReceiver){
-//        emit signalNewRawPacketReceived(baData);
-//        return;
-
-        processData(baData);
-    }
-}
-
-void CTransceiver::slotSetDeviceMode(CTransceiver::T_DeviceModes newMode)
-{
-    QByteArray baPacket;
-    baPacket.append(eWorkModeSet);
-    // так как T_DeviceModes совпадает с аргументами данной команды, просто передадим его
-    baPacket.append((char) newMode);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+  processData(baData);
 }
 
 void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModulaton)
@@ -214,30 +197,6 @@ void CTransceiver::slotSetCarrierFrequency(int newFrequency)
 {
 }
 
-void CTransceiver::slotStartOperation()
-{
-    if(eTransmitter == m_role)
-    {
-        slotTxStart();
-    }
-    if(eReceiver == m_role)
-    {
-        slotRxStart();
-    }
-}
-
-void CTransceiver::slotStopOperation()
-{
-    if(eTransmitter == m_role)
-    {
-        slotTxStop();
-    }
-    if(eReceiver == m_role)
-    {
-        slotRxStop();
-    }
-}
-
 void CTransceiver::slotAppendRawPacket(QByteArray newPacket)
 {
     m_TxQueue.enqueue(newPacket);
@@ -263,7 +222,6 @@ void CTransceiver::TxSendPacket()
 {
     if (0 < m_PermitedToTxPacketsCount)
     {
-       // emit signalTxProgress( (100 * (m_iPacketsToSend - m_TxQueue.length() + 1)) / m_iPacketsToSend);
         QByteArray packetToSend = m_TxQueue.dequeue();
 
         m_PermitedToTxPacketsCount--;
@@ -282,8 +240,6 @@ void CTransceiver::TxSendPacket()
 int CTransceiver::calculateCrc(QByteArray baData)
 {
   switch(m_crcType){
-  case CTransceiver::eCrcNone:
-      return 0;
   case CTransceiver::eCrcXOR:{
       unsigned char crc = 0;
       for(int iInd = 0; iInd < baData.size(); iInd++){
@@ -312,6 +268,9 @@ int CTransceiver::calculateCrc(QByteArray baData)
         }
         return crc;
         }break;
+    case CTransceiver::eCrcNone:
+    default:
+        return 0;
   }
   return 0;
 }
@@ -320,8 +279,6 @@ void CTransceiver::appendCrc(QByteArray *pbaData)
 {
   unsigned int uiCrc = calculateCrc(*pbaData);
   switch(m_crcType){
-    case eCrcNone:
-      break;
     case eCrcXOR:
     case eCrc8dallas:
       pbaData->append(static_cast<char>(uiCrc));
@@ -330,6 +287,9 @@ void CTransceiver::appendCrc(QByteArray *pbaData)
     case eCrc16_CCIT:
       pbaData->append(static_cast<char>(uiCrc>>8));
       pbaData->append(static_cast<char>(uiCrc));
+      break;
+    case eCrcNone:
+    default:
       break;
   }
 }
@@ -344,19 +304,11 @@ void CTransceiver::slotStatusTimer()
         QByteArray newPacket;
         newPacket.append(eModemStatusGet);
         emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
-
-        int txReqInterval = m_tmeTxReqDelta.elapsed();
-        m_tmeTxReqDelta.restart();
-        if (m_MaxTxReqInterval < txReqInterval)
-            m_MaxTxReqInterval = txReqInterval;
-        qDebug() << "slotStatusTimer, Interval = " << txReqInterval;
     }
 }
 
 void CTransceiver::slotTxStart()
 {
-    // отправить сообщение "начать передачу" на трансивер
-    slotSetDeviceMode(eTransmitter);
     m_PermitedToTxPacketsCount = 0;
 //    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
     m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
@@ -364,24 +316,17 @@ void CTransceiver::slotTxStart()
     m_iPacketsToSend = m_TxQueue.length();
     emit signalTxInProgress(true);
 
-    m_tmeTxReqDelta.restart();
-    m_tmeTxTmrDelta.restart();
-    m_MaxTxReqInterval = m_MaxTxTmrInterval = 0;
-
     m_bStopThread = false;
 }
 
 void CTransceiver::slotTxStop()
 {
     // выключить трансивер
-    slotSetDeviceMode(ePowerOff);
     m_TransceiverStatusTimer.stop();
     m_SenderTimer.stop();
     m_bStopThread = true;
     emit signalTxInProgress(false);
 
-    qDebug() << "MAX Req ask interval = " << m_MaxTxReqInterval;
-    qDebug() << "MAX Tx send interval = " << m_MaxTxTmrInterval;
     m_TxQueue.clear();
 
     m_bStopThread = true;
@@ -390,11 +335,6 @@ void CTransceiver::slotTxStop()
 void CTransceiver::slotRxStart()
 {
     m_TxQueue.clear();
-    // отправить сообщение "начать прием" на трансивер
-    slotSetDeviceMode(eReceiver);
-    QDataStream synch_read(m_baStartPattern);
-    m_RxSynchro.clear();
-    //m_RxSynchro << synch_read;
 
     // –егистраци€ себ€ в качестве получател€ "сырого" потока от приемника дл€ разбора
     QByteArray baPacket;
@@ -406,23 +346,18 @@ void CTransceiver::slotRxStart()
 
 void CTransceiver::slotRxStop()
 {
-    // выключить трансивер
-    slotSetDeviceMode(ePowerOff);
-
     // ќтключене трансл€ции "сырого" потока приЄмма
     QByteArray baPacket;
     baPacket.append(eSubmitRawData);
     baPacket.append((char)0);
     baPacket.append((char)0);
     emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
-
 }
 
 void CTransceiver::processData(QByteArray baData)
 {
     emit signalParceRawDataStart();
 
-    qDebug() << "FindData <======";
     static QByteArray baDataObtained;
     static unsigned long st_ulByteNext = 0; // ќчередна€ порци€ битов из входного буфера
     static int st_iByteCounter = -1;

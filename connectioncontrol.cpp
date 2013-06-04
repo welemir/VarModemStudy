@@ -62,7 +62,6 @@ int CConnectionDescriptor::FindIndexByPortName(QList<CConnectionDescriptor*> des
 //==============================================================================
 void CConnectionDescriptor::slotParceCommand(QByteArray baData, unsigned short usSenderID)
 {
-    qDebug() << "CConnectionDescriptor::slotParceCommand ";
     int iSeek = 0;
 
     while ( iSeek < baData.length() )

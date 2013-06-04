@@ -1,6 +1,7 @@
 #include <QMutex>
 #include <QStringList>
 #include <QTextCodec>
+#include <QThread>
 
 #include "ckernel.h"
 #include "BitBusPipes/USB_Communicator.h"
@@ -27,19 +28,20 @@ CKernel* CKernel::GetInstance()
 }
 
 CKernel::CKernel():
-    m_usDestinationAddress(0),
-    m_usGateway(0),
-    m_pPipeCmd(0),
-    m_ProgrammState(eDisconnected),
-    m_DataToSendLength(1000),
-    m_PacketLength(100),
-    m_isLastPacketSent(false),
-    m_isLastRawBufferProcessed(false),
-    m_crcType(CTransceiver::eCrcNone)
+  m_pPipeCmd(0),
+  m_isLastPacketSent(false),
+  m_isLastRawBufferProcessed(false),
+  m_iConnectionSpeed(9600),
+  m_iOutputPower(20),
+  m_ModulationType(CTransceiver::eFSK),
+  m_iPreambleLength(2),
+  m_iSyncPatternLength(2),
+  m_crcType(CTransceiver::eCrcNone),
+  m_iPacketDataLength(50),
+  m_iTotalDataLength(1000)
 {
-    m_Transmitter = new CTransceiver(CTransceiver::eTransmitter, this);
-    m_Receiver    = new CTransceiver(CTransceiver::eReceiver, this);
-    slotSetDefaultValuesOnStart();
+    m_Transmitter = new CTransceiver(this);
+    m_Receiver    = new CTransceiver(this);
 
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance(this);
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
@@ -47,21 +49,18 @@ CKernel::CKernel():
     connect(pConnectionControl, SIGNAL(signalReceiverrConnected()), this, SLOT(slotReceiverConnected()));
     connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), this, SLOT(slotReceiverDisconnected()));
 
+    // Сигналы ответов трансивера на изменение настроек для которых могут быть ограничения
     connect(m_Transmitter, SIGNAL(signalNewModulationType( CTransceiver::T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
     connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
-//    connect(m_Transmitter, SIGNAL(signalNewBitSynchLength( int )), this, SLOT();
-//    connect(m_Transmitter, SIGNAL(signalNewSychnroSequence( QByteArray )), this, SLOT());
-//    connect(m_Transmitter, SIGNAL(signalNewDataPacketLength( int )), this, SLOT());
-//    connect(m_Transmitter, SIGNAL(signalNewCrcType( T_CrcType )), this, SLOT()));
 
     connect(m_Transmitter, SIGNAL(signalTxInProgress(bool)), this, SIGNAL(signalTxInProgress(bool)));
     connect(m_Transmitter, SIGNAL(signalTxProgress(int)), this, SIGNAL(signalTxProgress(int)));
-    connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
-    connect(m_Receiver,    SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
-    connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(TReceivedPacketDescription)), this, SLOT(slotNewPacketReceived(TReceivedPacketDescription)));
 
+    connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
+    connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
+    connect(m_Receiver,    SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
 }
 
 void CKernel::slotRunCommandFromUI(const CUICommand UIcommand)
@@ -71,31 +70,6 @@ void CKernel::slotRunCommandFromUI(const CUICommand UIcommand)
 
     switch(UIcommand.teUIcommand)
     {
-        case CUICommand::eCmdConnect:
-        {
-            qDebug() <<  "Selected device: " << UIcommand.qsArguments;
-            setProgrammState(eDisconnected);
-            m_usDestinationAddress = UIcommand.qsArguments.toUShort();
-
-            if( (m_pPipeCmd) &&( m_usDestinationAddress ))
-              {
-                QByteArray data;
-
-                data.clear();
-                data.append(0x20);
-                data.append(0x21);
-                data.append(0x22);
-                m_pPipeCmd->WriteData(data, m_usDestinationAddress);
-
-                data.clear();
-                data.append(0x23);
-                data.append((char)0x00);
-                m_pPipeCmd->WriteData(data, m_usDestinationAddress);
-            }
-
-        }break;
-
-
         default:
         {
         }break;
@@ -140,7 +114,6 @@ void CKernel::slotTransmitterConnected()
     connect(m_Transmitter, SIGNAL(signalTxQueueTransmitFinished()),
             this, SLOT(slotTxFinished()));
 
-    m_Transmitter->slotSetDeviceMode(CTransceiver::eTransmitter);
     m_Transmitter->slotUploadAllSettingsToModem();
 
 }
@@ -184,32 +157,44 @@ void CKernel::slotReceiverDisconnected()
 
 void CKernel::slotSetConnectionSpeed(int newSpeed)
 {
-    m_Transmitter->slotSetConnectionSpeed(newSpeed);
-    m_Receiver->slotSetConnectionSpeed(newSpeed);
+  m_iConnectionSpeed = newSpeed;
+  m_Transmitter->slotSetConnectionSpeed(newSpeed);
+  m_Receiver->slotSetConnectionSpeed(newSpeed);
 }
 
 void CKernel::slotSetOutputPower(int newPower)
 {
+  m_iOutputPower = newPower;
     m_Transmitter->slotSetOutputPower(newPower);
     m_Receiver->slotSetOutputPower(newPower);
 }
 
 void CKernel::slotSetModulationType(int newModIndex)
 {
-    m_Transmitter->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
-    m_Receiver->slotSetModulationType( (CTransceiver::T_ModulationType) newModIndex );
+  switch(newModIndex){
+  case 0:
+      m_ModulationType = CTransceiver::eOOK;
+      break;
+  case 1:
+      m_ModulationType = CTransceiver::eFSK;
+      break;
+  }
+    m_Transmitter->slotSetModulationType(m_ModulationType);
+    m_Receiver->slotSetModulationType(m_ModulationType);
 }
 
 void CKernel::slotSetPreambleLength(int newLength)
 {
-    m_Transmitter->slotSetPreambleLength(newLength);
-    m_Receiver->slotSetPreambleLength(newLength);
+  m_iPreambleLength = newLength;
+  m_Transmitter->slotSetPreambleLength(newLength);
+  m_Receiver->slotSetPreambleLength(newLength);
 }
 
 void CKernel::slotSetSyncPatternLength(int newLength)
 {
   QByteArray baSequence;
-  switch(newLength){
+  m_iSyncPatternLength = newLength;
+  switch(m_iSyncPatternLength){
     case 1:
       baSequence.append(0x2d);  // Синхропосылка рекомендованная для MRF49XA
       break;
@@ -224,14 +209,14 @@ void CKernel::slotSetSyncPatternLength(int newLength)
 
 void CKernel::slotSetDataPacketLength(int newLength)
 {
-    m_PacketLength = newLength;
-    m_Transmitter->slotSetDataPacketLength(m_PacketLength);
-    m_Receiver->slotSetDataPacketLength(m_PacketLength);
+    m_iPacketDataLength = newLength;
+    m_Transmitter->slotSetDataPacketLength(m_iPacketDataLength);
+    m_Receiver->slotSetDataPacketLength(m_iPacketDataLength);
 }
 
 void CKernel::slotSetTotalDataLength(int newLength)
 {
-    m_DataToSendLength = newLength;
+    m_iTotalDataLength = newLength;
 }
 
 void CKernel::slotSetCrcType(int newCrcIndex)
@@ -270,11 +255,14 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 
 void CKernel::slotStartOperation()
 {   
-    if (m_PacketLength <= 50)
+    if (m_iPacketDataLength <= 50)
         signalNewDataPacketLength(50);
 
+    // Синхронизация всех настроек используемых устройств и програмных модулей
+    configureDevices();
+
     QByteArray newPacket;
-    for( int i = 0; i < m_PacketLength; i++)
+    for( int i = 0; i < m_iPacketDataLength; i++)
         newPacket.append(qrand());
 
     m_Transmitter->appendCrc(&newPacket);
@@ -293,13 +281,13 @@ void CKernel::slotStartOperation()
     m_isLastPacketSent = false;
     m_isLastRawBufferProcessed = false;
 
-    for (int i = 0; i<(m_DataToSendLength); i+=m_PacketLength)
+    for (int i = 0; i<(m_iTotalDataLength); i+=m_iPacketDataLength)
     {
         m_packets_to_send++;
         m_Transmitter->slotAppendRawPacket(newPacket);
     }
-    m_Receiver->slotStartOperation();
-    m_Transmitter->slotStartOperation();
+    m_Receiver->slotRxStart();
+    m_Transmitter->slotTxStart();
 
     emit signalShowBER(0);
     emit signalShowPER(0);
@@ -326,8 +314,8 @@ void CKernel::slotStopOperation()
     float fBer = (100. *  m_iBitErrorsTotal) / (m_bytes_received*8);
     emit signalShowBER(fBer);
 
-    m_Transmitter->slotStopOperation();
-    m_Receiver->slotStopOperation();
+    m_Transmitter->slotTxStop();
+    m_Receiver->slotRxStop();
 }
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
@@ -390,14 +378,6 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 
 void CKernel::slotSetDefaultValuesOnStart()
 {
-    slotSetConnectionSpeed(9600);
-    slotSetOutputPower(10);
-    slotSetModulationType(1);
-    slotSetPreambleLength(2);
-    slotSetSyncPatternLength(2);
-    slotSetDataPacketLength(10);
-    slotSetTotalDataLength(1000);
-    slotSetCrcType(0);
 }
 
 void CKernel::slotTxFinished()
@@ -409,6 +389,8 @@ void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 {
     m_iPacketsSentByTransmitter++;
     emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
+
+    m_Receiver->slotRxStart();
 }
 
 void CKernel::slotParceRawDataStart()
@@ -423,24 +405,14 @@ void CKernel::slotParceRawDataEnd()
     slotStopOperation();
 }
 
-void CKernel::setProgrammState(CKernel::T_ProgrammState newProgrammState)
+void CKernel::configureDevices()
 {
-    if (m_ProgrammState == newProgrammState)
-        return;
-
-    m_ProgrammState = newProgrammState;
-
-    QString qsMessage;
-    switch( m_ProgrammState )
-    {
-        case eConnected:
-        {
-            qsMessage = "Подключено";
-        } break;
-
-        default:
-        {
-        } break;
-    }// switch
+  slotSetConnectionSpeed(m_iConnectionSpeed);
+  slotSetOutputPower(m_iOutputPower);
+  slotSetModulationType(m_ModulationType);
+  slotSetPreambleLength(m_iPreambleLength);
+  slotSetSyncPatternLength(m_iSyncPatternLength);
+  slotSetDataPacketLength(m_iPacketDataLength);
+  slotSetCrcType(m_crcType);
 }
 

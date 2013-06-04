@@ -30,8 +30,8 @@ public:
 };
 
 class CKernel : public QObject
-{ Q_OBJECT
-private:
+{
+  Q_OBJECT
 
 public:
     static CKernel* GetInstance();
@@ -59,9 +59,6 @@ public slots:
     void slotNewModulationType(CTransceiver::T_ModulationType newModulaton );
     void slotNewConnectionSpeed(int newSpeed);
     void slotNewOutputPower(int newPower);
-//    void slotNewBitSynchLength( int newLength );
-//    void slotNewSychnroSequence( QByteArray sequence );
-//    void slotNewDataPacketLength( int newLength );
     void slotNewCrcType(int iCRCTypeIndexNew);
 
     void slotStartOperation();
@@ -96,7 +93,6 @@ signals:
     void signalNewTotalDataLength(int);
     void signalNewCrcType(int);
 
-
 private slots:
     void slotTxFinished();
     void slotTransmitterPacketSent(QByteArray,unsigned short);
@@ -106,35 +102,36 @@ private:
     CKernel(const CKernel &);
     CKernel& operator=(const CKernel &);
 
+    void configureDevices(); // Передача настроек всем подключённым устройствам (напр. в начале эксперимента)
 private:
     static CKernel* m_pInstance;
-    unsigned short m_usDestinationAddress;
-    unsigned short m_usGateway;
+
     CPipe *m_pPipeCmd;
     CTransceiver *m_Transmitter;
     CTransceiver *m_Receiver;
 
-private:
-    typedef enum
-    {
-        eDisconnected,
-        eConnected
-    }T_ProgrammState;
-    T_ProgrammState m_ProgrammState;
-
-    void setProgrammState(T_ProgrammState newProgrammState);
-    int m_DataToSendLength;
+    // Текущие настройки радиоканала для эксперимента
+    int m_iConnectionSpeed;
+    int m_iOutputPower;   // Выходная мощность для передатчика (0.5 dBm на бит)
+    CTransceiver::T_ModulationType m_ModulationType;
+    int m_iPreambleLength;
+    int m_iSyncPatternLength;
+    int m_iPacketDataLength;  // Количество данных в пакете
     CTransceiver::T_CrcType m_crcType;
-    int m_PacketLength;
+
+    int m_iTotalDataLength;
+
+    // Статистика обмена
+    int m_bytes_received;
     int m_packets_to_send;
     int m_iPacketsSentByTransmitter;
     int m_packets_received;
     int m_packets_received_ok;
-    int m_bytes_received;
-    bool m_isLastPacketSent;
-    bool m_isLastRawBufferProcessed;
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
+    //Флаги управления завершением эксперимента
+    bool m_isLastPacketSent;
+    bool m_isLastRawBufferProcessed;
 };
 
 #endif // CKERNEL_H

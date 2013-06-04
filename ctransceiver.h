@@ -26,14 +26,6 @@ class CTransceiver : public QObject
 public:
     typedef enum
     {
-        eReceiver   = 0,
-        eTransmitter= 1,
-        ePowerOff   = 3,
-        eLast_Mode
-    }T_DeviceModes;
-
-    typedef enum
-    {
         eOOK   = 0,
         eFSK   = 1,
         eLast_Modulation
@@ -50,7 +42,7 @@ public:
     }T_CrcType;
 
 public:
-    CTransceiver(T_DeviceModes role, QObject *parent = 0 );
+    CTransceiver(QObject *parent = 0 );
     void getTranscieverStatistics( int &payloadDataSize, int &serviceDataSize, int &connectionSpeed);
     int packetsToSend();
     int getFieldSizeCrc();
@@ -69,7 +61,6 @@ signals:
     void signalTxQueueTransmitFinished();
     void signalDiagMsg(QString);
 
-    void signalNewDeviceMode( T_DeviceModes );
     void signalNewModulationType( CTransceiver::T_ModulationType );
     void signalNewConnectionSpeed( int );
     void signalNewOutputPower( int );
@@ -86,7 +77,6 @@ public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);
     void slotParceRadioData(QByteArray baData, unsigned short usSenderID);
 
-    void slotSetDeviceMode( T_DeviceModes newMode );
     void slotSetModulationType( T_ModulationType newModulaton );
     void slotSetConnectionSpeed( int newSpeed );
     void slotSetOutputPower( int newPower );
@@ -96,27 +86,22 @@ public slots:
     void slotSetCrcType( T_CrcType newCrcType );
     void slotSetCarrierFrequency( int newFrequency);
 
-    void slotStartOperation();
-    void slotStopOperation();
+    void slotTxStart();
+    void slotTxStop();
+    void slotRxStart();
+    void slotRxStop();
     void slotAppendRawPacket(QByteArray newPacket);
     void slotUploadAllSettingsToModem();
 
 private slots:
     void slotTxTimer();
     void slotStatusTimer();
-    void slotTxStart();
-    void slotTxStop();
-    void slotRxStart();
-    void slotRxStop();
 
 protected:
     void processData(QByteArray baData);
-
-private:
     void TxSendPacket();
 
 private:
-    const T_DeviceModes m_role;
     T_ModulationType m_modulation;
     T_CrcType m_crcType;
     int m_connectionSpeed;
@@ -131,11 +116,6 @@ private:
     int m_PermitedToTxPacketsCount;
     bool m_RxEnabled;
     QBitArray m_RxArray;
-    QBitArray m_RxSynchro;
-    QTime m_tmeTxReqDelta;
-    QTime m_tmeTxTmrDelta;
-    int m_MaxTxReqInterval;
-    int m_MaxTxTmrInterval;
 
     int m_iPacketsToSend;
 

@@ -92,9 +92,6 @@ void MainWindow::connectKernelToUI()
     connect(m_pKernel, SIGNAL(signalNewConnectionSpeed(int)), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_pKernel, SIGNAL(signalNewOutputPower(int)), this, SLOT(slotNewOutputPower(int)));
     connect(m_pKernel, SIGNAL(signalNewModulationType(int)), this, SLOT(slotNewModulationType(int)));
-    connect(m_pKernel, SIGNAL(signalNewBitSynchLength(int)), this, SLOT(slotNewBitSynchLength(int)));
-    connect(m_pKernel, SIGNAL(signalNewSychnroSequenceLength(int)), this, SLOT(slotNewSychnroSequenceLength(int)));
-    connect(m_pKernel, SIGNAL(signalNewDataPacketLength(int)), this, SLOT(slotNewDataPacketLength(int)));
     connect(m_pKernel, SIGNAL(signalNewTotalDataLength(int)), this, SLOT(slotNewTotalDataLength(int)));
     connect(m_pKernel, SIGNAL(signalShowBER(qreal)), this, SLOT(slotNewBER(qreal)));
     connect(m_pKernel, SIGNAL(signalShowPER(qreal)), this, SLOT(slotNewPER(qreal)));
@@ -167,21 +164,6 @@ void MainWindow::slotNewOutputPower(int newValue)
 void MainWindow::slotNewModulationType(int newValue)
 {
     ui->comboBoxTxModulation->setCurrentIndex(newValue);
-}
-
-void MainWindow::slotNewBitSynchLength(int newValue)
-{
-    ui->comboBoxTxBitSynch->setEditText(QString("%1").arg(newValue));
-}
-
-void MainWindow::slotNewSychnroSequenceLength(int newValue)
-{
-    ui->comboBoxTxSynch->setEditText(QString("%1").arg(newValue));
-}
-
-void MainWindow::slotNewDataPacketLength(int newValue)
-{
-    ui->lineEditTxPacketDataLength->setText(QString("%1").arg(newValue));
 }
 
 void MainWindow::slotNewTotalDataLength(int newValue)
