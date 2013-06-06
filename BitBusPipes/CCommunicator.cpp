@@ -30,6 +30,14 @@ int CCommunicator::SendPacket(TPacket packet)
   baDataOut.append(packet.ucCRC);
   baDataOut.append(BITBUS_MARK);  // Маркер завершения пакета
 
+  // Отправка отладочного сообщения о принятом пакете
+  QString strData;
+  for( int i=0;i<=(packet.ucLength - 6); i++)
+   {
+     strData.append(QString("%1").arg(packet.ucData[i], 2, 16,QLatin1Char( '0' )));
+   }
+  qDebug() << endl << "Sended packet: --> " << strData;
+
   // Отправка данных (Длина указанная в пакете + поля CRC и длины + маркеры)
   return m_pIODevice->write(baDataOut);
 }
@@ -89,7 +97,7 @@ void CCommunicator::Parcer(unsigned char ucByteNew)
           {
             strData.append(QString("%1").arg(tmsgInput.ucData[i], 2, 16,QLatin1Char( '0' )));
           }
-        qDebug() << endl << "Received packet: " << strData;
+        qDebug() << endl << "Received packet: <-- " << strData;
       }
 
       // Отправка сигнала о принятом пакете всем подписчикам
