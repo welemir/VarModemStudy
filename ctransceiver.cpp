@@ -6,13 +6,16 @@
 
 #include "CommandCode_RadioModem.h"
 
-CTransceiver::CTransceiver(QObject *parent):
-  QObject(parent),
-  m_iPreambleLength(2),
-  m_RxEnabled(false)
+CTransceiver::CTransceiver(QObject *parent)
+  :QObject(parent)
+  ,m_iPreambleLength(2)
+  ,m_RxEnabled(false)
 {
+  m_timerSendTimeout.setSingleShot(true);
+
     connect(&m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
     connect(&m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
+    connect(&m_timerSendTimeout, SIGNAL(timeout()), this, SLOT(slotTimeoutSendToDevice()));
 }
 
 void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDataSize, int &connectionSpeed)
@@ -25,6 +28,30 @@ void CTransceiver::getTranscieverStatistics(int &payloadDataSize, int &serviceDa
 int CTransceiver::packetsToSend()
 {
     return m_TxQueue.length();
+}
+
+void CTransceiver::queueSendCommand(QByteArray baPacket)
+{
+  m_QueueCommandToSend.enqueue(baPacket);
+  if(0 == m_baCommandSendedLast.length())
+    trySendCommand();
+}
+
+void CTransceiver::trySendCommand()
+{
+  m_baCommandSendedLast.clear();
+  if(!m_QueueCommandToSend.isEmpty()){
+    m_baCommandSendedLast = m_QueueCommandToSend.dequeue();
+    emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
+    if(eSubmitRawData == m_baCommandSendedLast[0])
+      m_baCommandSendedLast.clear();
+    else{
+      m_timerSendTimeout.start(20);
+    }
+  }
+  else{
+    m_timerSendTimeout.stop();
+  }
 }
 
 int CTransceiver::getFieldSizeCrc()
@@ -114,11 +141,10 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 
         }break;
         default:
-        {
-            return;
-        }break;
+         break;
         }// switch
     }
+  trySendCommand();
 }
 
 void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSenderID)
@@ -133,7 +159,7 @@ void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModul
     baPacket.append(eModulationTypeSet);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newModulaton);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetConnectionSpeed(int newSpeed)
@@ -143,7 +169,7 @@ void CTransceiver::slotSetConnectionSpeed(int newSpeed)
     baPacket.append(eModulationSpeedSet);
     unsigned short modulationSpeed = newSpeed;
     baPacket.append((char*)&modulationSpeed, sizeof(modulationSpeed));
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetOutputPower(int newPower)
@@ -153,7 +179,7 @@ void CTransceiver::slotSetOutputPower(int newPower)
     baPacket.append(eTxPowerSet);
     signed short txPower = 2*newPower;
     baPacket.append((char*)&txPower, sizeof(txPower));
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetPreambleLength(int newLength)
@@ -162,7 +188,7 @@ void CTransceiver::slotSetPreambleLength(int newLength)
     QByteArray baPacket;
     baPacket.append(ePreambleLengthSet);
     baPacket.append((char) newLength);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetSyncPattern(QByteArray pattern)
@@ -171,7 +197,7 @@ void CTransceiver::slotSetSyncPattern(QByteArray pattern)
   QByteArray baPacket;
   baPacket.append(eSyncroStartParamSet);
   baPacket.append(pattern);
-  emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+  queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetDataPacketLength(int newLength)
@@ -180,7 +206,7 @@ void CTransceiver::slotSetDataPacketLength(int newLength)
     QByteArray baPacket;
     baPacket.append(eDataFieldSizeSet);
     baPacket.append((char) newLength);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrcType)
@@ -190,7 +216,7 @@ void CTransceiver::slotSetCrcType(CTransceiver::T_CrcType newCrcType)
     baPacket.append(eCrcModeSet);
     // так как T_CrcType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) m_crcType);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotSetCarrierFrequency(int newFrequency)
@@ -220,7 +246,8 @@ void CTransceiver::slotTxTimer()
 
 void CTransceiver::TxSendPacket()
 {
-    if (0 < m_PermitedToTxPacketsCount)
+    if((0 < m_PermitedToTxPacketsCount)
+       &&(!m_TxQueue.isEmpty()))
     {
         QByteArray packetToSend = m_TxQueue.dequeue();
 
@@ -228,12 +255,6 @@ void CTransceiver::TxSendPacket()
 
         packetToSend.prepend(m_baStartPattern);
         emit signalNewRawPacket(packetToSend, MODEM_DEVICE_ID);
-    }
-
-
-    if (m_TxQueue.empty())
-    {
-        slotTxStop();
     }
 }
 
@@ -299,12 +320,21 @@ void CTransceiver::slotStatusTimer()
     // в Poll режиме опрашивается трансивер. Запрашиваем статус модема
     // статус модема содаржит 1 char  количество свободных на отправку мест в очереди
     // и второй char со статусом модема
-    if(0 == m_PermitedToTxPacketsCount)
+    if((0 == m_PermitedToTxPacketsCount)
+       ||(0 == packetsToSend()))
     {
         QByteArray newPacket;
         newPacket.append(eModemStatusGet);
         emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
     }
+}
+
+void CTransceiver::slotTimeoutSendToDevice()
+{
+  if(0 != m_baCommandSendedLast.length()){
+    emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
+    m_timerSendTimeout.start(20);
+  }
 }
 
 void CTransceiver::slotTxStart()
@@ -341,7 +371,7 @@ void CTransceiver::slotRxStart()
     baPacket.append(eSubmitRawData);
     baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/);
     baPacket.append((char) 0xfff0/*CUSB_Communicator::eDevID_Usb*/>>8);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::slotRxStop()
@@ -351,7 +381,7 @@ void CTransceiver::slotRxStop()
     baPacket.append(eSubmitRawData);
     baPacket.append((char)0);
     baPacket.append((char)0);
-    emit signalNewCommand(baPacket, MODEM_DEVICE_ID);
+    queueSendCommand(baPacket);
 }
 
 void CTransceiver::processData(QByteArray baData)

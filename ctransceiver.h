@@ -45,6 +45,8 @@ public:
     CTransceiver(QObject *parent = 0 );
     void getTranscieverStatistics( int &payloadDataSize, int &serviceDataSize, int &connectionSpeed);
     int packetsToSend();
+    void queueSendCommand(QByteArray baPacket);
+    void trySendCommand();
     int getFieldSizeCrc();
     int getLenghtService();
     int calculateCrc(QByteArray baData);
@@ -96,6 +98,7 @@ public slots:
 private slots:
     void slotTxTimer();
     void slotStatusTimer();
+    void slotTimeoutSendToDevice();
 
 protected:
     void processData(QByteArray baData);
@@ -113,6 +116,9 @@ private:
     QTimer m_SenderTimer;
     QTimer m_TransceiverStatusTimer;
     QQueue<QByteArray> m_TxQueue;
+    QQueue<QByteArray> m_QueueCommandToSend;
+    QByteArray m_baCommandSendedLast;
+    QTimer m_timerSendTimeout;
     int m_PermitedToTxPacketsCount;
     bool m_RxEnabled;
     QBitArray m_RxArray;

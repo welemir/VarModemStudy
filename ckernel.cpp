@@ -54,7 +54,6 @@ CKernel::CKernel():
     connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
 
-    connect(m_Transmitter, SIGNAL(signalTxInProgress(bool)), this, SIGNAL(signalTxInProgress(bool)));
     connect(m_Transmitter, SIGNAL(signalTxProgress(int)), this, SIGNAL(signalTxProgress(int)));
     connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(TReceivedPacketDescription)), this, SLOT(slotNewPacketReceived(TReceivedPacketDescription)));
 
@@ -255,6 +254,7 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 
 void CKernel::slotStartOperation()
 {   
+  emit signalTxInProgress(true);
     if (m_iPacketDataLength <= 50)
         signalNewDataPacketLength(50);
 
@@ -316,6 +316,7 @@ void CKernel::slotStopOperation()
 
     m_Transmitter->slotTxStop();
     m_Receiver->slotRxStop();
+    emit signalTxInProgress(false);
 }
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
