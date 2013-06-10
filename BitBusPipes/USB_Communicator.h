@@ -4,13 +4,10 @@
 #ifndef _USB_COMMUNICATOR_H_
 #define _USB_COMMUNICATOR_H_
 
-#include <QObject>
-
-
 #include "CCommunicator.h"
-#include "serialport.h"
 
-QT_USE_NAMESPACE_SERIALPORT
+#include <QObject>
+#include <QtSerialPort/QSerialPort>
 
 /******************************************************************************/
 class CUSB_Communicator: public CCommunicator
@@ -48,7 +45,7 @@ protected:
 
 private:
   static CUSB_Communicator* st_pThis;
-  SerialPort  *m_pSerialPort;       // Драйвер последовательного устройства USB
+  QSerialPort  *m_pSerialPort;       // Драйвер последовательного устройства USB
 
 };
 //==============================================================================

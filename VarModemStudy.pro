@@ -6,7 +6,7 @@
 
 QT       += core gui network
 equals(QT_MAJOR_VERSION, 4) {
-    include($$PWD/QtAddOnSerialPort/qt4support_serialport.prf)
+    qtAddLibrary(QtSerialPort)
 } else {
     QT += widgets serialport
 }

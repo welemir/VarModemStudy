@@ -1,7 +1,7 @@
 #include "connectioncontrol.h"
 
 #include "BitBusPipes/ctcp_client_communicator.h"
-#include "serialportinfo.h"
+#include <QtSerialPort/QSerialPortInfo>
 #include "BitBusPipes/PipeMgr.h"
 #include <QMutex>
 #include <QList>
@@ -141,12 +141,12 @@ CConnectionControl::CConnectionControl(QObject *parent) :
 void CConnectionControl::slotUpdate()
 {
     // Получение списка имеющихся в системе последовательных портов
-    QList<SerialPortInfo> serialPortInfoList = SerialPortInfo::availablePorts();
+    QList<QSerialPortInfo> serialPortInfoList = QSerialPortInfo::availablePorts();
 
     QList<QString> listPortsNamesNew;  // Обновленный список доступных в системе портов
 
     // Копирование в локальный список толко портов пригодных для работы
-    foreach (const SerialPortInfo &serialPortInfo, serialPortInfoList) {
+    foreach (const QSerialPortInfo &serialPortInfo, serialPortInfoList) {
         if( !serialPortInfo.description().contains("AT91SAM"))
           continue;
         listPortsNamesNew.append(serialPortInfo.portName());  // Добавление порта
