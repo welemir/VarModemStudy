@@ -40,17 +40,15 @@ void CTransceiver::queueSendCommand(QByteArray baPacket)
 void CTransceiver::trySendCommand()
 {
   m_baCommandSendedLast.clear();
-  if(!m_QueueCommandToSend.isEmpty()){
+  if(m_QueueCommandToSend.isEmpty()){
+    m_timerSendTimeout.stop();
+  }else{
     m_baCommandSendedLast = m_QueueCommandToSend.dequeue();
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
     if(eSubmitRawData == m_baCommandSendedLast[0])
       m_baCommandSendedLast.clear();
-    else{
-      m_timerSendTimeout.start(20);
-    }
-  }
-  else{
-    m_timerSendTimeout.stop();
+
+    m_timerSendTimeout.start(10);
   }
 }
 
@@ -333,8 +331,10 @@ void CTransceiver::slotTimeoutSendToDevice()
 {
   if(0 != m_baCommandSendedLast.length()){
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
-    m_timerSendTimeout.start(20);
+    m_timerSendTimeout.start(10);
   }
+  else
+	trySendCommand();
 }
 
 void CTransceiver::slotTxStart()
