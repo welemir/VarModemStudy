@@ -5,10 +5,6 @@
 #include <QMutex>
 #include <QTimer>
 
-#include "serialportinfo.h"
-
-QT_USE_NAMESPACE_SERIALPORT
-
 class CBitBusPipes : public QObject
 {
     Q_OBJECT
@@ -27,7 +23,7 @@ public:
 public slots:
     void slotWriteDataToPipe(const QByteArray buff, unsigned short usDestAddr,
                              TPipeType PipeID);
-//    void slotConnectSerialPort(SerialPort newSP);
+
 signals:
     //void signalNewData();
 

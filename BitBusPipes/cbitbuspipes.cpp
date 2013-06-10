@@ -23,6 +23,5 @@ void CBitBusPipes::slotWriteDataToPipe(const QByteArray buff, unsigned short usD
 {
 }
 
-//    void slotConnectSerialPort(SerialPort newSP);
 
 
