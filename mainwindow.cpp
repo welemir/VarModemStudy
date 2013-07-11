@@ -123,7 +123,9 @@ void MainWindow::slotSetConnectionSpeed(QString newSpeed)
 
 void MainWindow::slotSetOutputPower(QString newPower)
 {
-    m_pKernel->slotSetOutputPower(newPower.toInt());
+    int iOutputPowerToSet = newPower.toInt();
+    iOutputPowerToSet -= 6;
+    m_pKernel->slotSetOutputPower(iOutputPowerToSet);
 }
 
 void MainWindow::slotSetModulationType(int newModIndex)

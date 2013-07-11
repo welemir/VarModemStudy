@@ -32,7 +32,7 @@ CKernel::CKernel():
   m_isLastPacketSent(false),
   m_isLastRawBufferProcessed(false),
   m_iConnectionSpeed(9600),
-  m_iOutputPower(20),
+  m_iOutputPower(4),
   m_ModulationType(CTransceiver::eFSK),
   m_iPreambleLength(2),
   m_iSyncPatternLength(2),
