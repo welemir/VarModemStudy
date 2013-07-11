@@ -33,7 +33,8 @@ SOURCES +=  \
     ../connectioncontrol.cpp \
     TestDeviceExistance.cpp \
     ../ctransceiver.cpp \
-    TestHelper.cpp
+    TestHelper.cpp \
+    TestDeviceStatus.cpp
 
 HEADERS += \
     ../BitBusPipes/cbitbuspipes.h \
@@ -49,4 +50,5 @@ HEADERS += \
     ../CommandCode_RadioModem.h \
     TestDeviceExistance.h \
     ../ctransceiver.h \
-    TestHelper.h
+    TestHelper.h \
+    TestDeviceStatus.h
