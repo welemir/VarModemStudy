@@ -18,7 +18,6 @@ private slots:
     void initTestCase();
     void testReceiverConnected();
     void testTransmitterConnected();
-    void sendPacket();
 };
 
 
