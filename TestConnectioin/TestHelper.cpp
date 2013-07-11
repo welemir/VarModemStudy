@@ -79,11 +79,9 @@ void TestHelper::attachTransmitter()
 void TestHelper::slotTransmitterConnected()
 {  
     m_bTransmitterConnected = true;
-    qDebug() << "TxReady: " << m_bTransmitterConnected;
 }
 
 void TestHelper::slotReceiverConnected()
 {
     m_bReceiverConnected = true;
-    qDebug() << "RxReady" << m_bReceiverConnected;
 }

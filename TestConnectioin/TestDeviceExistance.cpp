@@ -20,7 +20,7 @@ void TestDeviceExistance::initTestCase()
     TestHelper::getInstance()->initDevices();
 
     qDebug() << "Waiting until devices starts";
-    QTest::qWait(10000);
+    QTest::qWait(5000);
 }
 
 void TestDeviceExistance::testReceiverConnected()
@@ -37,6 +37,7 @@ void TestDeviceExistance::testReceiverConnected()
         return;
     }
 
+    // Тест на подключение прошли, проинициализируем ресивер
     testHelper->attachReceiver();
 }
 
@@ -52,11 +53,6 @@ void TestDeviceExistance::testTransmitterConnected()
         return;
     }
 
+    // Тест на подключение прошли, проинициализируем трансмиттер
     testHelper->attachTransmitter();
-
-}
-
-void TestDeviceExistance::sendPacket()
-{
-
 }
