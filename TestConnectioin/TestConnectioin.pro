@@ -4,7 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core testlib network
+CONFIG += release
+QT += testlib
+QT += core network
 equals(QT_MAJOR_VERSION, 4) {
     qtAddLibrary(QtSerialPort)
 } else {
@@ -29,7 +31,9 @@ SOURCES +=  \
     ../BitBusPipes/ctcp_client_communicator.cpp \
     ../BitBusPipes/CCommunicator.cpp \
     ../connectioncontrol.cpp \
+    TestDeviceExistance.cpp \
     ../ctransceiver.cpp \
+    TestHelper.cpp
 
 HEADERS += \
     ../BitBusPipes/cbitbuspipes.h \
@@ -40,8 +44,9 @@ HEADERS += \
     ../BitBusPipes/ctcp_client_communicator.h \
     ../BitBusPipes/CCommunicator.h \
     ../connectioncontrol.h \
-    ../ctransceiver.h \
     ../CommandCode_RadioModem.h \
     ../CommandCode.h \
     ../CommandCode_RadioModem.h \
+    TestDeviceExistance.h \
     ../ctransceiver.h \
+    TestHelper.h
