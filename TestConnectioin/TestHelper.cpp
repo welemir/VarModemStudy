@@ -3,7 +3,6 @@
 #include <QDebug>
 
 #include <connectioncontrol.h>
-#include "ctransceiver.h"
 
 TestHelper *TestHelper::m_pThis = NULL;
 
@@ -19,10 +18,21 @@ TestHelper::TestHelper(QObject *parent)
     : QObject(parent)
     , m_bTransmitterConnected(false)
     , m_bReceiverConnected(false)
+    , m_iReceiverAnswer(0)
+    , m_iTransmitterAnswer(0)
 {
 }
 
 
+void TestHelper::slotTransmitterConnected()
+{
+    m_bTransmitterConnected = true;
+}
+
+void TestHelper::slotReceiverConnected()
+{
+    m_bReceiverConnected = true;
+}
 
 void TestHelper::initDevices()
 {
@@ -49,9 +59,6 @@ void TestHelper::attachReceiver()
             m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
     connect(m_Receiver, SIGNAL(signalParceRawDataStart()),
             this, SLOT(slotParceRawDataStart()) );
-    connect(m_Receiver, SIGNAL(signalParceRawDataEnd()),
-            this, SLOT(slotParceRawDataEnd()) );
-
 }
 
 void TestHelper::attachTransmitter()
@@ -69,19 +76,110 @@ void TestHelper::attachTransmitter()
     connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
-    connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
-            this, SLOT(slotTransmitterPacketSent(QByteArray,unsigned short)));
 
-    connect(m_Transmitter, SIGNAL(signalTxQueueTransmitFinished()),
-            this, SLOT(slotTxFinished()));
+
 }
 
-void TestHelper::slotTransmitterConnected()
-{  
-    m_bTransmitterConnected = true;
-}
-
-void TestHelper::slotReceiverConnected()
+void TestHelper::askTransceiver(CTransceiver *device, const TCommand_RadioModem cmd, int value, TInfoType_RadioModem &waitFor)
 {
-    m_bReceiverConnected = true;
+    waitFor = static_cast<TInfoType_RadioModem>(eAnswerMark + cmd);
+    switch (cmd)
+    {
+        case eModulationTypeSet:
+        {
+            device->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
+
+        }break;
+
+        case eModulationSpeedSet:
+        {
+            device->slotSetConnectionSpeed(static_cast<int>(value));
+        }break;
+
+    default:
+        waitFor = static_cast<TInfoType_RadioModem>(0);
+        break;
+    }
+}
+
+void TestHelper::askTransmitter(const TCommand_RadioModem cmd, int value)
+{
+    switch (cmd)
+    {
+        case eModulationTypeSet:
+        {
+            connect(m_Transmitter, SIGNAL(signalNewModulationType(CTransceiver::T_ModulationType)), this, SLOT(transmitterModulationTypeChanged(CTransceiver::T_ModulationType)));
+            m_Transmitter->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
+            m_awaitingTransmitterAnswer = eAnsModulationType;
+        }break;
+
+        case eModulationSpeedSet:
+        {
+            connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed(int)), this, SLOT(transmitterModulationSpeedChanged(int)));
+            m_Transmitter->slotSetConnectionSpeed(static_cast<int>(value));
+            m_awaitingTransmitterAnswer = eAnsModulationSpeed;
+        }break;
+
+    default:
+        m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
+        break;
+    }
+}
+
+void TestHelper::askReceiver(const TCommand_RadioModem cmd, int value)
+{
+    switch (cmd)
+    {
+        case eModulationTypeSet:
+        {
+            connect(m_Receiver, SIGNAL(signalNewModulationType(CTransceiver::T_ModulationType)), this, SLOT(receiverModulationTypeChanged(CTransceiver::T_ModulationType)));
+            m_Receiver->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
+            m_awaitingReceiverAnswer = eAnsModulationType;
+        }break;
+
+        case eModulationSpeedSet:
+        {
+            connect(m_Receiver, SIGNAL(signalNewConnectionSpeed(int)), this, SLOT(receiverModulationSpeedChanged(int)));
+            m_Receiver->slotSetConnectionSpeed(static_cast<int>(value));
+            m_awaitingReceiverAnswer = eAnsModulationSpeed;
+        }break;
+
+    default:
+        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
+        break;
+    }
+}
+
+void TestHelper::transmitterModulationTypeChanged(CTransceiver::T_ModulationType value)
+{
+    if (eAnsModulationType == m_awaitingTransmitterAnswer)
+    {
+        m_iTransmitterAnswer = static_cast<int>(value);
+        m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
+}
+void TestHelper::receiverModulationTypeChanged(CTransceiver::T_ModulationType value)
+{
+    if (eAnsModulationType == m_awaitingReceiverAnswer)
+    {
+        m_iReceiverAnswer = static_cast<int>(value);
+        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
+}
+
+void TestHelper::transmitterModulationSpeedChanged(int value)
+{
+    if (eAnsModulationSpeed == m_awaitingTransmitterAnswer)
+    {
+        m_iTransmitterAnswer = static_cast<int>(value);
+        m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
+}
+void TestHelper::receiverModulationSpeedChanged(int value)
+{
+    if (eAnsModulationSpeed == m_awaitingReceiverAnswer)
+    {
+        m_iReceiverAnswer = static_cast<int>(value);
+        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
 }

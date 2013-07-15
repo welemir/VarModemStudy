@@ -20,7 +20,7 @@ void TestDeviceExistance::initTestCase()
     TestHelper::getInstance()->initDevices();
 
     qDebug() << "Waiting until devices starts";
-    QTest::qWait(5000);
+    QTest::qWait(3000);
 }
 
 void TestDeviceExistance::testReceiverConnected()
@@ -30,12 +30,7 @@ void TestDeviceExistance::testReceiverConnected()
     bool bExpected = true;
 
     qDebug() << "isRxConnected :" << testHelper->isRxConnected();
-    if (!QTest::qCompare(testHelper->isRxConnected(), bExpected, "ReceiverConnected", "ReceiverConnected", NULL, 0))
-    {
-        qDebug() << "Timeout expired:";
-        qDebug() << "Seems device is not connected";
-        return;
-    }
+    QCOMPARE(testHelper->isRxConnected(), bExpected);
 
     // Тест на подключение прошли, проинициализируем ресивер
     testHelper->attachReceiver();
@@ -46,12 +41,7 @@ void TestDeviceExistance::testTransmitterConnected()
     TestHelper *testHelper = TestHelper::getInstance();
 
     bool bExpected = true;
-    if (!QTest::qCompare(testHelper->isTxConnected(), bExpected, "TrensmitterConnected", "TrensmitterConnected", NULL, 0))
-    {
-        qDebug() << "Timeout expired:";
-        qDebug() << "Seems device is not connected";
-        return;
-    }
+    QCOMPARE(testHelper->isTxConnected(), bExpected);
 
     // Тест на подключение прошли, проинициализируем трансмиттер
     testHelper->attachTransmitter();

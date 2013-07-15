@@ -34,7 +34,7 @@ SOURCES +=  \
     TestDeviceExistance.cpp \
     ../ctransceiver.cpp \
     TestHelper.cpp \
-    TestDeviceStatus.cpp
+    TestDeviceSettings.cpp
 
 HEADERS += \
     ../BitBusPipes/cbitbuspipes.h \
@@ -51,4 +51,4 @@ HEADERS += \
     TestDeviceExistance.h \
     ../ctransceiver.h \
     TestHelper.h \
-    TestDeviceStatus.h
+    TestDeviceSettings.h
