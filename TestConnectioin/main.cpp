@@ -8,8 +8,9 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+
     if(QTest::qExec(new TestDeviceExistance, argc, argv))
-        qCritical() << "TestDeviceExistance FAILED! Please check if device is not connected to USB";
+        qCritical() << "TestDeviceConnection FAILED! Cannot create CTransceiver objects";
     else
     if (QTest::qExec(new TestDeviceSettings, argc, argv))
         qCritical() << "TestDeviceSettings FAILED!";

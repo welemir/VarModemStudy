@@ -44,7 +44,7 @@ void TestHelper::initDevices()
 
 }
 
-void TestHelper::attachReceiver()
+void TestHelper::attachReceiver(CTransceiver *pTransmitter)
 {
     m_Receiver    = new CTransceiver(this);
 
@@ -61,9 +61,9 @@ void TestHelper::attachReceiver()
             this, SLOT(slotParceRawDataStart()) );
 }
 
-void TestHelper::attachTransmitter()
+void TestHelper::attachTransmitter(CTransceiver *pTransmitter)
 {
-    m_Transmitter = new CTransceiver(this);
+    m_Transmitter = pTransmitter;
 
     CPipeMgr *pipeMgr = CConnectionControl::GetInstance()->GetTxDescriptor()->m_pipeMgr;
     CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
@@ -76,33 +76,9 @@ void TestHelper::attachTransmitter()
     connect(m_Transmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
-
-
 }
-
-void TestHelper::askTransceiver(CTransceiver *device, const TCommand_RadioModem cmd, int value, TInfoType_RadioModem &waitFor)
-{
-    waitFor = static_cast<TInfoType_RadioModem>(eAnswerMark + cmd);
-    switch (cmd)
-    {
-        case eModulationTypeSet:
-        {
-            device->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
-
-        }break;
-
-        case eModulationSpeedSet:
-        {
-            device->slotSetConnectionSpeed(static_cast<int>(value));
-        }break;
-
-    default:
-        waitFor = static_cast<TInfoType_RadioModem>(0);
-        break;
-    }
-}
-
-void TestHelper::askTransmitter(const TCommand_RadioModem cmd, int value)
+#include <QSignalSpy>
+void TestHelper::askTransmitter(const int cmd, int value)
 {
     switch (cmd)
     {
@@ -119,7 +95,12 @@ void TestHelper::askTransmitter(const TCommand_RadioModem cmd, int value)
             m_Transmitter->slotSetConnectionSpeed(static_cast<int>(value));
             m_awaitingTransmitterAnswer = eAnsModulationSpeed;
         }break;
-
+        case eTxPowerSet:
+        {
+            connect(m_Transmitter, SIGNAL(signalNewOutputPower(int)), this, SLOT(transmitterTxPowerChanged(int)));
+            m_Transmitter->slotSetConnectionSpeed(static_cast<int>(value));
+            m_awaitingTransmitterAnswer = eAnsModulationSpeed;
+        } break;
     default:
         m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
         break;
@@ -143,6 +124,13 @@ void TestHelper::askReceiver(const TCommand_RadioModem cmd, int value)
             m_Receiver->slotSetConnectionSpeed(static_cast<int>(value));
             m_awaitingReceiverAnswer = eAnsModulationSpeed;
         }break;
+
+        case eTxPowerSet:
+        {
+            connect(m_Receiver, SIGNAL(signalNewOutputPower(int)), this, SLOT(receiverTxPowerChanged(int)));
+            m_Receiver->slotSetConnectionSpeed(static_cast<int>(value));
+            m_awaitingTransmitterAnswer = eAnsModulationSpeed;
+        } break;
 
     default:
         m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
@@ -175,9 +163,27 @@ void TestHelper::transmitterModulationSpeedChanged(int value)
         m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
     }
 }
+
 void TestHelper::receiverModulationSpeedChanged(int value)
 {
     if (eAnsModulationSpeed == m_awaitingReceiverAnswer)
+    {
+        m_iReceiverAnswer = static_cast<int>(value);
+        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
+}
+
+void TestHelper::transmitterTxPowerChanged(int value)
+{
+    if (eAnsTxPower == m_awaitingReceiverAnswer)
+    {
+        m_iReceiverAnswer = static_cast<int>(value);
+        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
+    }
+}
+void TestHelper::receiverTxPowerChanged(int value)
+{
+    if (eAnsTxPower == m_awaitingReceiverAnswer)
     {
         m_iReceiverAnswer = static_cast<int>(value);
         m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);

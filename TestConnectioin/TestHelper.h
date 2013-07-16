@@ -24,9 +24,9 @@ public:
     void initDevices();
     bool isRxConnected() {return m_bReceiverConnected;}
     bool isTxConnected() {return m_bTransmitterConnected;}
-    void attachReceiver();
-    void attachTransmitter();
-    void askTransmitter(const TCommand_RadioModem cmd, int value);
+    void attachReceiver(CTransceiver *pTransmitter);
+    void attachTransmitter(CTransceiver *pTransmitter);
+    void askTransmitter(const int cmd, int value);
     void askReceiver(const TCommand_RadioModem cmd, int value);
     int transmitterAnswer() {return m_iTransmitterAnswer;}
     int receiverAnswer() {return m_iReceiverAnswer;}
@@ -38,11 +38,8 @@ private slots:
     void receiverModulationTypeChanged(CTransceiver::T_ModulationType value);
     void transmitterModulationSpeedChanged(int value);
     void receiverModulationSpeedChanged(int value);
-
-private:
-    // обобщение askTransmitter и askReceiver
-    void askTransceiver(CTransceiver *device, const TCommand_RadioModem cmd, int value, TInfoType_RadioModem &waitFor);
-    void transceiverModulationTypeChanged();
+    void transmitterTxPowerChanged(int value);
+    void receiverTxPowerChanged(int value);
 
 private:
     static TestHelper *m_pThis;
@@ -52,8 +49,8 @@ private:
     bool m_bReceiverConnected;
 
     // для тестирования корректности установки настроек будем ожидать ответ с нужной настройкой
-    TInfoType_RadioModem m_awaitingTransmitterAnswer;
-    TInfoType_RadioModem m_awaitingReceiverAnswer;
+    int m_awaitingTransmitterAnswer;
+    int m_awaitingReceiverAnswer;
     int m_iReceiverAnswer;
     int m_iTransmitterAnswer;
 };

@@ -1,23 +1,24 @@
 #ifndef TESTDEVICEEXISTANCE_H
 #define TESTDEVICEEXISTANCE_H
 
+#include "TestBase.h"
 #include <QObject>
 
-
 #include "TestHelper.h"
+
 class CTransceiver;
-class TestDeviceExistance : public QObject
+class TestDeviceExistance : public TestBase
 {
     Q_OBJECT
 
 public:
-    TestDeviceExistance();
+    TestDeviceExistance(QObject *parent = 0);
 
 // тест подключения устройств
 private slots:
-    void initTestCase();
-    void testReceiverConnected();
-    void testTransmitterConnected();
+    void init();
+    void receiverConnected();
+    void transmitterConnected();
 };
 
 

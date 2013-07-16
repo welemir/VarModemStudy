@@ -9,12 +9,12 @@
 
 #include "ctransceiver.h"
 
-TestDeviceExistance::TestDeviceExistance()
-    : QObject()
+TestDeviceExistance::TestDeviceExistance(QObject *parent)
+    : TestBase(parent)
 {
 }
 
-void TestDeviceExistance::initTestCase()
+void TestDeviceExistance::init()
 {
     //  init devices in global singleton
     TestHelper::getInstance()->initDevices();
@@ -22,8 +22,7 @@ void TestDeviceExistance::initTestCase()
     qDebug() << "Waiting until devices starts";
     QTest::qWait(3000);
 }
-
-void TestDeviceExistance::testReceiverConnected()
+void TestDeviceExistance::receiverConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
 
@@ -33,10 +32,11 @@ void TestDeviceExistance::testReceiverConnected()
     QCOMPARE(testHelper->isRxConnected(), bExpected);
 
     // Тест на подключение прошли, проинициализируем ресивер
-    testHelper->attachReceiver();
+    m_Receiver = new CTransceiver(testHelper);
+    testHelper->attachReceiver(m_Receiver);
 }
 
-void TestDeviceExistance::testTransmitterConnected()
+void TestDeviceExistance::transmitterConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
 
@@ -44,5 +44,6 @@ void TestDeviceExistance::testTransmitterConnected()
     QCOMPARE(testHelper->isTxConnected(), bExpected);
 
     // Тест на подключение прошли, проинициализируем трансмиттер
-    testHelper->attachTransmitter();
+    m_Transmitter = new CTransceiver(testHelper);
+    testHelper->attachTransmitter(m_Transmitter);
 }
