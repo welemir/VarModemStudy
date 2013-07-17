@@ -147,7 +147,9 @@ void CConnectionControl::slotUpdate()
 
     // Копирование в локальный список толко портов пригодных для работы
     foreach (const QSerialPortInfo &serialPortInfo, serialPortInfoList) {
-        if( !serialPortInfo.description().contains("AT91SAM"))
+        if( !serialPortInfo.description().contains("AT91SAM")
+                // В Linux QSerialPortInfo не сообщает description и Manufacturer фильтруем только по именам
+                && !serialPortInfo.portName().contains("ttyACM"))
           continue;
         listPortsNamesNew.append(serialPortInfo.portName());  // Добавление порта
     }
