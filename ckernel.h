@@ -120,6 +120,8 @@ private:
     CTransceiver::T_CrcType m_crcType;
 
     int m_iTotalDataLength;
+    QList<QByteArray> m_baPacketsTx;    // Пакеты подготовленные для отправки в ходе эксперимента
+    int m_iLastPacketRx;
 
     // Статистика обмена
     int m_bytes_received;

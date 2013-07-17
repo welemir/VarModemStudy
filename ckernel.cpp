@@ -10,8 +10,6 @@
 #include "BitBusPipes/ctcp_client_communicator.h"
 #include "programsettings.h"
 
-QByteArray txPacket; // тк передаем всегда один и тот же пакет, сохраним его тут
-
 CKernel* CKernel::m_pInstance = NULL;
 
 CKernel* CKernel::GetInstance()
@@ -261,13 +259,8 @@ void CKernel::slotStartOperation()
     // Синхронизация всех настроек используемых устройств и програмных модулей
     configureDevices();
 
-    QByteArray newPacket;
-    for( int i = 0; i < m_iPacketDataLength; i++)
-        newPacket.append(qrand());
-
-    m_Transmitter->appendCrc(&newPacket);
-
-    txPacket = newPacket;
+    m_baPacketsTx.clear();
+    m_iLastPacketRx = 0;
 
     // Сброс счётчиков статистики омена
     m_packets_to_send = 0;
@@ -283,8 +276,16 @@ void CKernel::slotStartOperation()
 
     for (int i = 0; i<(m_iTotalDataLength); i+=m_iPacketDataLength)
     {
-        m_packets_to_send++;
+        QByteArray newPacket;
+        for( int i = 0; i < m_iPacketDataLength; i++)
+            newPacket.append(qrand());
+        m_Transmitter->appendCrc(&newPacket);
+
+        m_baPacketsTx.append(newPacket);
+
         m_Transmitter->slotAppendRawPacket(newPacket);
+
+        m_packets_to_send++;
     }
     m_Receiver->slotRxStart();
     m_Transmitter->slotTxStart();
@@ -324,10 +325,15 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
   // Определение коилчества ошибок в пакете
   int iErrorCounterBits = 0;
   int iErrorCounterBytes = 0;
-    int iPacketLength = packetNew.baData.length();
+  int iPacketLength = packetNew.baData.length();
+  if(m_baPacketsTx.length() <= m_iLastPacketRx)
+      return;   // Принято пакетов больше чем передано
+
+  QByteArray baPacketExpected = m_baPacketsTx.at(m_iLastPacketRx++);
+
     for(int i = 0; i< iPacketLength; i++ )
     {
-        unsigned int uiErrors = 0xff &(packetNew.baData[i] ^ txPacket[i]);
+        unsigned int uiErrors = 0xff &(packetNew.baData[i] ^ baPacketExpected[i]);
         if(0 != uiErrors)
           iErrorCounterBytes++;
         while(0 != uiErrors){
@@ -362,7 +368,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     packetToDiag = packetNew.baData.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
     if(0 != iErrorCounterBits){
-        packetToDiag = txPacket.toHex();
+        packetToDiag = baPacketExpected.toHex();
         emit signalPrintDiagMeaasge( packetToDiag);
     }
 
