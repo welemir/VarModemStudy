@@ -112,12 +112,12 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
 
         case eAnsTxPower: // power
         {
-            unsigned short usCurrentPower;
-            memcpy(&usCurrentPower, baData.data() + iSeek, sizeof(usCurrentPower) );
-            iSeek += sizeof(usCurrentPower);
+            short sCurrentPower;
+            memcpy(&sCurrentPower, baData.data() + iSeek, sizeof(sCurrentPower) );
+            iSeek += sizeof(sCurrentPower);
            // m_TxPower = usCurrentPower;
 
-            emit signalNewOutputPower(usCurrentPower);
+            emit signalNewOutputPower(sCurrentPower/2);
         }break;
 
         case eAnsModemStatusGet:
