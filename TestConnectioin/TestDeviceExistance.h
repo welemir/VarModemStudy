@@ -1,13 +1,12 @@
 #ifndef TESTDEVICEEXISTANCE_H
 #define TESTDEVICEEXISTANCE_H
 
-#include "TestBase.h"
 #include <QObject>
 
 #include "TestHelper.h"
 
 class CTransceiver;
-class TestDeviceExistance : public TestBase
+class TestDeviceExistance : public QObject
 {
     Q_OBJECT
 

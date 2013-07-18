@@ -10,7 +10,7 @@
 #include "ctransceiver.h"
 
 TestDeviceExistance::TestDeviceExistance(QObject *parent)
-    : TestBase(parent)
+    : QObject(parent)
 {
 }
 
@@ -30,10 +30,6 @@ void TestDeviceExistance::receiverConnected()
 
     qDebug() << "isRxConnected :" << testHelper->isRxConnected();
     QCOMPARE(testHelper->isRxConnected(), bExpected);
-
-    // Тест на подключение прошли, проинициализируем ресивер
-    m_Receiver = new CTransceiver(testHelper);
-    testHelper->attachReceiver(m_Receiver);
 }
 
 void TestDeviceExistance::transmitterConnected()
@@ -42,8 +38,4 @@ void TestDeviceExistance::transmitterConnected()
 
     bool bExpected = true;
     QCOMPARE(testHelper->isTxConnected(), bExpected);
-
-    // Тест на подключение прошли, проинициализируем трансмиттер
-    m_Transmitter = new CTransceiver(testHelper);
-    testHelper->attachTransmitter(m_Transmitter);
 }

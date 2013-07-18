@@ -2,6 +2,7 @@
 #define CONNECTIONCONTROLCONTROLLER_H
 
 #include <QObject>
+#include <QSignalSpy>
 
 #include "CommandCode_RadioModem.h"
 #include "ctransceiver.h"
@@ -24,10 +25,15 @@ public:
     void initDevices();
     bool isRxConnected() {return m_bReceiverConnected;}
     bool isTxConnected() {return m_bTransmitterConnected;}
-    void attachReceiver(CTransceiver *pTransmitter);
+    void attachReceiver(CTransceiver *pReceiver);
     void attachTransmitter(CTransceiver *pTransmitter);
-    void askTransmitter(const int cmd, int value);
-    void askReceiver(const TCommand_RadioModem cmd, int value);
+    CTransceiver *receiver() {return m_Receiver;}
+    CTransceiver *transmitter() {return m_Transmitter;}
+    QList<int> modulationTypeList() {return m_ModulationTypeList;}
+    QList<int> connectionSpeedList() {return m_ConnectionSpeedList;}
+    QList<int> txPowerList() {return m_TxPowerList;}
+    QSignalSpy *askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value);
+    QList<QSignalSpy*> askTransceiver(CTransceiver *pDevice, QList<TCommand_RadioModem> commands, QList<int> values, int sendDelay);
     int transmitterAnswer() {return m_iTransmitterAnswer;}
     int receiverAnswer() {return m_iReceiverAnswer;}
 
@@ -48,11 +54,17 @@ private:
     bool m_bTransmitterConnected;
     bool m_bReceiverConnected;
 
+    QList<int> m_ModulationTypeList;
+    QList<int> m_ConnectionSpeedList;
+    QList<int> m_TxPowerList;
+    QList<int> m_Answers;
+
     // для тестирования корректности установки настроек будем ожидать ответ с нужной настройкой
     int m_awaitingTransmitterAnswer;
     int m_awaitingReceiverAnswer;
     int m_iReceiverAnswer;
     int m_iTransmitterAnswer;
 };
+
 
 #endif // CONNECTIONCONTROLCONTROLLER_H
