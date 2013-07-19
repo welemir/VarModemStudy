@@ -14,7 +14,6 @@ public:
 private slots:
     void TestSingleSettings();
     void TestContinuouslySettings();
-
 };
 
 #endif // TESTDEVICESTATUS_H

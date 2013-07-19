@@ -22,6 +22,8 @@ TEMPLATE = app
 
 INCLUDEPATH += ..
 
+DEFINES += IS_TEST
+
 SOURCES +=  \
     main.cpp \
     ../BitBusPipes/cbitbuspipes.cpp \

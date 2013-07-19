@@ -29,7 +29,6 @@ TestHelper::TestHelper(QObject *parent)
 
     m_ConnectionSpeedList.append(1200);
     m_ConnectionSpeedList.append(2400);
-    m_ConnectionSpeedList.append(2500);
     m_ConnectionSpeedList.append(4800);
     m_ConnectionSpeedList.append(9600);
     m_ConnectionSpeedList.append(19200);
@@ -60,10 +59,7 @@ void TestHelper::initDevices()
 {
     CConnectionControl *pConnectionControl = CConnectionControl::GetInstance();
     connect(pConnectionControl, SIGNAL(signalTransmitterConnected()), this, SLOT(slotTransmitterConnected()));
- //   connect(pConnectionControl, SIGNAL(signalTransmitterDisconnected()), m_pConControlTest, SLOT(slotTransmitterDisconnected()));
     connect(pConnectionControl, SIGNAL(signalReceiverrConnected()), this, SLOT(slotReceiverConnected()));
- //   connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), m_pConControlTest, SLOT(slotReceiverDisconnected()));
-
 }
 
 void TestHelper::attachReceiver(CTransceiver *pReceiver)
@@ -81,8 +77,6 @@ void TestHelper::attachReceiver(CTransceiver *pReceiver)
             pReceiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             pReceiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
-    connect(pReceiver, SIGNAL(signalParceRawDataStart()),
-            this, SLOT(slotParceRawDataStart()) );
 }
 
 void TestHelper::attachTransmitter(CTransceiver *pTransmitter)
@@ -112,18 +106,21 @@ QSignalSpy* TestHelper::askTransceiver(CTransceiver *pDevice, const TCommand_Rad
         case eModulationTypeSet:
         {
             spy = new QSignalSpy(pDevice, SIGNAL(signalNewModulationType(CTransceiver::T_ModulationType)));
+            spy->setObjectName("ModulationTypeSet");
             pDevice->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
         }break;
 
         case eModulationSpeedSet:
         {
             spy = new QSignalSpy(pDevice, SIGNAL(signalNewConnectionSpeed(int)));
+            spy->setObjectName("ModulationSpeedSet");
             pDevice->slotSetConnectionSpeed(static_cast<int>(value));
         }break;
 
         case eTxPowerSet:
         {
             spy = new QSignalSpy(pDevice, SIGNAL(signalNewOutputPower(int)));
+            spy->setObjectName("TxPowerSet");
             pDevice->slotSetOutputPower(static_cast<int>(value));
         } break;
 
@@ -135,7 +132,7 @@ QSignalSpy* TestHelper::askTransceiver(CTransceiver *pDevice, const TCommand_Rad
 }
 
 #include <QTest>
-QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, QList<TCommand_RadioModem> commands, QList<int> values, int sendDelay)
+QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, const QList<TCommand_RadioModem> &commands, const QList<int> &values, const int &sendDelay)
 {
     Q_ASSERT(commands.count());
     Q_ASSERT(values.count());
@@ -144,9 +141,6 @@ QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, QList<TComm
     QList<QSignalSpy*> spyList;
     for (int i = 0; i < commands.count(); i++)
     {
-//        qDebug() << i;
-//        qDebug() << "cmd = " << commands.at(i);
-  //      qDebug() << "val = " << values.at(i);
         QSignalSpy *retSpy = askTransceiver(pDevice, commands.at(i), values.at(i));
         if (retSpy)
             spyList.append(retSpy);
@@ -154,61 +148,4 @@ QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, QList<TComm
             QTest::qSleep(sendDelay);
     }
     return spyList;
-}
-
-void TestHelper::transmitterModulationTypeChanged(CTransceiver::T_ModulationType value)
-{
-    if (eAnsModulationType == m_awaitingTransmitterAnswer)
-    {
-        m_iTransmitterAnswer = static_cast<int>(value);
-        m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
-    }
-}
-void TestHelper::receiverModulationTypeChanged(CTransceiver::T_ModulationType value)
-{
-    if (eAnsModulationType == m_awaitingReceiverAnswer)
-    {
-        m_iReceiverAnswer = static_cast<int>(value);
-        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
-    }
-}
-
-void TestHelper::transmitterModulationSpeedChanged(int value)
-{
-    if (eAnsModulationSpeed == m_awaitingTransmitterAnswer)
-    {
-        m_iTransmitterAnswer = static_cast<int>(value);
-        m_awaitingTransmitterAnswer = static_cast<TInfoType_RadioModem>(0);
-    }
-}
-
-void TestHelper::receiverModulationSpeedChanged(int value)
-{
-    if (eAnsModulationSpeed == m_awaitingReceiverAnswer)
-    {
-        qDebug() << "Modulation speed " << value;
-        m_iReceiverAnswer = static_cast<int>(value);
-        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
-    }
-}
-
-void TestHelper::transmitterTxPowerChanged(int value)
-{
-    qDebug() << "tx power changed to " << value;
-    if (eAnsTxPower == m_awaitingReceiverAnswer)
-    {
-        m_iTransmitterAnswer = static_cast<int>(value);
-        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
-
-    }
-}
-void TestHelper::receiverTxPowerChanged(int value)
-{
-    qDebug() << "rx power changed to " << value;
-    if (eAnsTxPower == m_awaitingReceiverAnswer)
-    {
-        m_iReceiverAnswer = static_cast<int>(value);
-        m_awaitingReceiverAnswer = static_cast<TInfoType_RadioModem>(0);
-
-    }
 }

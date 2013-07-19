@@ -36,7 +36,9 @@ int CCommunicator::SendPacket(TPacket packet)
    {
      strData.append(QString("%1").arg(packet.ucData[i], 2, 16,QLatin1Char( '0' )));
    }
-  qDebug() << endl << "Sended packet: --> " << strData;
+#ifndef IS_TEST
+  qDebug() << endl << "Sent packet: --> " << strData;
+#endif
 
   // Отправка данных (Длина указанная в пакете + поля CRC и длины + маркеры)
   return m_pIODevice->write(baDataOut);
@@ -97,7 +99,9 @@ void CCommunicator::Parcer(unsigned char ucByteNew)
           {
             strData.append(QString("%1").arg(tmsgInput.ucData[i], 2, 16,QLatin1Char( '0' )));
           }
+#ifndef IS_TEST
         qDebug() << endl << "Received packet: <-- " << strData;
+#endif
       }
 
       // Отправка сигнала о принятом пакете всем подписчикам

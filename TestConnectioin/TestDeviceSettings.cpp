@@ -20,6 +20,6 @@ void TestDeviceSettings::TestSingleSettings()
 
 void TestDeviceSettings::TestContinuouslySettings()
 {
-     qDebug() << "---- Trying to upload all settings continousely -----";
+     qDebug() << "---- Trying to upload all settings continously -----";
      uploadAllSettingsCombinations(0, PACKET_TIMEOUT);
 }
