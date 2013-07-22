@@ -365,6 +365,7 @@ void CTransceiver::slotTxStop()
 void CTransceiver::slotRxStart()
 {
     m_TxQueue.clear();
+    m_iBitsReceived = 0;    // Сброс счётчика принятых битов
 
     // Регистрация себя в качестве получателя "сырого" потока от приемника для разбора
     QByteArray baPacket;
@@ -388,7 +389,9 @@ void CTransceiver::processData(QByteArray baData)
 {
     emit signalParceRawDataStart();
 
-    static QByteArray baDataObtained;
+    static QByteArray baDataObtained;       // Буфер для накопления принятого пакета
+    static int iPacketStartBit = 0;         // Порядковый номер первого бита пакета
+
     static unsigned long st_ulByteNext = 0; // Очередная порция битов из входного буфера
     static int st_iByteCounter = -1;
     static unsigned int st_uiOffsetBit = 0;  // Сдвиг для старшей части байта
@@ -414,6 +417,7 @@ void CTransceiver::processData(QByteArray baData)
                 if(ulMarkerPattern  == (st_ulByteNext & ulMarkerMask)){
                     st_ulByteNext <<= st_uiOffsetBit;
                     baDataObtained.clear();
+                    iPacketStartBit = m_iBitsReceived + 8 * iSourceInd - st_uiOffsetBit;
                     st_iByteCounter = 0;
                     break;
                 }
@@ -429,6 +433,7 @@ void CTransceiver::processData(QByteArray baData)
             if(st_iByteCounter >= (m_iDataFieldSize + getFieldSizeCrc())){
               TReceivedPacketDescription packetNew;
               packetNew.baData = baDataObtained;
+              packetNew.iStartBitNumber = iPacketStartBit;
               // Проверка Crc
               packetNew.bCrcOk = ( 0 == calculateCrc(packetNew.baData));
 
@@ -439,6 +444,9 @@ void CTransceiver::processData(QByteArray baData)
             }
         }
     }
+
+    // Учёт всех принятых битов в счётчике
+    m_iBitsReceived += 8*baData.length();
 
     emit signalParceRawDataEnd();
 }

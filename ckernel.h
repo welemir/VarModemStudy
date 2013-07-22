@@ -121,6 +121,7 @@ private:
 
     int m_iTotalDataLength;
     QList<QByteArray> m_baPacketsTx;    // Пакеты подготовленные для отправки в ходе эксперимента
+    QList<TReceivedPacketDescription> m_baPacketsRx;    // Пакеты принятые в ходе эксперимента
     int m_iLastPacketRx;
 
     // Статистика обмена

@@ -124,6 +124,7 @@ private:
     QBitArray m_RxArray;
 
     int m_iPacketsToSend;
+    int m_iBitsReceived;    //  оличество бит прин€тых с начала эксперимента дл€ попределени€ времени прихода пакета
 
     bool m_bStopThread;
 

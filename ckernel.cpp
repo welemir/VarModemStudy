@@ -260,6 +260,7 @@ void CKernel::slotStartOperation()
     configureDevices();
 
     m_baPacketsTx.clear();
+    m_baPacketsRx.clear();
     m_iLastPacketRx = 0;
 
     // —брос счЄтчиков статистики омена
@@ -347,6 +348,8 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     packetNew.iErrorsBit = iErrorCounterBits;
     packetNew.iErrorsByte = iErrorCounterBytes;
 
+    m_baPacketsRx.append(packetNew);
+
     m_packets_received++;
     if (0==iErrorCounterBits)
         m_packets_received_ok++;
@@ -396,8 +399,6 @@ void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 {
     m_iPacketsSentByTransmitter++;
     emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
-
-    m_Receiver->slotRxStart();
 }
 
 void CKernel::slotParceRawDataStart()
