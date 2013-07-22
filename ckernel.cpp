@@ -321,6 +321,23 @@ void CKernel::slotStopOperation()
     emit signalTxInProgress(false);
 }
 
+void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &baPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits)
+{
+  int iPacketLength = baPacketOne.length();
+
+  for(int i = 0; i< iPacketLength; i++ )
+  {
+      unsigned int uiErrors = 0xff &(baPacketOne[i] ^ baPacketTwo[i]);
+      if(0 != uiErrors)
+        (*piErrorCounterBytes)++;
+      while(0 != uiErrors){
+          if(1 == (1 & uiErrors))
+              (*piErrorCounterBits)++;
+          uiErrors >>= 1;
+      }
+  }
+}
+
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 {
   // Определение коилчества ошибок в пакете
@@ -332,17 +349,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 
   QByteArray baPacketExpected = m_baPacketsTx.at(m_iLastPacketRx++);
 
-    for(int i = 0; i< iPacketLength; i++ )
-    {
-        unsigned int uiErrors = 0xff &(packetNew.baData[i] ^ baPacketExpected[i]);
-        if(0 != uiErrors)
-          iErrorCounterBytes++;
-        while(0 != uiErrors){
-            if(1 == (1 & uiErrors))
-                iErrorCounterBits++;
-            uiErrors >>= 1;
-        }
-    }
+  comparePackets(baPacketExpected, packetNew.baData, &iErrorCounterBytes, &iErrorCounterBits);
 
     // Заполнение структуры-описателя пакета данными об ошибках
     packetNew.iErrorsBit = iErrorCounterBits;

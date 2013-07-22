@@ -29,10 +29,12 @@ public:
     QString   qsArguments;
 };
 
+class TestPacketsAnalyseTest;
 class CKernel : public QObject
 {
   Q_OBJECT
 
+  friend TestPacketsAnalyseTest;
 public:
     static CKernel* GetInstance();
 
@@ -103,6 +105,8 @@ private:
     CKernel& operator=(const CKernel &);
 
     void configureDevices(); // Передача настроек всем подключённым устройствам (напр. в начале эксперимента)
+    void comparePackets(const QByteArray &PacketOne, const QByteArray &pPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits);
+
 private:
     static CKernel* m_pInstance;
 
