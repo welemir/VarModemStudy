@@ -12,6 +12,9 @@ public:
     explicit TestDeviceSettings(QObject *parent = 0);
 
 private slots:
+    void TestModulationTypeSet();
+    void TestModulationSpeedSet();
+    void TestTxPowerSet();
     void TestSingleSettings();
     void TestContinuouslySettings();
 };

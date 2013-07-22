@@ -33,7 +33,7 @@ public:
     QList<int> connectionSpeedList() {return m_ConnectionSpeedList;}
     QList<int> txPowerList() {return m_TxPowerList;}
     QSignalSpy *askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value);
-    QList<QSignalSpy*> askTransceiver(CTransceiver *pDevice, const QList<TCommand_RadioModem> &commands, const QList<int> &values, const int &sendDelay);
+    QList<QSignalSpy*> askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay);
     int transmitterAnswer() {return m_iTransmitterAnswer;}
     int receiverAnswer() {return m_iReceiverAnswer;}
 
@@ -58,6 +58,8 @@ private:
     int m_awaitingReceiverAnswer;
     int m_iReceiverAnswer;
     int m_iTransmitterAnswer;
+
+    QTimer m_senderTimer;
 };
 
 

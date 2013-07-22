@@ -37,7 +37,8 @@ SOURCES +=  \
     ../ctransceiver.cpp \
     TestHelper.cpp \
     TestDeviceSettings.cpp \
-    TestBase.cpp
+    TestBase.cpp \
+    TestCommunicationStability.cpp
 
 HEADERS += \
     ../BitBusPipes/cbitbuspipes.h \
@@ -55,4 +56,5 @@ HEADERS += \
     ../ctransceiver.h \
     TestHelper.h \
     TestDeviceSettings.h \
-    TestBase.h
+    TestBase.h \
+    TestCommunicationStability.h

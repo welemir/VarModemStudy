@@ -1,6 +1,7 @@
 #include "TestHelper.h"
 
 #include <QDebug>
+#include <QThread>
 
 #include <connectioncontrol.h>
 
@@ -132,20 +133,23 @@ QSignalSpy* TestHelper::askTransceiver(CTransceiver *pDevice, const TCommand_Rad
 }
 
 #include <QTest>
-QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, const QList<TCommand_RadioModem> &commands, const QList<int> &values, const int &sendDelay)
+QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay)
 {
     Q_ASSERT(commands.count());
     Q_ASSERT(values.count());
     Q_ASSERT(commands.count() == values.count());
 
+    pDevice->setSendPeriod(sendDelay);
+
     QList<QSignalSpy*> spyList;
     for (int i = 0; i < commands.count(); i++)
     {
-        QSignalSpy *retSpy = askTransceiver(pDevice, commands.at(i), values.at(i));
+        qDebug() << "askTransceiver" << commands.at(i);
+        QSignalSpy *retSpy = askTransceiver(pDevice, static_cast<TCommand_RadioModem>(commands.at(i)), values.at(i));
         if (retSpy)
             spyList.append(retSpy);
-        if (0 < sendDelay)
-            QTest::qSleep(sendDelay);
+//        if (0 < sendDelay)
+            //QTest::qSleep(sendDelay);
     }
     return spyList;
 }

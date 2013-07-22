@@ -9,6 +9,7 @@
 CTransceiver::CTransceiver(QObject *parent)
   :QObject(parent)
   ,m_iPreambleLength(2)
+  ,m_uiSendPeriod(MODEM_RAWPIPE_TX_INTERVAL)
   ,m_RxEnabled(false)
 {
   m_timerSendTimeout.setSingleShot(true);
@@ -44,6 +45,7 @@ void CTransceiver::trySendCommand()
     m_timerSendTimeout.stop();
   }else{
     m_baCommandSendedLast = m_QueueCommandToSend.dequeue();
+    qDebug() << "<--- send";
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
     if(eSubmitRawData == m_baCommandSendedLast[0])
       m_baCommandSendedLast.clear();
@@ -97,6 +99,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         {
             unsigned char ucNewMode =  baData[iSeek++];
             T_ModulationType modulation = (CTransceiver::T_ModulationType) ucNewMode;
+            qDebug() << "Got new modulation type";
             emit signalNewModulationType(modulation);
         }break;
 
@@ -157,6 +160,8 @@ void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModul
     baPacket.append(eModulationTypeSet);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newModulaton);
+
+    qDebug() << "setModulationType";
     queueSendCommand(baPacket);
 }
 
@@ -334,14 +339,17 @@ void CTransceiver::slotTimeoutSendToDevice()
     m_timerSendTimeout.start(10);
   }
   else
-	trySendCommand();
+  {
+      qDebug() << "try 3";
+    trySendCommand();
+  }
 }
 
 void CTransceiver::slotTxStart()
 {
     m_PermitedToTxPacketsCount = 0;
 //    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
-    m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
+    m_SenderTimer.start(m_uiSendPeriod); // таймер отправки сообщений
 
     m_iPacketsToSend = m_TxQueue.length();
     emit signalTxInProgress(true);

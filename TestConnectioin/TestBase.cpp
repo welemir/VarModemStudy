@@ -11,25 +11,29 @@ TestBase::TestBase(QObject *parent) :
 {
 }
 
-void TestBase::checkSignal(const QSignalSpy &spy,const int &value)
+bool TestBase::checkSignal(const QSignalSpy &spy,const int &value)
 {
     qDebug() << spy.objectName();
-    QVERIFY(spy.count() >= 1);
+    if (0 == spy.count())
+        return false;
+
+//    QVERIFY(spy.count() >= 1);
     // преребор всех однотипных сигналов, отловленных одним шпионом (например, несколько ответов на установку типа модул€ции)
-    for (int i = 0; i < spy.count(); i++)
+    for (int i = 0; i < spy.count(); i++) // один шпион способен отловить сигнал несколько раз.
     {
         QList<QVariant> args = spy.at(i);
         // ѕеребор аргументов сигнала. ѕока только их вывод на экран.
-        for(int i = 0; i < args.count(); i++)
+        for(int j = 0; j < args.count(); j++)
         {
-            int arg = args.at(i).toInt();
-            qDebug() << i+1 <<" " << arg << "expected " << value;
+            int arg = args.at(j).toInt();
+            qDebug() << i+1 << j+1  << arg << "expected " << value;
             //QVERIFY(value == arg);
         }
     }
+    return true;
 }
 
-void TestBase::checkOperationResult(const DevicesSpyDescriptor &spyDesc, const QList<int> &values)
+bool TestBase::checkOperationResult(const DevicesSpyDescriptor &spyDesc, const QList<int> &values)
 {
     qDebug() << "Sent << " << values;
     qDebug() << "verification receiver:";
@@ -44,14 +48,52 @@ void TestBase::checkOperationResult(const DevicesSpyDescriptor &spyDesc, const Q
     {
         checkSignal(*spyDesc.TxSpyList.at(i), values.at(i));
     }
+
+    return false;
 }
 
-DevicesSpyDescriptor TestBase::uploadSettings(const QList<TCommand_RadioModem> &commands, const QList<int> &values, const int &packetsDelay)
+void TestBase::freeSpyes(DevicesSpyDescriptor &spyDesc)
+{
+    for (int i = 0; i < spyDesc.RxSpyList.count(); i++)
+    {
+        delete spyDesc.RxSpyList.at(i);
+    }
+
+    qDebug() << "verification transmitter:";
+    for (int i = 0; i < spyDesc.TxSpyList.count(); i++)
+    {
+        delete spyDesc.TxSpyList.at(i);
+    }
+
+}
+// ќтправка устройству одной и той же команды с разными параметрами
+DevicesSpyDescriptor TestBase::uploadSettings(const int command, const QList<int> &values, const int packetsDelay)
+{
+    DevicesSpyDescriptor retSpyDesc;
+
+    TestHelper *testHelper = TestHelper::getInstance();
+    QList<QSignalSpy*> spyList;
+    for (int i = 0; i < values.count(); i++)
+    {
+        qDebug() << "ask" << command << values.at(i);
+
+        testHelper->receiver()->setSendPeriod(packetsDelay);
+        retSpyDesc.RxSpyList.append(testHelper->askTransceiver(testHelper->receiver(), static_cast<TCommand_RadioModem>(command), values.at(i)));
+        testHelper->transmitter()->setSendPeriod(packetsDelay);
+        retSpyDesc.TxSpyList.append(testHelper->askTransceiver(testHelper->transmitter(), static_cast<TCommand_RadioModem>(command), values.at(i)));
+    }
+    return retSpyDesc;
+}
+
+// отправка устройству набора команд с соответствующими им параметрами (по одной команде на 1 параметр)
+DevicesSpyDescriptor TestBase::uploadSettings(const QList<int> &commands, const QList<int> &values, const int packetsDelay)
 {
     DevicesSpyDescriptor retSpyDesc;
     TestHelper *testHelper = TestHelper::getInstance();
 
+    qDebug() << "ask Rx";
     retSpyDesc.RxSpyList = testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
+    qDebug() << "ask Tx";
     retSpyDesc.TxSpyList = testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
 
     return retSpyDesc;
@@ -66,7 +108,7 @@ void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
         {
             foreach(int power, testHelper->txPowerList())
             {
-                QList<TCommand_RadioModem> commands;
+                QList<int> commands;
                 commands.append(eModulationTypeSet);
                 commands.append(eModulationSpeedSet);
                 commands.append(eTxPowerSet);
@@ -84,6 +126,8 @@ void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
 
                 // анализ результатов
                 checkOperationResult(spyDesc, values);
+
+                freeSpyes(spyDesc);
             }
         }
     }

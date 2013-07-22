@@ -51,6 +51,7 @@ public:
     int getLenghtService();
     int calculateCrc(QByteArray baData);
     void appendCrc(QByteArray *pbaData);
+    void setSendPeriod(unsigned int ms) {m_uiSendPeriod = ms; m_SenderTimer.setInterval(m_uiSendPeriod);}
 
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -113,6 +114,7 @@ private:
     int m_iPreambleLength;
 
     QByteArray m_baStartPattern;
+    unsigned int m_uiSendPeriod;
     QTimer m_SenderTimer;
     QTimer m_TransceiverStatusTimer;
     QQueue<QByteArray> m_TxQueue;
