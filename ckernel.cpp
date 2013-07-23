@@ -318,6 +318,15 @@ void CKernel::slotStopOperation()
 
     m_Transmitter->slotTxStop();
     m_Receiver->slotRxStop();
+
+    // ‘ормирование вектора номеров прин€тых пакетов дл€ просмотра при отладке
+    QVector<int> vectReceived;
+    TReceivedPacketDescription descr;
+    foreach(descr, m_baPacketsRx){
+        vectReceived.append(descr.listSendCompare.constBegin().value().iIndex);
+      }
+
+    // —ообщение о завершении передачи дл€ разблокировки интерфейса пользовател€
     emit signalTxInProgress(false);
 }
 
@@ -347,13 +356,39 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
   if(m_baPacketsTx.length() <= m_iLastPacketRx)
       return;   // ѕрин€то пакетов больше чем передано
 
-  QByteArray baPacketExpected = m_baPacketsTx.at(m_iLastPacketRx++);
+  // ѕоиск соответстви€ прин€того и переданныз пакетов в разрешЄнном окне
+  const int iPacketFindWindow = 30;
+  for(int i=m_iLastPacketRx; (i < m_baPacketsTx.size())&&(i < m_iLastPacketRx + iPacketFindWindow); i++){
+      QByteArray baPacketExpected = m_baPacketsTx.at(i);
 
+      int iErrorCounterBits = 0;
+      int iErrorCounterBytes = 0;
+      comparePackets(baPacketExpected, packetNew.baData, &iErrorCounterBytes, &iErrorCounterBits);
+
+      TPacketCompare comp;
+      comp.iIndex = i;
+      comp.iErrorsBit = iErrorCounterBits;
+      comp.iErrorsByte = iErrorCounterBytes;
+
+      packetNew.listSendCompare.insert(iErrorCounterBits, comp);
+  }
+
+  // —равнение прин€того пакета с текущим ожидаемым
+  QByteArray baPacketExpected = m_baPacketsTx.at(m_iLastPacketRx++);
   comparePackets(baPacketExpected, packetNew.baData, &iErrorCounterBytes, &iErrorCounterBits);
+
+  // «амена статиски совпадени€ на лучшую, если така€ есть в окне поиска
+  TPacketCompare estimation = packetNew.listSendCompare.constBegin().value();
+  if((m_baPacketsTx[0].length()*8/3) > estimation.iErrorsBit){
+      m_iLastPacketRx = estimation.iIndex;
+      iErrorCounterBits = estimation.iErrorsBit;
+      iErrorCounterBytes = estimation.iErrorsByte;
+    }
 
     // «аполнение структуры-описател€ пакета данными об ошибках
     packetNew.iErrorsBit = iErrorCounterBits;
     packetNew.iErrorsByte = iErrorCounterBytes;
+    packetNew.iTxCorrespondIndex = m_iLastPacketRx++;
 
     m_baPacketsRx.append(packetNew);
 

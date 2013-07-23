@@ -6,10 +6,17 @@
 #include <QTime>
 #include <QBitArray>
 #include <QQueue>
+#include <QMap>
 
 #define MODEM_DEVICE_ID 21
 #define MODEM_RAWPIPE_TX_INTERVAL 10
 #define MODEM_STATUS_INTERVAL 10
+
+typedef struct{
+  int iIndex;
+  int iErrorsBit;
+  int iErrorsByte;
+}TPacketCompare;
 
 typedef struct{
     QByteArray baData;      // Данные пакета извлечённые приёмником
@@ -18,6 +25,7 @@ typedef struct{
     int iErrorsByte;        // Количество байтовых ошибок в пакете
     bool bCrcOk;            // Флаг правильности контрольной суммы пакета
     int iTxCorrespondIndex; // Индекс пакета в переданной последовательности соответствующего данному
+    QMap<int, TPacketCompare> listSendCompare;  // Список кандидатов на соответствие в списке переданных
 }TReceivedPacketDescription;
 
 class CTransceiver : public QObject
