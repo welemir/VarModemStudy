@@ -29,8 +29,7 @@ CKernel* CKernel::GetInstance()
 
 CKernel::CKernel():
   m_pPipeCmd(0),
-  m_isLastPacketSent(false),
-  m_isLastRawBufferProcessed(false),
+  m_State(eIdle),
   m_iConnectionSpeed(9600),
   m_iOutputPower(20),
   m_ModulationType(CTransceiver::eFSK),
@@ -278,16 +277,14 @@ void CKernel::slotStartOperation()
     m_iBitErrorsDetected = 0;
     m_iPacketsSentByTransmitter = 0;
 
-    m_isLastPacketSent = false;
-    m_isLastRawBufferProcessed = false;
-
     for (int i = 0; i<(m_iTotalDataLength); i+=m_iPacketDataLength)
     {
         m_packets_to_send++;
         m_Transmitter->slotAppendRawPacket(newPacket);
     }
+    // Переключение в режим ожидания включения приёмника и передача ему команды на включение "сырого" приёма
+    m_State = ePrepare;
     m_Receiver->slotRxStart();
-    m_Transmitter->slotTxStart();
 
     emit signalShowBER(0);
     emit signalShowPER(0);
@@ -325,17 +322,17 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
   int iErrorCounterBits = 0;
   int iErrorCounterBytes = 0;
     int iPacketLength = packetNew.baData.length();
-    for(int i = 0; i< iPacketLength; i++ )
-    {
+  for(int i = 0; i< iPacketLength; i++ )
+  {
         unsigned int uiErrors = 0xff &(packetNew.baData[i] ^ txPacket[i]);
-        if(0 != uiErrors)
+      if(0 != uiErrors)
           iErrorCounterBytes++;
-        while(0 != uiErrors){
-            if(1 == (1 & uiErrors))
+      while(0 != uiErrors){
+          if(1 == (1 & uiErrors))
                 iErrorCounterBits++;
-            uiErrors >>= 1;
-        }
-    }
+          uiErrors >>= 1;
+      }
+  }
 
     // Заполнение структуры-описателя пакета данными об ошибках
     packetNew.iErrorsBit = iErrorCounterBits;
@@ -367,13 +364,6 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     }
 
     emit signalRxProgress((100 * (m_packets_received_ok)) / m_packets_to_send);
-    if (m_isLastPacketSent)
-    {
-        if(m_packets_to_send == m_packets_received_ok)
-        {
-            slotStopOperation();
-        }
-    }
     emit signalUpdateStatistics();
 }
 
@@ -383,8 +373,9 @@ void CKernel::slotSetDefaultValuesOnStart()
 
 void CKernel::slotTxFinished()
 {
-    if (m_packets_to_send == m_iPacketsSentByTransmitter)
-        m_isLastPacketSent = true;
+    if (m_packets_to_send == m_iPacketsSentByTransmitter){
+        m_State = eAwaitingEnd;
+      }
 }
 void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 {
@@ -396,13 +387,20 @@ void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 
 void CKernel::slotParceRawDataStart()
 {
-  if(m_isLastPacketSent)
-    m_isLastRawBufferProcessed = true;
+  switch(m_State){
+    case ePrepare:
+      m_Transmitter->slotTxStart();
+      m_State = eWork;
+      break;
+
+    case eAwaitingEnd:
+      m_State = eIdle;
+    }
 }
 
 void CKernel::slotParceRawDataEnd()
 {
-  if(m_isLastRawBufferProcessed)
+  if(eIdle == m_State)
     slotStopOperation();
 }
 

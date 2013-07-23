@@ -106,10 +106,20 @@ private:
 private:
     static CKernel* m_pInstance;
 
+    enum stateOfProcess{
+      eIdle,
+      ePrepare,
+      eWork,
+      eAwaitingEnd,
+      eStop,
+    };
+
     CPipe *m_pPipeCmd;
     CTransceiver *m_Transmitter;
     CTransceiver *m_Receiver;
 
+    // Состояние для управления ходом эксперимента
+    stateOfProcess m_State;
     // Текущие настройки радиоканала для эксперимента
     int m_iConnectionSpeed;
     int m_iOutputPower;   // Выходная мощность для передатчика (0.5 dBm на бит)
@@ -129,9 +139,6 @@ private:
     int m_packets_received_ok;
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
-    //Флаги управления завершением эксперимента
-    bool m_isLastPacketSent;
-    bool m_isLastRawBufferProcessed;
 };
 
 #endif // CKERNEL_H
