@@ -6,7 +6,7 @@
 #include "ckernel.h"
 #include "BitBusPipes/USB_Communicator.h"
 #include "BitBusPipes/CommunicationStructs.h"
-#include "connectionControl.h"
+#include "connectioncontrol.h"
 #include "BitBusPipes/ctcp_client_communicator.h"
 #include "programsettings.h"
 
