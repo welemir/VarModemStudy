@@ -8,8 +8,8 @@
 #include <QQueue>
 
 #define MODEM_DEVICE_ID 21
-#define MODEM_RAWPIPE_TX_INTERVAL 10
-#define MODEM_STATUS_INTERVAL 10
+#define MODEM_RAWPIPE_TX_INTERVAL 100
+#define MODEM_STATUS_INTERVAL 100
 
 typedef struct{
     QByteArray baData;      // Данные пакета извлечённые приёмником
@@ -23,13 +23,14 @@ typedef struct{
 class CTransceiver : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(T_ModulationType)
 public:
-    typedef enum
+    enum T_ModulationType
     {
         eOOK   = 0,
         eFSK   = 1,
         eLast_Modulation
-    }T_ModulationType;
+    };
 
     typedef enum
     {
@@ -51,7 +52,12 @@ public:
     int getLenghtService();
     int calculateCrc(QByteArray baData);
     void appendCrc(QByteArray *pbaData);
-    void setSendPeriod(unsigned int ms) {m_uiSendPeriod = ms; m_SenderTimer.setInterval(m_uiSendPeriod);}
+    void setSendPeriod(unsigned int ms)
+    {
+        m_uiSendPeriod = ms;
+        m_SenderTimer.setInterval(m_uiSendPeriod);
+        m_timerSendTimeout.setInterval(m_uiSendPeriod);
+    }
 
 signals:
     void signalNewCommand(QByteArray, unsigned short);
@@ -64,7 +70,7 @@ signals:
     void signalTxQueueTransmitFinished();
     void signalDiagMsg(QString);
 
-    void signalNewModulationType( CTransceiver::T_ModulationType );
+    void signalNewModulationType( int );
     void signalNewConnectionSpeed( int );
     void signalNewOutputPower( int );
     void signalNewBitSynchLength( int );
@@ -130,5 +136,6 @@ private:
     bool m_bStopThread;
 
 };
+//Q_DECLARE_METATYPE(CTransceiver::T_ModulationType)
 
 #endif // CTRANSCEIVER_H

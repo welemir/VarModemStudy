@@ -11,92 +11,70 @@ TestBase::TestBase(QObject *parent) :
 {
 }
 
-bool TestBase::checkSignal(const QSignalSpy &spy,const int &value)
+void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &value, const int valueNo)
 {
-    qDebug() << spy.objectName();
-    if (0 == spy.count())
-        return false;
-
-//    QVERIFY(spy.count() >= 1);
     // преребор всех однотипных сигналов, отловленных одним шпионом (например, несколько ответов на установку типа модуляции)
-    for (int i = 0; i < spy.count(); i++) // один шпион способен отловить сигнал несколько раз.
+
+    QSignalSpy *spy = TestHelper::getInstance()->spyForCommand(pDevice, command);
+    qDebug() << "Spy" << spy << "expected value" << value;
+
+    QVERIFY(spy->count() >= 1);
+    QVERIFY(valueNo <= spy->count());
+
+    //QCOMPARE(spy->at(valueNo).at(0).toInt(), value);
+    qDebug() << spy->at(valueNo).at(0).toInt();
+    /*for (int i = 0; i < spy->count(); i++) // один шпион способен отловить сигнал несколько раз.
     {
-        QList<QVariant> args = spy.at(i);
+        qDebug() << "catch " << i+1;
+        QList<QVariant> args = spy->at(i);
         // Перебор аргументов сигнала. Пока только их вывод на экран.
-        for(int j = 0; j < args.count(); j++)
+        for(int argNo = 0; argNo < args.count(); argNo++)
         {
-            int arg = args.at(j).toInt();
-            qDebug() << i+1 << j+1  << arg << "expected " << value;
-            //QVERIFY(value == arg);
+            int argValue = static_cast<int>(args.at(argNo).toInt());
+            qDebug() << "arg" << argNo+1  << "=" << argValue;
+            //QVERIFY(value == argValue);
         }
     }
-    return true;
+    */
 }
 
-bool TestBase::checkOperationResult(const DevicesSpyDescriptor &spyDesc, const QList<int> &values)
+void TestBase::checkOperationResult(const int command, const QList<int> &values)
 {
     qDebug() << "Sent << " << values;
+
     qDebug() << "verification receiver:";
-    // перебор всех зарегистрированных шпионов (по одному на каждый тип сигнала)
-    for (int i = 0; i < spyDesc.RxSpyList.count(); i++)
-    {
-        checkSignal(*spyDesc.RxSpyList.at(i), values.at(i));
-    }
+    for (int i = 0; i < values.count(); i++)
+        checkSignal(TestHelper::getInstance()->receiver(), command, values.at(i), i);
 
     qDebug() << "verification transmitter:";
-    for (int i = 0; i < spyDesc.TxSpyList.count(); i++)
-    {
-        checkSignal(*spyDesc.TxSpyList.at(i), values.at(i));
-    }
-
-    return false;
-}
-
-void TestBase::freeSpyes(DevicesSpyDescriptor &spyDesc)
-{
-    for (int i = 0; i < spyDesc.RxSpyList.count(); i++)
-    {
-        delete spyDesc.RxSpyList.at(i);
-    }
-
-    qDebug() << "verification transmitter:";
-    for (int i = 0; i < spyDesc.TxSpyList.count(); i++)
-    {
-        delete spyDesc.TxSpyList.at(i);
-    }
+    for (int i = 0; i < values.count(); i++)
+        checkSignal(TestHelper::getInstance()->transmitter(), command, values.at(i), i);
 
 }
+
 // Отправка устройству одной и той же команды с разными параметрами
-DevicesSpyDescriptor TestBase::uploadSettings(const int command, const QList<int> &values, const int packetsDelay)
+void TestBase::uploadSettings(const int command, const QList<int> &values, const int packetsDelay)
 {
-    DevicesSpyDescriptor retSpyDesc;
-
     TestHelper *testHelper = TestHelper::getInstance();
-    QList<QSignalSpy*> spyList;
     for (int i = 0; i < values.count(); i++)
     {
         qDebug() << "ask" << command << values.at(i);
-
         testHelper->receiver()->setSendPeriod(packetsDelay);
-        retSpyDesc.RxSpyList.append(testHelper->askTransceiver(testHelper->receiver(), static_cast<TCommand_RadioModem>(command), values.at(i)));
+        testHelper->askTransceiver(testHelper->receiver(), static_cast<TCommand_RadioModem>(command), values.at(i));
         testHelper->transmitter()->setSendPeriod(packetsDelay);
-        retSpyDesc.TxSpyList.append(testHelper->askTransceiver(testHelper->transmitter(), static_cast<TCommand_RadioModem>(command), values.at(i)));
+        testHelper->askTransceiver(testHelper->transmitter(), static_cast<TCommand_RadioModem>(command), values.at(i));
     }
-    return retSpyDesc;
 }
 
 // отправка устройству набора команд с соответствующими им параметрами (по одной команде на 1 параметр)
-DevicesSpyDescriptor TestBase::uploadSettings(const QList<int> &commands, const QList<int> &values, const int packetsDelay)
+void TestBase::uploadSettings(const QList<int> &commands, const QList<int> &values, const int packetsDelay)
 {
-    DevicesSpyDescriptor retSpyDesc;
     TestHelper *testHelper = TestHelper::getInstance();
 
     qDebug() << "ask Rx";
-    retSpyDesc.RxSpyList = testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
+    testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
     qDebug() << "ask Tx";
-    retSpyDesc.TxSpyList = testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
-
-    return retSpyDesc;
+    testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
 }
 
 void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
@@ -119,15 +97,13 @@ void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
                 values.append(power);
 
                 // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
-                DevicesSpyDescriptor spyDesc = uploadSettings(commands, values, packetsDelay);
+                uploadSettings(commands, values, packetsDelay);
 
                 // ожидаем результата выполнения операции
                 QTest::qWait(waitDelay);
 
                 // анализ результатов
-                checkOperationResult(spyDesc, values);
-
-                freeSpyes(spyDesc);
+                //checkOperationResult(spyDesc, values);
             }
         }
     }

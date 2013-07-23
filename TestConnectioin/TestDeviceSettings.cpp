@@ -16,54 +16,50 @@ void TestDeviceSettings::TestModulationTypeSet()
 {
     qDebug() << "---- Trying to set new modulation Type -----";
 
-    QList<int> values;
-    values.append(TestHelper::getInstance()->modulationTypeList().at(0));
+    TestHelper::getInstance()->prepare();
+    QList<int> values = TestHelper::getInstance()->modulationTypeList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
-    DevicesSpyDescriptor spyDesc = uploadSettings(eModulationTypeSet, TestHelper::getInstance()->modulationTypeList(), PACKET_TIMEOUT);
+    uploadSettings(eModulationTypeSet, values, PACKET_TIMEOUT);
 
     // ожидаем результата выполнения операции
     QTest::qWait(PACKET_TIMEOUT);
 
     // анализ результатов
-    checkOperationResult(spyDesc, values);
-
-    freeSpyes(spyDesc);
+    checkOperationResult(eModulationTypeSet, values);
 }
 
 void TestDeviceSettings::TestModulationSpeedSet()
 {
     qDebug() << "---- Trying to set new modulation Speed -----";
 
-    QList<int> values;
-    values.append(TestHelper::getInstance()->connectionSpeedList().at(0));
+//
+    //TestHelper::getInstance()->prepare();
+    QList<int> values = TestHelper::getInstance()->connectionSpeedList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
-    DevicesSpyDescriptor spyDesc = uploadSettings(eModulationSpeedSet, values, PACKET_TIMEOUT);
+    uploadSettings(eModulationSpeedSet, values, PACKET_TIMEOUT);
 
     // ожидаем результата выполнения операции
-    QTest::qWait(PACKET_TIMEOUT);
+    QTest::qWait(PACKET_TIMEOUT*values.count());
 
     // анализ результатов
-    checkOperationResult(spyDesc, values);
-
-    freeSpyes(spyDesc);
+    checkOperationResult(eModulationSpeedSet, values);
 }
 
 void TestDeviceSettings::TestTxPowerSet()
 {
     qDebug() << "---- Trying to set new transmit Power -----";
 
-    QList<int> values;
-    values.append(TestHelper::getInstance()->txPowerList().at(0));
+    TestHelper::getInstance()->prepare();
+    QList<int> values = TestHelper::getInstance()->txPowerList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
-    DevicesSpyDescriptor spyDesc = uploadSettings(eTxPowerSet, values, PACKET_TIMEOUT);
+    uploadSettings(eTxPowerSet, values, PACKET_TIMEOUT);
 
     // ожидаем результата выполнения операции
     QTest::qWait(PACKET_TIMEOUT);
 
     // анализ результатов
-    checkOperationResult(spyDesc, values);
+    checkOperationResult(eTxPowerSet, values);
 
-    freeSpyes(spyDesc);
 }
 
 void TestDeviceSettings::TestSingleSettings()

@@ -9,6 +9,11 @@
 
 #define PACKET_TIMEOUT 300
 
+typedef QMap<int, QSignalSpy *> DviceSpyes; // карта шпионов - команда к шпиону
+typedef QMap<CTransceiver *, DviceSpyes> DevicesSpyDescriptor; // карта уникальных устройств и их карт шпионов
+
+
+
 // Класс-помощник для тестирования системы.
 // Работает с устройствами, хранит промежуточные результаты работы, исследуемые внешним тестом.
 class TestHelper : public QObject
@@ -32,10 +37,10 @@ public:
     QList<int> modulationTypeList() {return m_ModulationTypeList;}
     QList<int> connectionSpeedList() {return m_ConnectionSpeedList;}
     QList<int> txPowerList() {return m_TxPowerList;}
-    QSignalSpy *askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value);
-    QList<QSignalSpy*> askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay);
-    int transmitterAnswer() {return m_iTransmitterAnswer;}
-    int receiverAnswer() {return m_iReceiverAnswer;}
+    void askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value);
+    void askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay);
+    QSignalSpy *spyForCommand(CTransceiver *pDevice, const int command);
+    void prepare();
 
 private slots:
     void slotTransmitterConnected();
@@ -52,6 +57,8 @@ private:
     QList<int> m_ConnectionSpeedList;
     QList<int> m_TxPowerList;
     QList<int> m_Answers;
+
+    DevicesSpyDescriptor m_Spyes;
 
     // для тестирования корректности установки настроек будем ожидать ответ с нужной настройкой
     int m_awaitingTransmitterAnswer;

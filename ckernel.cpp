@@ -50,7 +50,7 @@ CKernel::CKernel():
     connect(pConnectionControl, SIGNAL(signalReceiverDisconnected()), this, SLOT(slotReceiverDisconnected()));
 
     // Сигналы ответов трансивера на изменение настроек для которых могут быть ограничения
-    connect(m_Transmitter, SIGNAL(signalNewModulationType( CTransceiver::T_ModulationType )), this, SLOT(slotNewModulationType(CTransceiver::T_ModulationType)));
+    connect(m_Transmitter, SIGNAL(signalNewModulationType(int)), this, SLOT(slotNewModulationType(int)));
     connect(m_Transmitter, SIGNAL(signalNewConnectionSpeed( int )), this, SLOT(slotNewConnectionSpeed(int)));
     connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
 
@@ -233,9 +233,9 @@ void CKernel::slotSetCrcType(int newCrcIndex)
   m_Receiver->slotSetCrcType( (CTransceiver::T_CrcType) newCrcIndex );
 }
 
-void CKernel::slotNewModulationType(CTransceiver::T_ModulationType newModulaton)
+void CKernel::slotNewModulationType(int newModulaton)
 {
-    emit signalNewModulationType(static_cast<int>(newModulaton));
+    emit signalNewModulationType(newModulaton);
 }
 
 void CKernel::slotNewConnectionSpeed(int newSpeed)

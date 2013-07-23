@@ -56,7 +56,7 @@ public slots:
     void slotSetTotalDataLength(int newLength);
     void slotSetCrcType(int newCrcIndex);
 
-    void slotNewModulationType(CTransceiver::T_ModulationType newModulaton );
+    void slotNewModulationType(int newModulaton );
     void slotNewConnectionSpeed(int newSpeed);
     void slotNewOutputPower(int newPower);
     void slotNewCrcType(int iCRCTypeIndexNew);

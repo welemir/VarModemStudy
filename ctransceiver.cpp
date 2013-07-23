@@ -1,10 +1,9 @@
-#include "ctransceiver.h"
-#include"BitBusPipes/CommunicationStructs.h"
 #include <QDataStream>
 #include <QDebug>
 #include <QCoreApplication>
-
+#include"BitBusPipes/CommunicationStructs.h"
 #include "CommandCode_RadioModem.h"
+#include "ctransceiver.h"
 
 CTransceiver::CTransceiver(QObject *parent)
   :QObject(parent)
@@ -45,12 +44,12 @@ void CTransceiver::trySendCommand()
     m_timerSendTimeout.stop();
   }else{
     m_baCommandSendedLast = m_QueueCommandToSend.dequeue();
-    qDebug() << "<--- send";
+    qDebug() << ".";
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
     if(eSubmitRawData == m_baCommandSendedLast[0])
       m_baCommandSendedLast.clear();
 
-    m_timerSendTimeout.start(10);
+    m_timerSendTimeout.start(m_uiSendPeriod);
   }
 }
 
@@ -98,9 +97,7 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
         case eAnsModulationType:
         {
             unsigned char ucNewMode =  baData[iSeek++];
-            T_ModulationType modulation = (CTransceiver::T_ModulationType) ucNewMode;
-            qDebug() << "Got new modulation type";
-            emit signalNewModulationType(modulation);
+            emit signalNewModulationType(ucNewMode);
         }break;
 
         case eAnsModulationSpeed: // speed
@@ -153,15 +150,13 @@ void CTransceiver::slotParceRadioData(QByteArray baData, unsigned short usSender
   processData(baData);
 }
 
-void CTransceiver::slotSetModulationType(CTransceiver::T_ModulationType newModulaton)
+void CTransceiver::slotSetModulationType(T_ModulationType newModulaton)
 {
     m_modulation = newModulaton;
     QByteArray baPacket;
     baPacket.append(eModulationTypeSet);
     // так как T_ModulationType совпадает с аргументами данной команды, просто передадим его
     baPacket.append((char) newModulaton);
-
-    qDebug() << "setModulationType";
     queueSendCommand(baPacket);
 }
 
@@ -335,12 +330,12 @@ void CTransceiver::slotStatusTimer()
 void CTransceiver::slotTimeoutSendToDevice()
 {
   if(0 != m_baCommandSendedLast.length()){
+    qDebug() << "+";
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
-    m_timerSendTimeout.start(10);
+    m_timerSendTimeout.start(m_uiSendPeriod);
   }
   else
   {
-      qDebug() << "try 3";
     trySendCommand();
   }
 }

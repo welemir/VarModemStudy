@@ -49,4 +49,6 @@ typedef enum
   eAnsModemStatusGet  = (unsigned char)eAnswerMark + eModemStatusGet,
 }TInfoType_RadioModem;
 
+Q_DECLARE_METATYPE(TCommand_RadioModem);
+
 #endif // _COMMAND_CODE_RADIOMODEM_H_

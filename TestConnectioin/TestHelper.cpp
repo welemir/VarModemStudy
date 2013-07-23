@@ -22,9 +22,6 @@ TestHelper::TestHelper(QObject *parent)
     , m_iReceiverAnswer(0)
     , m_iTransmitterAnswer(0)
 {
-    qRegisterMetaType<TCommand_RadioModem>("TCommand_RadioModem");
-    qRegisterMetaType<CTransceiver::T_ModulationType>("CTransceiver::T_ModulationType");
-
     m_ModulationTypeList.append(CTransceiver::eOOK);
     m_ModulationTypeList.append(CTransceiver::eFSK);
 
@@ -78,6 +75,25 @@ void TestHelper::attachReceiver(CTransceiver *pReceiver)
             pReceiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             pReceiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
+
+
+    // заполним карты шпионов. Адрес устройства - ключ, список шпионов - значение.
+    QSignalSpy *spy = NULL;
+    DviceSpyes spyesList;
+
+    spy = new QSignalSpy(pReceiver, SIGNAL(signalNewModulationType(int)));
+    spy->setObjectName("ModulationTypeSet");
+    spyesList.insert(static_cast<int>(eModulationTypeSet), spy);
+
+    spy = new QSignalSpy(pReceiver, SIGNAL(signalNewConnectionSpeed(int)));
+    spy->setObjectName("ModulationSpeedSet");
+    spyesList.insert(static_cast<int>(eModulationSpeedSet), spy);
+
+    spy = new QSignalSpy(pReceiver, SIGNAL(signalNewOutputPower(int)));
+    spy->setObjectName("TxPowerSet");
+    spyesList.insert(static_cast<int>(eTxPowerSet), spy);
+
+    m_Spyes.insert(pReceiver, spyesList);
 }
 
 void TestHelper::attachTransmitter(CTransceiver *pTransmitter)
@@ -97,43 +113,51 @@ void TestHelper::attachTransmitter(CTransceiver *pTransmitter)
     connect(pTransmitter, SIGNAL(signalNewRawPacket(QByteArray,unsigned short)),
             pipeRadioRaw, SLOT(WriteData(QByteArray,unsigned short)));
 
+    // заполним карты шпионов. Адрес устройства - ключ, список шпионов - значение.
+    QSignalSpy *spy = NULL;
+    DviceSpyes spyesList;
+
+    spy = new QSignalSpy(pTransmitter, SIGNAL(signalNewModulationType(int)));
+    spy->setObjectName("ModulationTypeSet");
+    spyesList.insert(static_cast<int>(eModulationTypeSet), spy);
+
+    spy = new QSignalSpy(pTransmitter, SIGNAL(signalNewConnectionSpeed(int)));
+    spy->setObjectName("ModulationSpeedSet");
+    spyesList.insert(static_cast<int>(eModulationSpeedSet), spy);
+
+    spy = new QSignalSpy(pTransmitter, SIGNAL(signalNewOutputPower(int)));
+    spy->setObjectName("TxPowerSet");
+    spyesList.insert(static_cast<int>(eTxPowerSet), spy);
+
+    m_Spyes.insert(pTransmitter, spyesList);
 }
 
-QSignalSpy* TestHelper::askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value)
-{
-    QSignalSpy *spy = NULL;
+void TestHelper::askTransceiver(CTransceiver *pDevice, const TCommand_RadioModem cmd, int value)
+{   
     switch (cmd)
     {
         case eModulationTypeSet:
         {
-            spy = new QSignalSpy(pDevice, SIGNAL(signalNewModulationType(CTransceiver::T_ModulationType)));
-            spy->setObjectName("ModulationTypeSet");
             pDevice->slotSetModulationType(static_cast<CTransceiver::T_ModulationType>(value));
         }break;
 
         case eModulationSpeedSet:
         {
-            spy = new QSignalSpy(pDevice, SIGNAL(signalNewConnectionSpeed(int)));
-            spy->setObjectName("ModulationSpeedSet");
-            pDevice->slotSetConnectionSpeed(static_cast<int>(value));
+            pDevice->slotSetConnectionSpeed(value);
         }break;
 
         case eTxPowerSet:
         {
-            spy = new QSignalSpy(pDevice, SIGNAL(signalNewOutputPower(int)));
-            spy->setObjectName("TxPowerSet");
-            pDevice->slotSetOutputPower(static_cast<int>(value));
+            pDevice->slotSetOutputPower(value);
         } break;
 
     default:
         break;
     }
 
-    return spy;
 }
 
-#include <QTest>
-QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay)
+void TestHelper::askTransceiver(CTransceiver *pDevice, const QList<int> &commands, const QList<int> &values, const int &sendDelay)
 {
     Q_ASSERT(commands.count());
     Q_ASSERT(values.count());
@@ -141,15 +165,27 @@ QList<QSignalSpy*> TestHelper::askTransceiver(CTransceiver *pDevice, const QList
 
     pDevice->setSendPeriod(sendDelay);
 
-    QList<QSignalSpy*> spyList;
     for (int i = 0; i < commands.count(); i++)
     {
-        qDebug() << "askTransceiver" << commands.at(i);
-        QSignalSpy *retSpy = askTransceiver(pDevice, static_cast<TCommand_RadioModem>(commands.at(i)), values.at(i));
-        if (retSpy)
-            spyList.append(retSpy);
-//        if (0 < sendDelay)
-            //QTest::qSleep(sendDelay);
+        askTransceiver(pDevice, static_cast<TCommand_RadioModem>(commands.at(i)), values.at(i));
     }
-    return spyList;
+}
+
+QSignalSpy *TestHelper::spyForCommand(CTransceiver *pDevice, const int command)
+{
+    return m_Spyes.value(pDevice).value(command);
+}
+
+void TestHelper::prepare()
+{
+    qDebug() << "cleaning" << m_Spyes.count() << "Devices";
+    foreach (DviceSpyes SpyesList, m_Spyes.values())
+    {
+        qDebug() << "cleaning" << SpyesList.count() << "spyes";
+        foreach(QSignalSpy *spy, SpyesList.values())
+        {
+            qDebug() << "cleaning spy" << spy->objectName() << "for" << spy->count() << "results";
+            //spy->clear();
+        }
+    }
 }
