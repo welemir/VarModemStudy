@@ -252,8 +252,12 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
-    if (m_iPacketDataLength <= 50)
-        signalNewDataPacketLength(50);
+  if (m_iPacketDataLength <= 50)
+      signalNewDataPacketLength(50);
+
+  // Открытие файла лога хода эксперимента для последующего анализа
+  m_streamRawLogger.setDevice(new QFile("RawData.log"));
+  m_streamRawLogger.device()->open(QIODevice::WriteOnly);
 
     // Синхронизация всех настроек используемых устройств и програмных модулей
     configureDevices();
@@ -325,6 +329,14 @@ void CKernel::slotStopOperation()
 
     // Сообщение о завершении передачи для разблокировки интерфейса пользователя
     emit signalTxInProgress(false);
+
+    // Сохранение данных эксперимента для последующего анализа
+    if(m_streamRawLogger.status() == QDataStream::Ok){
+        m_streamRawLogger << m_baPacketsTx;
+        m_streamRawLogger << m_baPacketsRx;
+
+        m_streamRawLogger.device()->close();
+        }
 }
 
 void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &baPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits)

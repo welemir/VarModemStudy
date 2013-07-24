@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QMap>
 #include <QList>
+#include <QDataStream>
 
 class CUICommand
 {
@@ -146,6 +147,8 @@ private:
     int m_packets_received_ok;
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
+
+    QDataStream m_streamRawLogger;
 };
 
 #endif // CKERNEL_H

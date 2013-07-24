@@ -7,6 +7,7 @@
 #include <QBitArray>
 #include <QQueue>
 #include <QMap>
+#include <QDataStream>
 
 #define MODEM_DEVICE_ID 21
 #define MODEM_RAWPIPE_TX_INTERVAL 10
@@ -27,6 +28,8 @@ typedef struct{
     int iTxCorrespondIndex; // Индекс пакета в переданной последовательности соответствующего данному
     QMap<int, TPacketCompare> listSendCompare;  // Список кандидатов на соответствие в списке переданных
 }TReceivedPacketDescription;
+QDataStream & operator<< (QDataStream & out, const TReceivedPacketDescription & packetDescr);
+QDataStream & operator>> (QDataStream & in, TReceivedPacketDescription & packetDescr);
 
 class CTransceiver : public QObject
 {

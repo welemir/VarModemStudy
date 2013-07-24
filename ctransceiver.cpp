@@ -6,6 +6,17 @@
 
 #include "CommandCode_RadioModem.h"
 
+QDataStream & operator<< (QDataStream & out, const TReceivedPacketDescription & packetDescr){
+    out << packetDescr.baData << packetDescr.iStartBitNumber << packetDescr.iErrorsBit;
+    out << packetDescr.iErrorsByte << packetDescr.bCrcOk << packetDescr.iTxCorrespondIndex;
+    return out;
+};
+QDataStream & operator>> (QDataStream & in, TReceivedPacketDescription & packetDescr){
+  in >> packetDescr.baData >> packetDescr.iStartBitNumber >> packetDescr.iErrorsBit;
+  in >> packetDescr.iErrorsByte >> packetDescr.bCrcOk >> packetDescr.iTxCorrespondIndex;
+  return in;
+};
+
 CTransceiver::CTransceiver(QObject *parent)
   :QObject(parent)
   ,m_iPreambleLength(2)
