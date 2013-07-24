@@ -27,8 +27,7 @@ CKernel* CKernel::GetInstance()
 
 CKernel::CKernel():
   m_pPipeCmd(0),
-  m_isLastPacketSent(false),
-  m_isLastRawBufferProcessed(false),
+  m_State(eIdle),
   m_iConnectionSpeed(9600),
   m_iOutputPower(20),
   m_ModulationType(CTransceiver::eFSK),
@@ -272,9 +271,6 @@ void CKernel::slotStartOperation()
     m_iBitErrorsDetected = 0;
     m_iPacketsSentByTransmitter = 0;
 
-    m_isLastPacketSent = false;
-    m_isLastRawBufferProcessed = false;
-
     for (int i = 0; i<(m_iTotalDataLength); i+=m_iPacketDataLength)
     {
         QByteArray newPacket;
@@ -288,8 +284,9 @@ void CKernel::slotStartOperation()
 
         m_packets_to_send++;
     }
+    // Переключение в режим ожидания включения приёмника и передача ему команды на включение "сырого" приёма
+    m_State = ePrepare;
     m_Receiver->slotRxStart();
-    m_Transmitter->slotTxStart();
 
     emit signalShowBER(0);
     emit signalShowPER(0);
@@ -352,6 +349,7 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
   // Определение коилчества ошибок в пакете
   int iErrorCounterBits = 0;
   int iErrorCounterBytes = 0;
+
   int iPacketLength = packetNew.baData.length();
   if(m_baPacketsTx.length() <= m_iLastPacketRx)
       return;   // Принято пакетов больше чем передано
@@ -418,13 +416,6 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     }
 
     emit signalRxProgress((100 * (m_packets_received_ok)) / m_packets_to_send);
-    if (m_isLastPacketSent)
-    {
-        if(m_packets_to_send == m_packets_received_ok)
-        {
-            slotStopOperation();
-        }
-    }
     emit signalUpdateStatistics();
 }
 
@@ -434,8 +425,9 @@ void CKernel::slotSetDefaultValuesOnStart()
 
 void CKernel::slotTxFinished()
 {
-    if (m_packets_to_send == m_iPacketsSentByTransmitter)
-        m_isLastPacketSent = true;
+    if (m_packets_to_send == m_iPacketsSentByTransmitter){
+        m_State = eAwaitingEnd;
+      }
 }
 void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 {
@@ -445,13 +437,20 @@ void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 
 void CKernel::slotParceRawDataStart()
 {
-  if(m_isLastPacketSent)
-    m_isLastRawBufferProcessed = true;
+  switch(m_State){
+    case ePrepare:
+      m_Transmitter->slotTxStart();
+      m_State = eWork;
+      break;
+
+    case eAwaitingEnd:
+      m_State = eIdle;
+    }
 }
 
 void CKernel::slotParceRawDataEnd()
 {
-  if(m_isLastRawBufferProcessed)
+  if(eIdle == m_State)
     slotStopOperation();
 }
 
