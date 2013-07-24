@@ -8,7 +8,7 @@
 #include <QQueue>
 
 #define MODEM_DEVICE_ID 21
-#define MODEM_RAWPIPE_TX_INTERVAL 100
+#define MODEM_CMD_TX_INTERVAL 100
 #define MODEM_STATUS_INTERVAL 100
 
 typedef struct{
@@ -122,7 +122,6 @@ private:
     QByteArray m_baStartPattern;
     unsigned int m_uiSendPeriod;
     QTimer m_SenderTimer;
-    QTimer m_TransceiverStatusTimer;
     QQueue<QByteArray> m_TxQueue;
     QQueue<QByteArray> m_QueueCommandToSend;
     QByteArray m_baCommandSendedLast;

@@ -18,14 +18,14 @@ void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &
     QSignalSpy *spy = TestHelper::getInstance()->spyForCommand(pDevice, command);
     qDebug() << "Spy" << spy << "expected value" << value;
 
-    QVERIFY(spy->count() >= 1);
-    QVERIFY(valueNo <= spy->count());
+    //QVERIFY(valueNo <= spy->count());
 
     //QCOMPARE(spy->at(valueNo).at(0).toInt(), value);
-    qDebug() << spy->at(valueNo).at(0).toInt();
-    /*for (int i = 0; i < spy->count(); i++) // один шпион способен отловить сигнал несколько раз.
+    if (-1 != valueNo)
+        qDebug() << spy->at(valueNo).at(0).toInt();
+    else
+    for (int i = 0; i < spy->count(); i++) // один шпион способен отловить сигнал несколько раз.
     {
-        qDebug() << "catch " << i+1;
         QList<QVariant> args = spy->at(i);
         // Перебор аргументов сигнала. Пока только их вывод на экран.
         for(int argNo = 0; argNo < args.count(); argNo++)
@@ -35,7 +35,20 @@ void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &
             //QVERIFY(value == argValue);
         }
     }
-    */
+
+}
+
+void TestBase::checkOperationResult(const QList<int> &commands, const QList<int> &values)
+{
+    qDebug() << "Sent << " << values;
+
+    qDebug() << "verification receiver:";
+    for (int i = 0; i < values.count(); i++)
+        checkSignal(TestHelper::getInstance()->receiver(), commands.at(i), values.at(i));
+
+    qDebug() << "verification transmitter:";
+    for (int i = 0; i < values.count(); i++)
+        checkSignal(TestHelper::getInstance()->transmitter(),  commands.at(i), values.at(i));
 }
 
 void TestBase::checkOperationResult(const int command, const QList<int> &values)
@@ -55,13 +68,11 @@ void TestBase::checkOperationResult(const int command, const QList<int> &values)
 // Отправка устройству одной и той же команды с разными параметрами
 void TestBase::uploadSettings(const int command, const QList<int> &values, const int packetsDelay)
 {
+    TestHelper::getInstance()->prepare();
     TestHelper *testHelper = TestHelper::getInstance();
     for (int i = 0; i < values.count(); i++)
     {
-        qDebug() << "ask" << command << values.at(i);
-        testHelper->receiver()->setSendPeriod(packetsDelay);
         testHelper->askTransceiver(testHelper->receiver(), static_cast<TCommand_RadioModem>(command), values.at(i));
-        testHelper->transmitter()->setSendPeriod(packetsDelay);
         testHelper->askTransceiver(testHelper->transmitter(), static_cast<TCommand_RadioModem>(command), values.at(i));
     }
 }
@@ -69,11 +80,9 @@ void TestBase::uploadSettings(const int command, const QList<int> &values, const
 // отправка устройству набора команд с соответствующими им параметрами (по одной команде на 1 параметр)
 void TestBase::uploadSettings(const QList<int> &commands, const QList<int> &values, const int packetsDelay)
 {
+    TestHelper::getInstance()->prepare();
     TestHelper *testHelper = TestHelper::getInstance();
-
-    qDebug() << "ask Rx";
     testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
-    qDebug() << "ask Tx";
     testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
 }
 
@@ -103,7 +112,7 @@ void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
                 QTest::qWait(waitDelay);
 
                 // анализ результатов
-                //checkOperationResult(spyDesc, values);
+                checkOperationResult(commands, values);
             }
         }
     }

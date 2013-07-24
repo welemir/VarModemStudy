@@ -8,13 +8,12 @@
 CTransceiver::CTransceiver(QObject *parent)
   :QObject(parent)
   ,m_iPreambleLength(2)
-  ,m_uiSendPeriod(MODEM_RAWPIPE_TX_INTERVAL)
+  ,m_uiSendPeriod(MODEM_CMD_TX_INTERVAL)
   ,m_RxEnabled(false)
 {
   m_timerSendTimeout.setSingleShot(true);
 
     connect(&m_SenderTimer, SIGNAL(timeout()), this, SLOT(slotTxTimer()));
-    connect(&m_TransceiverStatusTimer, SIGNAL(timeout()), this, SLOT(slotStatusTimer()));
     connect(&m_timerSendTimeout, SIGNAL(timeout()), this, SLOT(slotTimeoutSendToDevice()));
 }
 
@@ -44,7 +43,6 @@ void CTransceiver::trySendCommand()
     m_timerSendTimeout.stop();
   }else{
     m_baCommandSendedLast = m_QueueCommandToSend.dequeue();
-    qDebug() << ".";
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
     if(eSubmitRawData == m_baCommandSendedLast[0])
       m_baCommandSendedLast.clear();
@@ -343,7 +341,6 @@ void CTransceiver::slotTimeoutSendToDevice()
 void CTransceiver::slotTxStart()
 {
     m_PermitedToTxPacketsCount = 0;
-//    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
     m_SenderTimer.start(m_uiSendPeriod); // таймер отправки сообщений
 
     m_iPacketsToSend = m_TxQueue.length();
@@ -355,7 +352,6 @@ void CTransceiver::slotTxStart()
 void CTransceiver::slotTxStop()
 {
     // выключить трансивер
-    m_TransceiverStatusTimer.stop();
     m_SenderTimer.stop();
     m_bStopThread = true;
     emit signalTxInProgress(false);

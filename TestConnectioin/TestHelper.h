@@ -7,7 +7,7 @@
 #include "CommandCode_RadioModem.h"
 #include "ctransceiver.h"
 
-#define PACKET_TIMEOUT 300
+#define PACKET_TIMEOUT 100
 
 typedef QMap<int, QSignalSpy *> DviceSpyes; // карта шпионов - команда к шпиону
 typedef QMap<CTransceiver *, DviceSpyes> DevicesSpyDescriptor; // карта уникальных устройств и их карт шпионов

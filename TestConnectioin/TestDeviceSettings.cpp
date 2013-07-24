@@ -16,7 +16,6 @@ void TestDeviceSettings::TestModulationTypeSet()
 {
     qDebug() << "---- Trying to set new modulation Type -----";
 
-    TestHelper::getInstance()->prepare();
     QList<int> values = TestHelper::getInstance()->modulationTypeList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eModulationTypeSet, values, PACKET_TIMEOUT);
@@ -32,8 +31,6 @@ void TestDeviceSettings::TestModulationSpeedSet()
 {
     qDebug() << "---- Trying to set new modulation Speed -----";
 
-//
-    //TestHelper::getInstance()->prepare();
     QList<int> values = TestHelper::getInstance()->connectionSpeedList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eModulationSpeedSet, values, PACKET_TIMEOUT);
@@ -49,7 +46,6 @@ void TestDeviceSettings::TestTxPowerSet()
 {
     qDebug() << "---- Trying to set new transmit Power -----";
 
-    TestHelper::getInstance()->prepare();
     QList<int> values = TestHelper::getInstance()->txPowerList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eTxPowerSet, values, PACKET_TIMEOUT);

@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QThread>
+#include <QTest>
 
 #include <connectioncontrol.h>
 
@@ -163,11 +164,12 @@ void TestHelper::askTransceiver(CTransceiver *pDevice, const QList<int> &command
     Q_ASSERT(values.count());
     Q_ASSERT(commands.count() == values.count());
 
-    pDevice->setSendPeriod(sendDelay);
+    //pDevice->setSendPeriod(sendDelay);
 
     for (int i = 0; i < commands.count(); i++)
     {
         askTransceiver(pDevice, static_cast<TCommand_RadioModem>(commands.at(i)), values.at(i));
+        QTest::qWait(sendDelay);
     }
 }
 
@@ -178,14 +180,14 @@ QSignalSpy *TestHelper::spyForCommand(CTransceiver *pDevice, const int command)
 
 void TestHelper::prepare()
 {
-    qDebug() << "cleaning" << m_Spyes.count() << "Devices";
+//    qDebug() << "cleaning" << m_Spyes.count() << "Devices";
     foreach (DviceSpyes SpyesList, m_Spyes.values())
     {
-        qDebug() << "cleaning" << SpyesList.count() << "spyes";
+//        qDebug() << "cleaning" << SpyesList.count() << "spyes";
         foreach(QSignalSpy *spy, SpyesList.values())
         {
-            qDebug() << "cleaning spy" << spy->objectName() << "for" << spy->count() << "results";
-            //spy->clear();
+//            qDebug() << "cleaning spy" << spy->objectName() << "for" << spy->count() << "results";
+            spy->clear();
         }
     }
 }
