@@ -3,9 +3,13 @@
 
 #include <QObject>
 #include <QSignalSpy>
+#include <QFile>
+#include <QTextStream>
 
 #include "CommandCode_RadioModem.h"
 #include "ctransceiver.h"
+
+#define log qCritical
 
 #define PACKET_TIMEOUT 100
 
@@ -22,6 +26,8 @@ class TestHelper : public QObject
 
 public:
     static TestHelper *getInstance();
+
+    ~TestHelper();
 
 private:
     explicit TestHelper(QObject *parent = 0);
@@ -59,14 +65,6 @@ private:
     QList<int> m_Answers;
 
     DevicesSpyDescriptor m_Spyes;
-
-    // для тестирования корректности установки настроек будем ожидать ответ с нужной настройкой
-    int m_awaitingTransmitterAnswer;
-    int m_awaitingReceiverAnswer;
-    int m_iReceiverAnswer;
-    int m_iTransmitterAnswer;
-
-    QTimer m_senderTimer;
 };
 
 

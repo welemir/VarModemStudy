@@ -10,6 +10,7 @@ class TestDeviceSettings : public TestBase
     Q_OBJECT
 public:
     explicit TestDeviceSettings(QObject *parent = 0);
+    void uploadAllSettingsCombinations(int packetsDelay, int waitDelay);
 
 private slots:
     void TestModulationTypeSet();

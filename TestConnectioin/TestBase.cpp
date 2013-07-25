@@ -6,60 +6,129 @@
 
 #include "TestHelper.h"
 
+QFile *pOutFile = NULL;
+
+void customMessageHandler(QtMsgType type, const char *msg)
+{
+    QString txt;
+    switch (type)
+    {
+        case QtDebugMsg:
+            fprintf(stderr, "Debug: %s\n", msg);
+            break;
+        case QtWarningMsg:
+            txt = QString("%1").arg(msg);
+            fprintf(stderr, "Warning: %s\n", msg);
+            break;
+        case QtCriticalMsg:
+            txt = QString("%1").arg(msg);
+            //fprintf(stdout, "Critical: %s\n", msg);
+            break;
+        case QtFatalMsg:
+            fprintf(stderr, "Fatal: %s\n", msg);
+            abort();
+    }
+
+    if (NULL == pOutFile)
+    {
+        pOutFile = new QFile("TestLog.txt");
+        pOutFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+    }
+
+    if (!txt.isEmpty())
+    {
+        QTextStream ts(pOutFile);
+        ts << txt << endl;
+        pOutFile->flush();
+    }
+}
+
+
 TestBase::TestBase(QObject *parent) :
     QObject(parent)
 {
 }
 
-void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &value, const int valueNo)
+void TestBase::initTestCase()
+{
+    qInstallMsgHandler(customMessageHandler);
+}
+
+void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &expectedValue, const int valueNo)
 {
     // преребор всех однотипных сигналов, отловленных одним шпионом (например, несколько ответов на установку типа модул€ции)
 
     QSignalSpy *spy = TestHelper::getInstance()->spyForCommand(pDevice, command);
-    qDebug() << "Spy" << spy << "expected value" << value;
 
-    //QVERIFY(valueNo <= spy->count());
+    QVERIFY(valueNo <= spy->count());
 
-    //QCOMPARE(spy->at(valueNo).at(0).toInt(), value);
-    if (-1 != valueNo)
-        qDebug() << spy->at(valueNo).at(0).toInt();
-    else
-    for (int i = 0; i < spy->count(); i++) // один шпион способен отловить сигнал несколько раз.
+    if (-1 != valueNo) // если команда одна, то и значение ее параметра должно быть в одном пришедшем сигнале
     {
-        QList<QVariant> args = spy->at(i);
-        // ѕеребор аргументов сигнала. ѕока только их вывод на экран.
-        for(int argNo = 0; argNo < args.count(); argNo++)
+//        if (1 < spy->count())
+//            log() << "Warning:" << spy->count() << "signals came. Only one signal should came";
+
+
+        if (valueNo <= spy->count())
         {
-            int argValue = static_cast<int>(args.at(argNo).toInt());
-            qDebug() << "arg" << argNo+1  << "=" << argValue;
-            //QVERIFY(value == argValue);
+            int argValue = spy->at(valueNo).at(0).toInt();
+
+            if (expectedValue != argValue)
+                log() << "There is no expected value" << expectedValue << "but received" << argValue;
+
+            QVERIFY(expectedValue == argValue);
         }
     }
+    else
+    {
+        if (valueNo+1 > spy->count())
+            log() << "Error: expected signal #" << valueNo << "with value" << expectedValue << "didn't arrived.";
 
+        bool bMatch = false;
+        QList<int> valuesCame;
+        for (int i = 0; i < spy->count(); i++) // если команд несколько, то значени€ параметров должны приходить в соответствующих сигналах
+        {
+            QList<QVariant> args = spy->at(i);
+
+            // ѕеребор аргументов сигнала.
+            for(int argNo = 0; argNo < args.count(); argNo++)
+            {
+                int argValue = args.at(argNo).toInt();
+                valuesCame.append(argValue);
+                if (expectedValue == argValue)
+                {
+                    bMatch = true;
+                    break;
+                }
+            }
+        }
+        if (false == bMatch)
+            log() << "Test Fail:" << "There is no expected value" << expectedValue << "but received" << valuesCame;
+        QVERIFY(bMatch);
+    }
 }
 
 void TestBase::checkOperationResult(const QList<int> &commands, const QList<int> &values)
 {
-    qDebug() << "Sent << " << values;
+    log() << "Sent << " << values;
 
-    qDebug() << "verification receiver:";
+    log() << "verification receiver:";
     for (int i = 0; i < values.count(); i++)
         checkSignal(TestHelper::getInstance()->receiver(), commands.at(i), values.at(i));
 
-    qDebug() << "verification transmitter:";
+    log() << "verification transmitter:";
     for (int i = 0; i < values.count(); i++)
         checkSignal(TestHelper::getInstance()->transmitter(),  commands.at(i), values.at(i));
 }
 
 void TestBase::checkOperationResult(const int command, const QList<int> &values)
 {
-    qDebug() << "Sent << " << values;
+    log() << "Sent << " << values;
 
-    qDebug() << "verification receiver:";
+    log() << "verification receiver:";
     for (int i = 0; i < values.count(); i++)
         checkSignal(TestHelper::getInstance()->receiver(), command, values.at(i), i);
 
-    qDebug() << "verification transmitter:";
+    log() << "verification transmitter:";
     for (int i = 0; i < values.count(); i++)
         checkSignal(TestHelper::getInstance()->transmitter(), command, values.at(i), i);
 
@@ -84,36 +153,4 @@ void TestBase::uploadSettings(const QList<int> &commands, const QList<int> &valu
     TestHelper *testHelper = TestHelper::getInstance();
     testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
     testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
-}
-
-void TestBase::uploadAllSettingsCombinations(int packetsDelay, int waitDelay)
-{
-    TestHelper *testHelper = TestHelper::getInstance();
-    foreach(int modulation, testHelper->modulationTypeList())
-    {
-        foreach(int speed, testHelper->connectionSpeedList())
-        {
-            foreach(int power, testHelper->txPowerList())
-            {
-                QList<int> commands;
-                commands.append(eModulationTypeSet);
-                commands.append(eModulationSpeedSet);
-                commands.append(eTxPowerSet);
-
-                QList<int> values;
-                values.append(modulation);
-                values.append(speed);
-                values.append(power);
-
-                // отправка настроек в модем. ћежду пакетами задержка в packetsDelay милисекунд
-                uploadSettings(commands, values, packetsDelay);
-
-                // ожидаем результата выполнени€ операции
-                QTest::qWait(waitDelay);
-
-                // анализ результатов
-                checkOperationResult(commands, values);
-            }
-        }
-    }
 }

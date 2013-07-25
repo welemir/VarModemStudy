@@ -10,32 +10,30 @@
 #include "ctransceiver.h"
 
 TestDeviceExistance::TestDeviceExistance(QObject *parent)
-    : QObject(parent)
+    : TestBase(parent)
 {
 }
 
 void TestDeviceExistance::init()
 {
     //  init devices in global singleton
+    qWarning() << "------init TestDeviceExistance------";
     TestHelper::getInstance()->initDevices();
 
     qDebug() << "Waiting until devices starts";
     QTest::qWait(3000);
 }
+
 void TestDeviceExistance::receiverConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
-
-    bool bExpected = true;
-
-    qDebug() << "isRxConnected :" << testHelper->isRxConnected();
-    QCOMPARE(testHelper->isRxConnected(), bExpected);
+    log() << "isRxConnected :" << testHelper->isRxConnected();
+    QVERIFY(testHelper->isRxConnected());
 }
 
 void TestDeviceExistance::transmitterConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
-
-    bool bExpected = true;
-    QCOMPARE(testHelper->isTxConnected(), bExpected);
+    log() << "isTxConnected :" << testHelper->isTxConnected();
+    QVERIFY(testHelper->isTxConnected());
 }

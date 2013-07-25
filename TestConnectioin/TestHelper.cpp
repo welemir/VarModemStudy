@@ -6,6 +6,7 @@
 
 #include <connectioncontrol.h>
 
+
 TestHelper *TestHelper::m_pThis = NULL;
 
 TestHelper *TestHelper::getInstance()
@@ -16,12 +17,14 @@ TestHelper *TestHelper::getInstance()
     return m_pThis;
 }
 
+TestHelper::~TestHelper()
+{
+}
+
 TestHelper::TestHelper(QObject *parent)
     : QObject(parent)
     , m_bTransmitterConnected(false)
     , m_bReceiverConnected(false)
-    , m_iReceiverAnswer(0)
-    , m_iTransmitterAnswer(0)
 {
     m_ModulationTypeList.append(CTransceiver::eOOK);
     m_ModulationTypeList.append(CTransceiver::eFSK);
@@ -38,7 +41,6 @@ TestHelper::TestHelper(QObject *parent)
     m_TxPowerList.append(4);
     m_TxPowerList.append(10);
 }
-
 
 void TestHelper::slotTransmitterConnected()
 {
