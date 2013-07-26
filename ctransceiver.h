@@ -67,7 +67,7 @@ signals:
     void signalNewCommand(QByteArray, unsigned short);
     void signalNewRawPacket(QByteArray, unsigned short);
 
-    void signalNewRawPacketReceived(TReceivedPacketDescription);
+    void signalNewPacketReceived(TReceivedPacketDescription);
 
     void signalTxInProgress(bool inProgress);
     void signalTxProgress(int percent);
@@ -83,7 +83,7 @@ signals:
     void signalNewCrcType( T_CrcType );
     void signalNewCarrierFrequency( int );
     // Сигналы начала и окончания разбора буфера приёма для правильной отработки последнего буфера экспериминта
-    void signalParceRawDataStart();
+    void signalParceRawDataStart(QByteArray*);
     void signalParceRawDataEnd();
 
 public slots:

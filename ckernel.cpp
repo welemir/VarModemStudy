@@ -52,7 +52,9 @@ CKernel::CKernel():
     connect(m_Transmitter, SIGNAL(signalNewOutputPower( int )), this, SLOT(slotNewOutputPower(int)));
 
     connect(m_Transmitter, SIGNAL(signalTxProgress(int)), this, SIGNAL(signalTxProgress(int)));
-    connect(m_Receiver, SIGNAL(signalNewRawPacketReceived(TReceivedPacketDescription)), this, SLOT(slotNewPacketReceived(TReceivedPacketDescription)));
+    connect(m_Receiver, SIGNAL(signalNewPacketReceived(TReceivedPacketDescription)), this, SLOT(slotNewPacketReceived(TReceivedPacketDescription)));
+    connect(m_Receiver, SIGNAL(signalParceRawDataStart(QByteArray*)), this, SLOT(slotParceRawDataStart(QByteArray*)) );
+    connect(m_Receiver, SIGNAL(signalParceRawDataEnd()), this, SLOT(slotParceRawDataEnd()) );
 
     connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
@@ -136,10 +138,6 @@ void CKernel::slotReceiverConnected()
             m_Receiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
     connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             m_Receiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
-    connect(m_Receiver, SIGNAL(signalParceRawDataStart()),
-            this, SLOT(slotParceRawDataStart()) );
-    connect(m_Receiver, SIGNAL(signalParceRawDataEnd()),
-            this, SLOT(slotParceRawDataEnd()) );
 
     m_Receiver->slotUploadAllSettingsToModem();
 }
@@ -265,7 +263,9 @@ void CKernel::slotStartOperation()
     // Синхронизация всех настроек используемых устройств и програмных модулей
     configureDevices();
 
+    // Очистка списков и переменных ведения протокола эксперимента
     m_baPacketsTx.clear();
+    m_baReceivedRaw.clear();
     m_baPacketsRx.clear();
     m_iLastPacketRx = 0;
 
@@ -336,6 +336,7 @@ void CKernel::slotStopOperation()
     // Сохранение данных эксперимента для последующего анализа
     if(m_streamRawLogger.status() == QDataStream::Ok){
         m_streamRawLogger << m_baPacketsTx;
+        m_streamRawLogger << m_baReceivedRaw;
         m_streamRawLogger << m_baPacketsRx;
 
         m_streamRawLogger.device()->close();
@@ -450,8 +451,11 @@ void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
     emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
 }
 
-void CKernel::slotParceRawDataStart()
+void CKernel::slotParceRawDataStart(QByteArray *baRawDataNew)
 {
+  // Добавление нового пакета битового потока приёмника в список для возможности последующего анализа
+  m_baReceivedRaw.append(*baRawDataNew);
+
   switch(m_State){
     case ePrepare:
       m_Transmitter->slotTxStart();

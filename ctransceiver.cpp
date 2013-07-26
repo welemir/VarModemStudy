@@ -398,7 +398,7 @@ void CTransceiver::slotRxStop()
 
 void CTransceiver::processData(QByteArray baData)
 {
-    emit signalParceRawDataStart();
+    emit signalParceRawDataStart(&baData);
 
     static QByteArray baDataObtained;       // Буфер для накопления принятого пакета
     static int iPacketStartBit = 0;         // Порядковый номер первого бита пакета
@@ -448,7 +448,7 @@ void CTransceiver::processData(QByteArray baData)
               // Проверка Crc
               packetNew.bCrcOk = ( 0 == calculateCrc(packetNew.baData));
 
-              emit signalNewRawPacketReceived(packetNew);
+              emit signalNewPacketReceived(packetNew);
 
                 st_iByteCounter = -1;
                 st_uiOffsetBit = 0;

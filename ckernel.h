@@ -68,7 +68,7 @@ public slots:
     void slotStopOperation();
     void slotNewPacketReceived(TReceivedPacketDescription packetNew);
     void slotSetDefaultValuesOnStart();
-    void slotParceRawDataStart();
+    void slotParceRawDataStart(QByteArray *baRawDataNew);
     void slotParceRawDataEnd();
 
 signals:
@@ -136,6 +136,7 @@ private:
 
     int m_iTotalDataLength;
     QList<QByteArray> m_baPacketsTx;    // Пакеты подготовленные для отправки в ходе эксперимента
+    QList<QByteArray> m_baReceivedRaw;  // Пакеты битового потока от приёмника принятые в ходе эксперимента
     QList<TReceivedPacketDescription> m_baPacketsRx;    // Пакеты принятые в ходе эксперимента
     int m_iLastPacketRx;
 
