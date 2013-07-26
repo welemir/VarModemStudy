@@ -256,7 +256,10 @@ void CKernel::slotStartOperation()
       signalNewDataPacketLength(50);
 
   // Открытие файла лога хода эксперимента для последующего анализа
-  m_streamRawLogger.setDevice(new QFile("RawData.log"));
+  QString sLogFileName("RawData_");
+  sLogFileName += QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
+  sLogFileName += ".log";
+  m_streamRawLogger.setDevice(new QFile(sLogFileName));
   m_streamRawLogger.device()->open(QIODevice::WriteOnly);
 
     // Синхронизация всех настроек используемых устройств и програмных модулей
@@ -457,6 +460,10 @@ void CKernel::slotParceRawDataStart()
 
     case eAwaitingEnd:
       m_State = eIdle;
+      break;
+
+    default:
+      break;
     }
 }
 
