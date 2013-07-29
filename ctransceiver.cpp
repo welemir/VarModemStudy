@@ -250,7 +250,6 @@ void CTransceiver::slotUploadAllSettingsToModem()
 void CTransceiver::slotTxTimer()
 {
     TxSendPacket();
-    slotStatusTimer();
 }
 
 void CTransceiver::TxSendPacket()
@@ -351,13 +350,18 @@ void CTransceiver::slotTimeoutSendToDevice()
 void CTransceiver::slotTxStart()
 {
     m_PermitedToTxPacketsCount = 0;
-//    m_TransceiverStatusTimer.start(MODEM_STATUS_INTERVAL); // таймер опроса статуса трансивера
     m_SenderTimer.start(MODEM_RAWPIPE_TX_INTERVAL); // таймер отправки сообщений
 
     m_iPacketsToSend = m_TxQueue.length();
     emit signalTxInProgress(true);
 
     m_bStopThread = false;
+
+    // Запрос статуса передатчика для запуска процесса передачи 
+    // (далее статусы приходят при изменении состояния)
+    QByteArray newPacket;
+    newPacket.append(eModemStatusGet);
+    emit signalNewCommand(newPacket, MODEM_DEVICE_ID);
 }
 
 void CTransceiver::slotTxStop()
