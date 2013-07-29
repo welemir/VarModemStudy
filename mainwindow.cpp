@@ -215,3 +215,8 @@ void MainWindow::slotUpdateStatistics()
   int iBitErrorsMissed = m_pKernel->getBitErrorsMissed();
   ui->lineEditRxMissedErrorsCount->setText(QString("%1").arg(iBitErrorsMissed));
 }
+
+void MainWindow::on_actionSwitchPlaybackMode_toggled(bool arg1)
+{
+  m_pKernel->setProperty("modePlayback", arg1);
+}

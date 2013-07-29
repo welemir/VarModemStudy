@@ -34,6 +34,7 @@ class TestPacketsAnalyseTest;
 class CKernel : public QObject
 {
   Q_OBJECT
+  Q_PROPERTY(bool modePlayback READ modePlayback WRITE setmodePlayback /*NOTIFY modePlaybackChanged*/)
 
   friend class TestPacketsAnalyseTest;
 public:
@@ -41,6 +42,8 @@ public:
 
     int getBitErrorsDetected(){return m_iBitErrorsDetected;}
     int getBitErrorsMissed(){return m_iBitErrorsTotal - m_iBitErrorsDetected;}
+    bool modePlayback(){return m_bModePlayback;}
+    void setmodePlayback(bool bModeNew){m_bModePlayback = bModeNew;}
 
 public slots:
     void slotRunCommandFromUI(const CUICommand UIcommand);
@@ -99,6 +102,7 @@ signals:
 private slots:
     void slotTxFinished();
     void slotTransmitterPacketSent(QByteArray,unsigned short);
+    void slotPlaybackTimerEvent();
 
 private:
     CKernel();
@@ -123,6 +127,8 @@ private:
     CTransceiver *m_Transmitter;
     CTransceiver *m_Receiver;
 
+    // Управление режимом работы с модемами или с записанными логами радиообмена
+    bool m_bModePlayback;
     // Состояние для управления ходом эксперимента
     stateOfProcess m_State;
     // Текущие настройки радиоканала для эксперимента
@@ -137,6 +143,9 @@ private:
     int m_iTotalDataLength;
     QList<QByteArray> m_baPacketsTx;    // Пакеты подготовленные для отправки в ходе эксперимента
     QList<QByteArray> m_baReceivedRaw;  // Пакеты битового потока от приёмника принятые в ходе эксперимента
+    QList<QByteArray> m_baReceivedRawToPlay;  // Пакеты битового потока в режиме воспроизведения
+    QList<QByteArray>::ConstIterator m_rawIterator;
+    int m_iPlaybackPacketCounter;       // Счётчик пакетов обраотанных в режиме воспроизведения
     QList<TReceivedPacketDescription> m_baPacketsRx;    // Пакеты принятые в ходе эксперимента
     int m_iLastPacketRx;
 
@@ -150,6 +159,7 @@ private:
     int m_iBitErrorsDetected;
 
     QDataStream m_streamRawLogger;
+    QTimer m_PlaybackTimer;
 };
 
 #endif // CKERNEL_H

@@ -27,6 +27,7 @@ CKernel* CKernel::GetInstance()
 
 CKernel::CKernel():
   m_pPipeCmd(0),
+  m_bModePlayback(false),
   m_State(eIdle),
   m_iConnectionSpeed(9600),
   m_iOutputPower(20),
@@ -59,6 +60,8 @@ CKernel::CKernel():
     connect(pConnectionControl, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Transmitter, SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
     connect(m_Receiver,    SIGNAL(signalDiagMsg(QString)), this, SIGNAL(signalPrintDiagMeaasge(QString)) );
+
+    connect(&m_PlaybackTimer, SIGNAL(timeout()), this, SLOT(slotPlaybackTimerEvent()) );
 }
 
 void CKernel::slotRunCommandFromUI(const CUICommand UIcommand)
@@ -250,6 +253,45 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
+  if(m_bModePlayback){
+    QString sLogFileName("!RawData_2013-07-26_12-05-09.log");
+    m_streamRawLogger.setDevice(new QFile(sLogFileName));
+    m_streamRawLogger.device()->open(QIODevice::ReadOnly);
+
+    m_streamRawLogger >> m_baPacketsTx;
+    m_baReceivedRawToPlay.clear();
+    m_streamRawLogger >> m_baReceivedRawToPlay;
+
+    m_rawIterator = m_baReceivedRawToPlay.constBegin();
+    m_iPlaybackPacketCounter = 0;
+
+    m_Receiver->slotSetDataPacketLength(m_baPacketsTx[0].length());
+    // Очистка списков и переменных ведения протокола эксперимента
+    m_baPacketsRx.clear();
+    m_iLastPacketRx = 0;
+
+    // Сброс счётчиков статистики омена
+    m_packets_to_send = m_baPacketsTx.length();
+    m_packets_received = 0;
+    m_packets_received_ok = 0;
+    m_bytes_received = 0;
+    m_iBitErrorsTotal = 0;
+    m_iBitErrorsDetected = 0;
+    m_iPacketsSentByTransmitter = 0;
+
+    m_streamRawLogger.device()->close();
+
+    // Настройка приёмника на параметры обмена
+    slotSetSyncPatternLength(2/*m_iSyncPatternLength*/);
+    slotSetDataPacketLength(50/*m_iPacketDataLength*/);
+    slotSetCrcType(CTransceiver::eCrcNone/*m_crcType*/);
+
+
+    m_PlaybackTimer.setInterval(1);
+    m_PlaybackTimer.setSingleShot(false);
+    m_PlaybackTimer.start();
+    return;
+  }
   if (m_iPacketDataLength <= 50)
       signalNewDataPacketLength(50);
 
@@ -448,7 +490,8 @@ void CKernel::slotTxFinished()
 void CKernel::slotTransmitterPacketSent(QByteArray,unsigned short)
 {
     m_iPacketsSentByTransmitter++;
-    emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
+    emit signalTxProgress( (100 * m_iPacketsSentByTransmitter) / m_packets_to_send);
+//    emit signalTxProgress( (100 * (m_packets_to_send - m_Transmitter->packetsToSend() + 1)) / m_packets_to_send);
 }
 
 void CKernel::slotParceRawDataStart(QByteArray *baRawDataNew)
@@ -488,3 +531,17 @@ void CKernel::configureDevices()
   slotSetCrcType(m_crcType);
 }
 
+void CKernel::slotPlaybackTimerEvent(){
+  if(m_baReceivedRawToPlay.constEnd() == m_rawIterator){
+    m_PlaybackTimer.stop();
+    emit signalTxProgress(100);
+    return;
+  }
+  QByteArray baDataNext = *m_rawIterator;
+
+  m_rawIterator++;
+  m_iPacketsSentByTransmitter = (m_baPacketsTx.length()*(++m_iPlaybackPacketCounter)) / m_baReceivedRawToPlay.length();
+//  m_iPacketsSentByTransmitter++;
+  emit signalTxProgress( (100 * m_iPacketsSentByTransmitter) / m_packets_to_send);
+  m_Receiver->slotParceRadioData(baDataNext, 0);
+}

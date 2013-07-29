@@ -878,6 +878,7 @@
     </property>
     <addaction name="actionShowSettings"/>
     <addaction name="actionShowDiag"/>
+    <addaction name="actionSwitchPlaybackMode"/>
    </widget>
    <widget class="QMenu" name="menuInfo">
     <property name="title">
@@ -911,6 +912,14 @@
   <action name="actionShowDiag">
    <property name="text">
     <string>Диагностика</string>
+   </property>
+  </action>
+  <action name="actionSwitchPlaybackMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Режим воспроизведения</string>
    </property>
   </action>
  </widget>

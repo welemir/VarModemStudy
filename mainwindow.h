@@ -49,6 +49,9 @@ private slots:
     void slotNewChannelUtilizationSerivce(qreal);
     void slotNewRxSpeed(qreal);
     void slotUpdateStatistics();  // Запрос на обновление статистики обмена
+
+    void on_actionSwitchPlaybackMode_toggled(bool arg1);
+
 private:
     void connectKernelToUI();
 
