@@ -32,7 +32,7 @@ void customMessageHandler(QtMsgType type, const char *msg)
     if (NULL == pOutFile)
     {
         pOutFile = new QFile("TestLog.txt");
-        pOutFile->open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+        pOutFile->open(QIODevice::WriteOnly | QIODevice::Text);
     }
 
     if (!txt.isEmpty())
@@ -54,13 +54,13 @@ void TestBase::initTestCase()
     qInstallMsgHandler(customMessageHandler);
 }
 
-void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &expectedValue, const int valueNo)
+bool TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &expectedValue, const int valueNo)
 {
     // преребор всех однотипных сигналов, отловленных одним шпионом (например, несколько ответов на установку типа модуляции)
 
     QSignalSpy *spy = TestHelper::getInstance()->spyForCommand(pDevice, command);
 
-    QVERIFY(valueNo <= spy->count());
+    //QVERIFY(valueNo <= spy->count());
 
     if (-1 != valueNo) // если команда одна, то и значение ее параметра должно быть в одном пришедшем сигнале
     {
@@ -75,7 +75,8 @@ void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &
             if (expectedValue != argValue)
                 log() << "There is no expected value" << expectedValue << "but received" << argValue;
 
-            QVERIFY(expectedValue == argValue);
+            return expectedValue == argValue;
+           // QVERIFY(expectedValue == argValue);
         }
     }
     else
@@ -103,35 +104,56 @@ void TestBase::checkSignal(CTransceiver *pDevice, const int command, const int &
         }
         if (false == bMatch)
             log() << "Test Fail:" << "There is no expected value" << expectedValue << "but received" << valuesCame;
-        QVERIFY(bMatch);
+        return bMatch;
+      //  QVERIFY(bMatch);
     }
+    return false;
 }
 
-void TestBase::checkOperationResult(const QList<int> &commands, const QList<int> &values)
+bool TestBase::checkOperationResult(const QList<int> &commands, const QList<int> &values)
 {
+    bool bRxRes = true;
     log() << "Sent << " << values;
 
     log() << "verification receiver:";
     for (int i = 0; i < values.count(); i++)
-        checkSignal(TestHelper::getInstance()->receiver(), commands.at(i), values.at(i));
+        bRxRes &= checkSignal(TestHelper::getInstance()->receiver(), commands.at(i), values.at(i));
+    if (!bRxRes)
+        log() << bRxRes;
 
+    bool bTxRes = true;
     log() << "verification transmitter:";
     for (int i = 0; i < values.count(); i++)
-        checkSignal(TestHelper::getInstance()->transmitter(),  commands.at(i), values.at(i));
+        bTxRes &= checkSignal(TestHelper::getInstance()->transmitter(),  commands.at(i), values.at(i));
+    if (!bTxRes)
+        log() << bTxRes;
+
+    return bTxRes & bRxRes;
 }
 
-void TestBase::checkOperationResult(const int command, const QList<int> &values)
+bool TestBase::checkOperationResult(const int command, const QList<int> &values)
 {
+    bool bRxRes = true;
     log() << "Sent << " << values;
-
     log() << "verification receiver:";
     for (int i = 0; i < values.count(); i++)
-        checkSignal(TestHelper::getInstance()->receiver(), command, values.at(i), i);
+        bRxRes &= checkSignal(TestHelper::getInstance()->receiver(), command, values.at(i), i);
 
+    if (!bRxRes)
+        log() << "failed";
+    else
+        log() << "success";
+
+    bool bTxRes = true;
     log() << "verification transmitter:";
     for (int i = 0; i < values.count(); i++)
-        checkSignal(TestHelper::getInstance()->transmitter(), command, values.at(i), i);
+        bTxRes &= checkSignal(TestHelper::getInstance()->transmitter(), command, values.at(i), i);
+    if (!bRxRes)
+        log() << "failed";
+    else
+        log() << "success";
 
+    return bTxRes & bRxRes;
 }
 
 // Отправка устройству одной и той же команды с разными параметрами
@@ -144,6 +166,9 @@ void TestBase::uploadSettings(const int command, const QList<int> &values, const
         testHelper->askTransceiver(testHelper->receiver(), static_cast<TCommand_RadioModem>(command), values.at(i));
         testHelper->askTransceiver(testHelper->transmitter(), static_cast<TCommand_RadioModem>(command), values.at(i));
     }
+
+    // ожидаем результата выполнения операции
+    QTest::qWait(packetsDelay);
 }
 
 // отправка устройству набора команд с соответствующими им параметрами (по одной команде на 1 параметр)
@@ -153,4 +178,7 @@ void TestBase::uploadSettings(const QList<int> &commands, const QList<int> &valu
     TestHelper *testHelper = TestHelper::getInstance();
     testHelper->askTransceiver(testHelper->receiver(), commands, values, packetsDelay);
     testHelper->askTransceiver(testHelper->transmitter(),commands, values, packetsDelay);
+
+    // ожидаем результата выполнения операции
+    QTest::qWait(packetsDelay);
 }

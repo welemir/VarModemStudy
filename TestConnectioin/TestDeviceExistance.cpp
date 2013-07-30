@@ -17,7 +17,7 @@ TestDeviceExistance::TestDeviceExistance(QObject *parent)
 void TestDeviceExistance::init()
 {
     //  init devices in global singleton
-    qWarning() << "------init TestDeviceExistance------";
+    qDebug() << "------init TestDeviceExistance------";
     TestHelper::getInstance()->initDevices();
 
     qDebug() << "Waiting until devices starts";

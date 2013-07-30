@@ -19,13 +19,13 @@ private slots:
     void initTestCase();
 
 protected:
-    void checkSignal(CTransceiver *pDevice, const int command, const int &expectedValue, const int valueNo = -1);
+    bool checkSignal(CTransceiver *pDevice, const int command, const int &expectedValue, const int valueNo = -1);
 
     // проверка результатов операции при условии, что отправлялись разные команды с соответствующими значениями
-    void checkOperationResult(const QList<int> &commands, const QList<int> &values);
+    bool checkOperationResult(const QList<int> &commands, const QList<int> &values);
 
     // проверка результатов операции при условии, что отправлялась одна команда с разными значениями
-    void checkOperationResult(const int command, const QList<int> &values);
+    bool checkOperationResult(const int command, const QList<int> &values);
     void uploadSettings(const int command, const QList<int> &values, const int packetsDelay = 0);
     void uploadSettings(const QList<int> &commands, const QList<int> &values, const int packetsDelay = 0);
 };

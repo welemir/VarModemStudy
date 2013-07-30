@@ -5,8 +5,10 @@
 #include <QSignalSpy>
 #include <QFile>
 #include <QTextStream>
+#include <QElapsedTimer>
 
 #include "CommandCode_RadioModem.h"
+#include "connectioncontrol.h"
 #include "ctransceiver.h"
 
 #define log qCritical
@@ -48,14 +50,23 @@ public:
     QSignalSpy *spyForCommand(CTransceiver *pDevice, const int command);
     void prepare();
 
+    void startRxMeasure(QList<int> *resultList);
+    void stopRxMeasure();
+    void startTxMeasure(QList<int> *resultList);
+    int rxRawDataSize(){return m_iRxRawDataSize;}
+
 private slots:
     void slotTransmitterConnected();
     void slotReceiverConnected();
+
+    void slotRxRawDataCame(QByteArray baData, unsigned short usSenderID);
+    void slotTxRawDataCame();
 
 private:
     static TestHelper *m_pThis;
     CTransceiver *m_Transmitter;
     CTransceiver *m_Receiver;
+    CPipe *m_RxPipeRadioRaw;
     bool m_bTransmitterConnected;
     bool m_bReceiverConnected;
 
@@ -65,6 +76,16 @@ private:
     QList<int> m_Answers;
 
     DevicesSpyDescriptor m_Spyes;
+
+
+    QList<int> *m_pRawDataRxIntervals;
+    QElapsedTimer m_RawDataRxMeasureTimer;
+
+    QList<int> *m_pRawDataTxIntervals;
+    int m_iRxRawDataSize;
+    QTime m_RawDataTxMeasureTimer;
+
+    QTime m_TxMeasureTimer;
 };
 
 

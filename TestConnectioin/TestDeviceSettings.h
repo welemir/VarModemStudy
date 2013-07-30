@@ -16,6 +16,7 @@ private slots:
     void TestModulationTypeSet();
     void TestModulationSpeedSet();
     void TestTxPowerSet();
+public:
     void TestSingleSettings();
     void TestContinuouslySettings();
 };

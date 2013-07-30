@@ -81,6 +81,7 @@ signals:
     // Сигналы начала и окончания разбора буфера приёма для правильной отработки последнего буфера экспериминта
     void signalParceRawDataStart();
     void signalParceRawDataEnd();
+    void signalCommandSendRetry();
 
 public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);

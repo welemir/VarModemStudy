@@ -329,6 +329,7 @@ void CTransceiver::slotTimeoutSendToDevice()
 {
   if(0 != m_baCommandSendedLast.length()){
     qDebug() << "+";
+    emit signalCommandSendRetry();
     emit signalNewCommand(m_baCommandSendedLast, MODEM_DEVICE_ID);
     m_timerSendTimeout.start(m_uiSendPeriod);
   }

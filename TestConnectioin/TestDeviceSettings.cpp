@@ -34,11 +34,8 @@ void TestDeviceSettings::uploadAllSettingsCombinations(int packetsDelay, int wai
                 // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
                 uploadSettings(commands, values, packetsDelay);
 
-                // ожидаем результата выполнения операции
-                QTest::qWait(waitDelay);
-
                 // анализ результатов
-                checkOperationResult(commands, values);
+                QVERIFY(checkOperationResult(commands, values));
             }
         }
     }
@@ -46,58 +43,49 @@ void TestDeviceSettings::uploadAllSettingsCombinations(int packetsDelay, int wai
 
 void TestDeviceSettings::TestModulationTypeSet()
 {
-    qWarning() << "---- Trying to set new modulation Type -----";
+    log() << "---- Trying to set new modulation Type -----";
 
     QList<int> values = TestHelper::getInstance()->modulationTypeList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eModulationTypeSet, values, PACKET_TIMEOUT);
 
-    // ожидаем результата выполнения операции
-    QTest::qWait(PACKET_TIMEOUT);
-
     // анализ результатов
-    checkOperationResult(eModulationTypeSet, values);
+    QVERIFY(checkOperationResult(eModulationTypeSet, values));
 }
 
 void TestDeviceSettings::TestModulationSpeedSet()
 {
-    qWarning() << "---- Trying to set new modulation Speed -----";
+    log() << "---- Trying to set new modulation Speed -----";
 
     QList<int> values = TestHelper::getInstance()->connectionSpeedList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eModulationSpeedSet, values, PACKET_TIMEOUT);
 
-    // ожидаем результата выполнения операции
-    QTest::qWait(PACKET_TIMEOUT*values.count());
-
     // анализ результатов
-    checkOperationResult(eModulationSpeedSet, values);
+    QVERIFY(checkOperationResult(eModulationSpeedSet, values));
 }
 
 void TestDeviceSettings::TestTxPowerSet()
 {
-    qWarning() << "---- Trying to set new transmit Power -----";
+    log() << "---- Trying to set new transmit Power -----";
 
     QList<int> values = TestHelper::getInstance()->txPowerList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
     uploadSettings(eTxPowerSet, values, PACKET_TIMEOUT);
 
-    // ожидаем результата выполнения операции
-    QTest::qWait(PACKET_TIMEOUT);
-
     // анализ результатов
-    checkOperationResult(eTxPowerSet, values);
+    QVERIFY(checkOperationResult(eTxPowerSet, values));
 
 }
 
 void TestDeviceSettings::TestSingleSettings()
 {
-    qWarning() << "---- Trying to upload all settings separately -----";
+    log() << "---- Trying to upload all settings separately -----";
     uploadAllSettingsCombinations(PACKET_TIMEOUT, PACKET_TIMEOUT);
 }
 
 void TestDeviceSettings::TestContinuouslySettings()
 {
-     qWarning() << "---- Trying to upload all settings continously -----";
+     log() << "---- Trying to upload all settings continously -----";
      uploadAllSettingsCombinations(0, PACKET_TIMEOUT);
 }

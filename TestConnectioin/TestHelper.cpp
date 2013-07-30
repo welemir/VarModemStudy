@@ -4,8 +4,6 @@
 #include <QThread>
 #include <QTest>
 
-#include <connectioncontrol.h>
-
 
 TestHelper *TestHelper::m_pThis = NULL;
 
@@ -26,6 +24,8 @@ TestHelper::TestHelper(QObject *parent)
     , m_bTransmitterConnected(false)
     , m_bReceiverConnected(false)
 {
+
+    qRegisterMetaType<TReceivedPacketDescription>("TReceivedPacketDescription");
     m_ModulationTypeList.append(CTransceiver::eOOK);
     m_ModulationTypeList.append(CTransceiver::eFSK);
 
@@ -71,12 +71,12 @@ void TestHelper::attachReceiver(CTransceiver *pReceiver)
 
     CPipeMgr *pipeMgr = CConnectionControl::GetInstance()->GetRxDescriptor()->m_pipeMgr;
     CPipe    *pipeCmd = pipeMgr->CreatePipe(CPipeMgr::ePipeOfCommand);
-    CPipe    *pipeRadioRaw = pipeMgr->CreatePipe(CPipeMgr::ePipeOfDataRaw);
+    m_RxPipeRadioRaw = pipeMgr->CreatePipe(CPipeMgr::ePipeOfDataRaw);
     connect(pReceiver, SIGNAL(signalNewCommand(QByteArray,unsigned short)),
             pipeCmd, SLOT(WriteData(QByteArray,unsigned short)));
     connect(pipeCmd, SIGNAL(ReadData(QByteArray,unsigned short)),
             pReceiver, SLOT(slotParceCommand(QByteArray,unsigned short)));
-    connect(pipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
+    connect(m_RxPipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)),
             pReceiver, SLOT(slotParceRadioData(QByteArray,unsigned short)) );
 
 
@@ -192,4 +192,43 @@ void TestHelper::prepare()
             spy->clear();
         }
     }
+}
+
+void TestHelper::startRxMeasure(QList<int> *resultList)
+{
+    m_iRxRawDataSize = 0;
+    m_pRawDataRxIntervals = resultList;
+    connect(m_RxPipeRadioRaw, SIGNAL(ReadData(QByteArray,unsigned short)), this, SLOT(slotRxRawDataCame(QByteArray, unsigned short)));
+    //m_Receiver->setSendPeriod(20);
+    m_Receiver->slotRxStart();
+    m_RawDataRxMeasureTimer.restart();
+}
+
+void TestHelper::stopRxMeasure()
+{
+    m_Receiver->slotRxStop();
+    disconnect(m_RxPipeRadioRaw, SIGNAL(ReadData(QByteArray, unsigned short)), this, SLOT(slotRxRawDataCame(QByteArray, unsigned short)));
+}
+
+void TestHelper::startTxMeasure(QList<int> *resultList)
+{
+    m_pRawDataTxIntervals = resultList;
+    //m_Transmitter->setSendPeriod(20);
+    m_Transmitter->slotTxStart();
+    m_RawDataTxMeasureTimer.restart();
+}
+
+void TestHelper::slotRxRawDataCame(QByteArray baData, unsigned short usSenderID)
+{
+    Q_UNUSED(usSenderID);
+
+    m_iRxRawDataSize += baData.count();
+    m_pRawDataRxIntervals->append(m_RawDataRxMeasureTimer.elapsed());
+    m_RawDataRxMeasureTimer.restart();
+}
+
+void TestHelper::slotTxRawDataCame()
+{
+    m_pRawDataTxIntervals->append(m_RawDataRxMeasureTimer.elapsed());
+    m_RawDataTxMeasureTimer.restart();
 }
