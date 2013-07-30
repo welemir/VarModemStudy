@@ -34,7 +34,7 @@ class TestPacketsAnalyseTest;
 class CKernel : public QObject
 {
   Q_OBJECT
-  Q_PROPERTY(bool modePlayback READ modePlayback WRITE setmodePlayback /*NOTIFY modePlaybackChanged*/)
+  Q_PROPERTY(QString fileNameToPlayback READ fileNameToPlayback WRITE setFileNameToPlayback)
 
   friend class TestPacketsAnalyseTest;
 public:
@@ -42,8 +42,8 @@ public:
 
     int getBitErrorsDetected(){return m_iBitErrorsDetected;}
     int getBitErrorsMissed(){return m_iBitErrorsTotal - m_iBitErrorsDetected;}
-    bool modePlayback(){return m_bModePlayback;}
-    void setmodePlayback(bool bModeNew){m_bModePlayback = bModeNew;}
+    QString fileNameToPlayback(){return m_sFileNameToPlayback;}
+    void setFileNameToPlayback(QString fileNameNew){m_sFileNameToPlayback = fileNameNew;}
 
 public slots:
     void slotRunCommandFromUI(const CUICommand UIcommand);
@@ -127,8 +127,8 @@ private:
     CTransceiver *m_Transmitter;
     CTransceiver *m_Receiver;
 
-    // Управление режимом работы с модемами или с записанными логами радиообмена
-    bool m_bModePlayback;
+    // Имя файла лога для чтения в режиме воспроизведения
+    QString m_sFileNameToPlayback;
     // Состояние для управления ходом эксперимента
     stateOfProcess m_State;
     // Текущие настройки радиоканала для эксперимента

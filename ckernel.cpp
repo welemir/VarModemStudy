@@ -27,7 +27,6 @@ CKernel* CKernel::GetInstance()
 
 CKernel::CKernel():
   m_pPipeCmd(0),
-  m_bModePlayback(false),
   m_State(eIdle),
   m_iConnectionSpeed(9600),
   m_iOutputPower(20),
@@ -253,14 +252,14 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
-  if(m_bModePlayback){
-    QString sLogFileName("!RawData_2013-07-26_12-05-09.log");
-    m_streamRawLogger.setDevice(new QFile(sLogFileName));
-    m_streamRawLogger.device()->open(QIODevice::ReadOnly);
+  // Если определено имя файла воспроизведения - работаем в режиме воспроизведения
+  if(!m_sFileNameToPlayback.isEmpty()){
+    QDataStream streamToPlay(new QFile(m_sFileNameToPlayback));
+    streamToPlay.device()->open(QIODevice::ReadOnly);
 
-    m_streamRawLogger >> m_baPacketsTx;
+    streamToPlay >> m_baPacketsTx;
     m_baReceivedRawToPlay.clear();
-    m_streamRawLogger >> m_baReceivedRawToPlay;
+    streamToPlay >> m_baReceivedRawToPlay;
 
     m_rawIterator = m_baReceivedRawToPlay.constBegin();
     m_iPlaybackPacketCounter = 0;
@@ -279,7 +278,7 @@ void CKernel::slotStartOperation()
     m_iBitErrorsDetected = 0;
     m_iPacketsSentByTransmitter = 0;
 
-    m_streamRawLogger.device()->close();
+    streamToPlay.device()->close();
 
     // Настройка приёмника на параметры обмена
     slotSetSyncPatternLength(2/*m_iSyncPatternLength*/);
@@ -292,6 +291,7 @@ void CKernel::slotStartOperation()
     m_PlaybackTimer.start();
     return;
   }
+
   if (m_iPacketDataLength <= 50)
       signalNewDataPacketLength(50);
 
@@ -376,7 +376,8 @@ void CKernel::slotStopOperation()
     emit signalTxInProgress(false);
 
     // Сохранение данных эксперимента для последующего анализа
-    if(m_streamRawLogger.status() == QDataStream::Ok){
+    if(m_sFileNameToPlayback.isEmpty()  // В режиме воспроизведения лог не пишется
+       && (m_streamRawLogger.status() == QDataStream::Ok)){
         m_streamRawLogger << m_baPacketsTx;
         m_streamRawLogger << m_baReceivedRaw;
         m_streamRawLogger << m_baPacketsRx;

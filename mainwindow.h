@@ -50,7 +50,8 @@ private slots:
     void slotNewRxSpeed(qreal);
     void slotUpdateStatistics();  // Запрос на обновление статистики обмена
 
-    void on_actionSwitchPlaybackMode_toggled(bool arg1);
+    void on_actionSwitchMeasureMode_triggered();
+    void on_actionOpenFileToPlay_triggered();
 
 private:
     void connectKernelToUI();

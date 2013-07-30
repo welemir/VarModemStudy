@@ -878,7 +878,8 @@
     </property>
     <addaction name="actionShowSettings"/>
     <addaction name="actionShowDiag"/>
-    <addaction name="actionSwitchPlaybackMode"/>
+    <addaction name="actionSwitchMeasureMode"/>
+    <addaction name="actionOpenFileToPlay"/>
    </widget>
    <widget class="QMenu" name="menuInfo">
     <property name="title">
@@ -914,12 +915,20 @@
     <string>Диагностика</string>
    </property>
   </action>
-  <action name="actionSwitchPlaybackMode">
+  <action name="actionSwitchMeasureMode">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Режим воспроизведения</string>
+    <string>Режим измерения</string>
+   </property>
+  </action>
+  <action name="actionOpenFileToPlay">
+   <property name="text">
+    <string>Открыть файл ...</string>
    </property>
   </action>
  </widget>

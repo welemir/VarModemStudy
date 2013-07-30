@@ -216,7 +216,31 @@ void MainWindow::slotUpdateStatistics()
   ui->lineEditRxMissedErrorsCount->setText(QString("%1").arg(iBitErrorsMissed));
 }
 
-void MainWindow::on_actionSwitchPlaybackMode_toggled(bool arg1)
+void MainWindow::on_actionSwitchMeasureMode_triggered()
 {
-  m_pKernel->setProperty("modePlayback", arg1);
+  m_pKernel->setProperty("fileNameToPlayback", "");
+  ui->actionSwitchMeasureMode->setChecked(true);
+
+  QString sHeader = QFileInfo(QApplication::arguments().first()).fileName();  // Имя приложения
+  sHeader += " : ";                                                           // Разделитель
+  sHeader += "Измерение";                                                     // Обозначение режима непосредственного измерения
+
+  setWindowTitle(sHeader);
+}
+
+void MainWindow::on_actionOpenFileToPlay_triggered()
+{
+  QString filePathSelected = QFileDialog::getOpenFileName(this,
+       tr("Open log file"), "", tr("Log Files (*.log);;All Files (*.*)"));
+
+  if(!filePathSelected.isEmpty()){
+    m_pKernel->setProperty("fileNameToPlayback", filePathSelected);
+    ui->actionSwitchMeasureMode->setChecked(false);
+
+    QString sHeader = QFileInfo(QApplication::arguments().first()).fileName();  // Имя приложения
+    sHeader += " : ";                                                           // Разделитель
+    sHeader += QFileInfo(filePathSelected).fileName();                          // Имя файла лога для воспроизведения
+
+    setWindowTitle(sHeader);
+  }
 }
