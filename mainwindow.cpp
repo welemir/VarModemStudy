@@ -8,7 +8,6 @@
 #include "connectioncontrol.h"
 #include "cstatuswidget.h"
 
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // создание окон
     m_aboutProgramWindow = new DialogAboutProgram(this);
-//    m_settingsWindow     = new DialogSettings(this);
     m_diagnosticsWindow  = new DialogDiagnostics(this);
 
     m_statusWidget = new CStatusWidget();
@@ -27,7 +25,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // подключение пунктов главного меню
     QObject::connect(ui->actionShowAboutWindow, SIGNAL(triggered()), this, SLOT(showAboutWindow()));
-    //QObject::connect(ui->actionShowSettings,    SIGNAL(triggered()), this, SLOT(showSettingsWindow()));
     QObject::connect(ui->actionShowDiag,        SIGNAL(triggered()), this, SLOT(showDiagWindow()));
 
     m_pKernel = CKernel::GetInstance();
@@ -243,4 +240,9 @@ void MainWindow::on_actionOpenFileToPlay_triggered()
 
     setWindowTitle(sHeader);
   }
+}
+
+void MainWindow::on_actionShowStatistics_triggered()
+{
+  m_StatisticsWindow.show();
 }

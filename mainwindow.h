@@ -11,6 +11,7 @@
 //#include "dialogsettings.h"
 #include "dialogdiagnostics.h"
 #include "cstatuswidget.h"
+#include "dialogstatistics.h"
 
 namespace Ui {
 class MainWindow;
@@ -52,6 +53,7 @@ private slots:
 
     void on_actionSwitchMeasureMode_triggered();
     void on_actionOpenFileToPlay_triggered();
+    void on_actionShowStatistics_triggered();
 
 private:
     void connectKernelToUI();
@@ -60,9 +62,9 @@ private:
     Ui::MainWindow *ui;
     CKernel* m_pKernel;
     DialogAboutProgram *m_aboutProgramWindow;
-//    DialogSettings *m_settingsWindow;
     DialogDiagnostics *m_diagnosticsWindow;
     CStatusWidget *m_statusWidget;
+    CDialogStatistics m_StatisticsWindow;
 };
 
 #endif // MAINWINDOW_H

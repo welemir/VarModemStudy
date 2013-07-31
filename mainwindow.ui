@@ -878,6 +878,7 @@
     </property>
     <addaction name="actionShowSettings"/>
     <addaction name="actionShowDiag"/>
+    <addaction name="actionShowStatistics"/>
     <addaction name="actionSwitchMeasureMode"/>
     <addaction name="actionOpenFileToPlay"/>
    </widget>
@@ -929,6 +930,11 @@
   <action name="actionOpenFileToPlay">
    <property name="text">
     <string>Открыть файл ...</string>
+   </property>
+  </action>
+  <action name="actionShowStatistics">
+   <property name="text">
+    <string>Окно статистики</string>
    </property>
   </action>
  </widget>

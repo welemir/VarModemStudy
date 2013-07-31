@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     dialogsettings.cpp \
     dialogdiagnostics.cpp \
     ctransceiver.cpp \
-    cstatuswidget.cpp
+    cstatuswidget.cpp \
+    dialogstatistics.cpp
 
 HEADERS  += mainwindow.h \
     ckernel.h \
@@ -49,13 +50,15 @@ HEADERS  += mainwindow.h \
     CommandCode.h \
     CommandCode.h \
     CommandCode_RadioModem.h \
-    cstatuswidget.h
+    cstatuswidget.h \
+    dialogstatistics.h
 
 FORMS    += mainwindow.ui \
     dialogaboutprogram.ui \
     dialogsettings.ui \
     dialogdiagnostics.ui \
-    cstatuswidget.ui
+    cstatuswidget.ui \
+    dialogstatistics.ui
 
 RESOURCES += \
     VarControl.qrc
