@@ -43,7 +43,7 @@ void TestDeviceSettings::uploadAllSettingsCombinations(int packetsDelay, int wai
 
 void TestDeviceSettings::TestModulationTypeSet()
 {
-    log() << "---- Trying to set new modulation Type -----";
+    qWarning() << "---- Trying to set new modulation Type -----";
 
     QList<int> values = TestHelper::getInstance()->modulationTypeList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
@@ -55,7 +55,7 @@ void TestDeviceSettings::TestModulationTypeSet()
 
 void TestDeviceSettings::TestModulationSpeedSet()
 {
-    log() << "---- Trying to set new modulation Speed -----";
+    qWarning() << "---- Trying to set new modulation Speed -----";
 
     QList<int> values = TestHelper::getInstance()->connectionSpeedList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
@@ -67,7 +67,7 @@ void TestDeviceSettings::TestModulationSpeedSet()
 
 void TestDeviceSettings::TestTxPowerSet()
 {
-    log() << "---- Trying to set new transmit Power -----";
+    qWarning() << "---- Trying to set new transmit Power -----";
 
     QList<int> values = TestHelper::getInstance()->txPowerList();
     // отправка настроек в модем. Между пакетами задержка в packetsDelay милисекунд
@@ -80,12 +80,12 @@ void TestDeviceSettings::TestTxPowerSet()
 
 void TestDeviceSettings::TestSingleSettings()
 {
-    log() << "---- Trying to upload all settings separately -----";
+    qWarning() << "---- Trying to upload all settings separately -----";
     uploadAllSettingsCombinations(PACKET_TIMEOUT, PACKET_TIMEOUT);
 }
 
 void TestDeviceSettings::TestContinuouslySettings()
 {
-     log() << "---- Trying to upload all settings continously -----";
+     qWarning() << "---- Trying to upload all settings continously -----";
      uploadAllSettingsCombinations(0, PACKET_TIMEOUT);
 }

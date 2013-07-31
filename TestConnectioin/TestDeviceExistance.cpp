@@ -17,7 +17,7 @@ TestDeviceExistance::TestDeviceExistance(QObject *parent)
 void TestDeviceExistance::init()
 {
     //  init devices in global singleton
-    qDebug() << "------init TestDeviceExistance------";
+    qWarning() << "------init TestDeviceExistance------";
     TestHelper::getInstance()->initDevices();
 
     qDebug() << "Waiting until devices starts";
@@ -27,13 +27,13 @@ void TestDeviceExistance::init()
 void TestDeviceExistance::receiverConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
-    log() << "isRxConnected :" << testHelper->isRxConnected();
+    qWarning() << "isRxConnected :" << testHelper->isRxConnected();
     QVERIFY(testHelper->isRxConnected());
 }
 
 void TestDeviceExistance::transmitterConnected()
 {
     TestHelper *testHelper = TestHelper::getInstance();
-    log() << "isTxConnected :" << testHelper->isTxConnected();
+    qWarning() << "isTxConnected :" << testHelper->isTxConnected();
     QVERIFY(testHelper->isTxConnected());
 }

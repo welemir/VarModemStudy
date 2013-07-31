@@ -14,6 +14,11 @@ private:
 
 private slots:
     void TestMaximumContinuouslySettingsCount();
+    void prepareDevicesForRawDataTransfer();
+    void testReceivePackets();
+
+public slots:
+    void sendPackets();
 };
 
 #endif // TESTCOMMUNICATIONSTABILITY_H

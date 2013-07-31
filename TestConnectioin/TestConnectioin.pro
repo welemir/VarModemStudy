@@ -38,8 +38,7 @@ SOURCES +=  \
     TestHelper.cpp \
     TestDeviceSettings.cpp \
     TestBase.cpp \
-    TestCommunicationStability.cpp \
-    TestPacketSend.cpp
+    TestCommunicationStability.cpp
 
 HEADERS += \
     ../BitBusPipes/cbitbuspipes.h \
@@ -58,5 +57,4 @@ HEADERS += \
     TestHelper.h \
     TestDeviceSettings.h \
     TestBase.h \
-    TestCommunicationStability.h \
-    TestPacketSend.h
+    TestCommunicationStability.h
