@@ -158,6 +158,7 @@ private:
     int m_iBitErrorsTotal;
     int m_iBitErrorsDetected;
 
+    bool m_bLogSave;
     QDataStream m_streamRawLogger;
     QTimer m_PlaybackTimer;
 };

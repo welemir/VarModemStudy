@@ -36,7 +36,12 @@ CKernel::CKernel():
   m_crcType(CTransceiver::eCrcNone),
   m_iPacketDataLength(50),
   m_iTotalDataLength(1000)
+  ,m_bLogSave(false)
 {
+  ProgramSettings ps;
+  // Восстановление из файла настроек разрешения на сохранение log-файла эксперимента
+  m_bLogSave = ps.value("RawLogging", false).toBool();
+
     m_Transmitter = new CTransceiver(this);
     m_Receiver    = new CTransceiver(this);
 
@@ -376,14 +381,16 @@ void CKernel::slotStopOperation()
     emit signalTxInProgress(false);
 
     // Сохранение данных эксперимента для последующего анализа
-    if(m_sFileNameToPlayback.isEmpty()  // В режиме воспроизведения лог не пишется
-       && (m_streamRawLogger.status() == QDataStream::Ok)){
-        m_streamRawLogger << m_baPacketsTx;
-        m_streamRawLogger << m_baReceivedRaw;
-        m_streamRawLogger << m_baPacketsRx;
+    if(m_bLogSave
+       && m_sFileNameToPlayback.isEmpty()  // В режиме воспроизведения лог не пишется
+       && (m_streamRawLogger.status() == QDataStream::Ok))
+    {
+      m_streamRawLogger << m_baPacketsTx;
+      m_streamRawLogger << m_baReceivedRaw;
+      m_streamRawLogger << m_baPacketsRx;
 
-        m_streamRawLogger.device()->close();
-        }
+      m_streamRawLogger.device()->close();
+    }
 }
 
 void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &baPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits)
