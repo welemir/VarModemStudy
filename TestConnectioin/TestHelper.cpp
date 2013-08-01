@@ -212,7 +212,8 @@ void TestHelper::stopRxMeasure()
 
 void TestHelper::startTxMeasure(QList<int> *resultList)
 {
-    m_pRawDataTxIntervals = resultList;
+    m_pRawDataTxStatusCounters = resultList;
+    connect(m_Transmitter, SIGNAL(signalStatusGet(unsigned char)), this, SLOT(slotTxStatusGet(unsigned char)));
     //m_Transmitter->setSendPeriod(20);
     m_Transmitter->slotTxStart();
     m_RawDataTxMeasureTimer.restart();
@@ -227,8 +228,7 @@ void TestHelper::slotRxRawDataCame(QByteArray baData, unsigned short usSenderID)
     m_RawDataRxMeasureTimer.restart();
 }
 
-void TestHelper::slotTxRawDataCame()
+void TestHelper::slotTxStatusGet(unsigned char freeBuffersCount)
 {
-    m_pRawDataTxIntervals->append(m_RawDataRxMeasureTimer.elapsed());
-    m_RawDataTxMeasureTimer.restart();
+    m_pRawDataTxStatusCounters->append(freeBuffersCount);
 }

@@ -43,6 +43,7 @@ void TestCommunicationStability::TestMaximumContinuouslySettingsCount()
 
 void TestCommunicationStability::prepareDevicesForRawDataTransfer()
 {
+    qWarning() << "preparing devices for RAW data communication stability tests";
     TestHelper *testHelper = TestHelper::getInstance();
 
     QList<int> commands;
@@ -68,7 +69,7 @@ void TestCommunicationStability::prepareDevicesForRawDataTransfer()
 void TestCommunicationStability::testReceivePackets()
 {
     QList<QString> logMessages;
-    logMessages.append(QString("l---- Receiving packets test ----"));
+    logMessages.append(QString("w---- Receiving packets test ----"));
 
     qDebug() << "---- Receiving packets test ----";
     TestHelper *testHelper = TestHelper::getInstance();
@@ -86,7 +87,7 @@ void TestCommunicationStability::testReceivePackets()
     float effectiveConnectionSpeed = payloadPercent*connectionSpeed/100;
 
     // ожидаем прихода пакетов сплошных данных
-    int iRawPacketsToCatch = 10;
+    int iRawPacketsToCatch = 150;
     testHelper->startRxMeasure(&RxIntervalsList);
 
     QElapsedTimer timeoutTimer;
@@ -141,14 +142,6 @@ void TestCommunicationStability::testReceivePackets()
     }
 
     float measuredDataRate = testHelper->rxRawDataSize()/(timeTotal/1000.)*8;
-
-/*
-    qDebug() << "connection speed:" << connectionSpeed;
-    qDebug() << "total data came:" << testHelper->rxRawDataSize();
-    qDebug() << "measure time: " << timeTotal/1000. <<  "seconds";
-    qDebug() << "effective:" << measuredDataRate;
-*/
-
     float allowedInacuracy = 0.05;
     bool dataRateIsFine = measuredDataRate*(1+allowedInacuracy) >= effectiveConnectionSpeed && effectiveConnectionSpeed >= measuredDataRate*(1-allowedInacuracy);
 
@@ -168,8 +161,9 @@ void TestCommunicationStability::testReceivePackets()
 }
 
 
-void TestCommunicationStability::sendPackets()
+void TestCommunicationStability::testTransmitPackets()
 {
+    qWarning() << "---- Transmitting packets test ----";
     TestHelper *testHelper = TestHelper::getInstance();
 
     int iPacketDataLength = 50;
@@ -178,45 +172,44 @@ void TestCommunicationStability::sendPackets()
         newPacket.append(qrand());
 
     CTransceiver *Tx = testHelper->transmitter();
-    CTransceiver *Rx = testHelper->receiver();
 
-    Rx->slotSetDataPacketLength(iPacketDataLength);
     Tx->slotSetDataPacketLength(iPacketDataLength);
     Tx->appendCrc(&newPacket);
 
-
-
-    int iPacketsToSend = 100;
+    int iPacketsToSend = 150;
     for (int i = 0; i < iPacketsToSend; i++)
     {
         Tx->slotAppendRawPacket(newPacket);
     }
 
-    QList<int> RxIntervalsList;
-    QList<int> TxIntervalsList;
+    QList<int> TxStatusList;
     //connect(Tx, SIGNAL(signalNewRawPacket(QByteArray, unsigned short)), testHelper, SLOT(slotTxRawDataCame()));
 
-    testHelper->startRxMeasure(&RxIntervalsList);
-    testHelper->startTxMeasure(&TxIntervalsList);
-/*
-    int payloadDataSize, serviceDataSize, connectionSpeed;
-    Tx->getTranscieverStatistics(payloadDataSize, serviceDataSize, connectionSpeed);
-    float payloadPercent = (100. * payloadDataSize )/(payloadDataSize + serviceDataSize);
-    float effectiveConnectionSpeed = payloadPercent*connectionSpeed/100;
-*/
+    int serviceDataSize, connectionSpeed;
+    Tx->getTranscieverStatistics(iPacketDataLength, serviceDataSize, connectionSpeed);
+    QElapsedTimer timeoutTimer;
+    float expectedTime = 128.*8*iPacketsToSend/connectionSpeed;
+
+    testHelper->startTxMeasure(&TxStatusList);
+    timeoutTimer.start();
     do
     {
-//        if (iPacketsToSend >= RxIntervalsList.count())
-//            break;
-        //else
-            QTest::qWait(100);
-    }while (TxIntervalsList.count() < iPacketsToSend);
+        if (timeoutTimer.elapsed()/1000 >= expectedTime)
+        {
+            qWarning() << "FAILED!" << TxStatusList.count() << "packets sent (" << TxStatusList.count()/Tx->packetsToSend()*100. << "% )";
+            break;
+        }
+        QTest::qWait(1);
+    }while (TxStatusList.count() < Tx->packetsToSend());
 
-    Rx->slotRxStop();
-
-    qDebug() << RxIntervalsList << TxIntervalsList;
-    qWarning() << "Rx Packets Came" << RxIntervalsList.count();
-    //QCOMPARE(iPacketsToSend, RxIntervalsList.count());
-
+    int PacketsSent = -1;
+    foreach (int i, TxStatusList)
+    {
+        PacketsSent+=i;
+    }
+    PacketsSent /=2 ;
     Tx->slotTxStop();
+    QVERIFY(PacketsSent == iPacketsToSend && 0 == Tx->packetsToSend());
+
+    log() << "ok";
 }

@@ -83,6 +83,8 @@ signals:
     void signalParceRawDataEnd();
     void signalCommandSendRetry();
 
+    void signalStatusGet(unsigned char);
+
 public slots:
     void slotParceCommand(QByteArray baData, unsigned short usSenderID);
     void slotParceRadioData(QByteArray baData, unsigned short usSenderID);

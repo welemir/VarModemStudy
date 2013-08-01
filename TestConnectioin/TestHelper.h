@@ -60,7 +60,7 @@ private slots:
     void slotReceiverConnected();
 
     void slotRxRawDataCame(QByteArray baData, unsigned short usSenderID);
-    void slotTxRawDataCame();
+    void slotTxStatusGet(unsigned char freeBuffersCount);
 
 private:
     static TestHelper *m_pThis;
@@ -81,10 +81,10 @@ private:
     QList<int> *m_pRawDataRxIntervals;
     QElapsedTimer m_RawDataRxMeasureTimer;
 
-    QList<int> *m_pRawDataTxIntervals;
+    QList<int> *m_pRawDataTxStatusCounters;
     int m_iRxRawDataSize;
-    QTime m_RawDataTxMeasureTimer;
 
+    QTime m_RawDataTxMeasureTimer;
     QTime m_TxMeasureTimer;
 };
 

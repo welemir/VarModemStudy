@@ -124,6 +124,8 @@ void CTransceiver::slotParceCommand(QByteArray baData, unsigned short usSenderID
             unsigned char ucPacketQueueFree = baData[iSeek++];
             m_PermitedToTxPacketsCount = ucPacketQueueFree;//(0 < ucPacketQueueFree) ? 1 : 0;
 
+            emit signalStatusGet(ucPacketQueueFree);
+
             // передатчик трансивера отправил все переданные ему пакеты и выключился
             unsigned char TxOn = baData[iSeek++]&0x1;
 
