@@ -257,6 +257,11 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
+  // Очистка модели стотистики ошибок для нового эксперимента
+  for(int i=0;i<9;i++){
+    m_analizeData.setData(m_analizeData.index(0,i), 0, Qt::EditRole);
+  }
+
   // Если определено имя файла воспроизведения - работаем в режиме воспроизведения
   if(!m_sFileNameToPlayback.isEmpty()){
     QDataStream streamToPlay(new QFile(m_sFileNameToPlayback));
@@ -291,7 +296,7 @@ void CKernel::slotStartOperation()
     slotSetCrcType(CTransceiver::eCrcNone/*m_crcType*/);
 
 
-    m_PlaybackTimer.setInterval(1);
+    m_PlaybackTimer.setInterval(5);
     m_PlaybackTimer.setSingleShot(false);
     m_PlaybackTimer.start();
     return;
@@ -393,28 +398,43 @@ void CKernel::slotStopOperation()
     }
 }
 
-void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &baPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits)
+void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &baPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits, bool bUpdateStat/*=false*/)
 {
   int iPacketLength = baPacketOne.length();
+
+  // Счётчики статистики ошибок в пределах байта
+  int iErrorCounters[9];
+  memset(iErrorCounters, 0, sizeof(iErrorCounters));
 
   for(int i = 0; i< iPacketLength; i++ )
   {
       unsigned int uiErrors = 0xff &(baPacketOne[i] ^ baPacketTwo[i]);
       if(0 != uiErrors)
         (*piErrorCounterBytes)++;
+      int iErrorsInByte = 0;
       while(0 != uiErrors){
-          if(1 == (1 & uiErrors))
-              (*piErrorCounterBits)++;
+          if(1 == (1 & uiErrors)){
+            (*piErrorCounterBits)++;
+            iErrorsInByte++;
+          }
           uiErrors >>= 1;
       }
+      // Подсчёт байта содержащего iErrorsInByte ошибок
+      iErrorCounters[iErrorsInByte]++;
+  }
+
+  // Добавлене счётчиков ошибок в модель статистики
+  for(int i=1;i<9;i++){
+    if(bUpdateStat &&(0 != iErrorCounters[i])){
+      QModelIndex ind =  m_analizeData.index(0,i);
+      int iDataOld = m_analizeData.data(ind).toInt();
+      m_analizeData.setData(ind, iDataOld+iErrorCounters[i]);
+    }
   }
 }
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 {
-  // Определение коилчества ошибок в пакете
-  int iErrorCounterBits = 0;
-  int iErrorCounterBytes = 0;
 
   int iPacketLength = packetNew.baData.length();
   if(m_baPacketsTx.length() <= m_iLastPacketRx)
@@ -422,7 +442,8 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 
   // Поиск соответствия принятого и переданныз пакетов в разрешённом окне
   const int iPacketFindWindow = 30;
-  for(int i=m_iLastPacketRx; (i < m_baPacketsTx.size())&&(i < m_iLastPacketRx + iPacketFindWindow); i++){
+//  for(int i=m_iLastPacketRx; (i < m_baPacketsTx.size())&&(i < m_iLastPacketRx + iPacketFindWindow); i++){
+  for(int i=(5>m_iLastPacketRx)? 0 : m_iLastPacketRx-5; (i < m_baPacketsTx.size())&&(i < m_iLastPacketRx + iPacketFindWindow); i++){
       QByteArray baPacketExpected = m_baPacketsTx.at(i);
 
       int iErrorCounterBits = 0;
@@ -437,22 +458,24 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
       packetNew.listSendCompare.insert(iErrorCounterBits, comp);
   }
 
-  // Сравнение принятого пакета с текущим ожидаемым
-  QByteArray baPacketExpected = m_baPacketsTx.at(m_iLastPacketRx++);
-  comparePackets(baPacketExpected, packetNew.baData, &iErrorCounterBytes, &iErrorCounterBits);
-
   // Замена статиски совпадения на лучшую, если такая есть в окне поиска
   TPacketCompare estimation = packetNew.listSendCompare.constBegin().value();
   if((m_baPacketsTx[0].length()*8/3) > estimation.iErrorsBit){
       m_iLastPacketRx = estimation.iIndex;
-      iErrorCounterBits = estimation.iErrorsBit;
-      iErrorCounterBytes = estimation.iErrorsByte;
     }
+
+  // Сравнение принятого пакета с ожидаемым выбранным как соответствующий
+  int iErrorCounterBits = 0;
+  int iErrorCounterBytes = 0;
+  if(m_baPacketsTx.size() > m_iLastPacketRx)
+    comparePackets(m_baPacketsTx.at(m_iLastPacketRx), packetNew.baData, &iErrorCounterBytes, &iErrorCounterBits, true);
+  else
+    m_iLastPacketRx = m_baPacketsTx.size();
 
     // Заполнение структуры-описателя пакета данными об ошибках
     packetNew.iErrorsBit = iErrorCounterBits;
     packetNew.iErrorsByte = iErrorCounterBytes;
-    packetNew.iTxCorrespondIndex = m_iLastPacketRx++;
+    packetNew.iTxCorrespondIndex = m_iLastPacketRx;
 
     m_baPacketsRx.append(packetNew);
 
@@ -477,12 +500,15 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
     packetToDiag = packetNew.baData.toHex();
     emit signalPrintDiagMeaasge( packetToDiag);
     if(0 != iErrorCounterBits){
-        packetToDiag = baPacketExpected.toHex();
+        packetToDiag = m_baPacketsTx.at(m_iLastPacketRx).toHex();
         emit signalPrintDiagMeaasge( packetToDiag);
     }
 
     emit signalRxProgress((100 * (m_packets_received_ok)) / m_packets_to_send);
     emit signalUpdateStatistics();
+
+    // принятый пакет обработан - переходим к ожиданию следующего
+    m_iLastPacketRx++;
 }
 
 void CKernel::slotSetDefaultValuesOnStart()

@@ -17,23 +17,9 @@
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
-     <widget class="QWidget" name="page_3">
-      <widget class="QLabel" name="label">
-       <property name="geometry">
-        <rect>
-         <x>70</x>
-         <y>50</y>
-         <width>71</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Страница 1</string>
-       </property>
-      </widget>
-     </widget>
+     <widget class="CFormBitsErrorsInBytes" name="page_3"/>
      <widget class="QWidget" name="page_4">
       <widget class="QLabel" name="label_2">
        <property name="geometry">
@@ -74,6 +60,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CFormBitsErrorsInBytes</class>
+   <extends>QWidget</extends>
+   <header>formbitserrorsinbytes.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

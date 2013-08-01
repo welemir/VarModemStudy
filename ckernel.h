@@ -5,6 +5,7 @@
 //#include "BitBusPipes/CCommunicator.h"
 #include "BitBusPipes/PipeMgr.h"
 #include "ctransceiver.h"
+#include "modelanalizedata.h"
 
 #include <QObject>
 #include <QByteArray>
@@ -40,6 +41,7 @@ class CKernel : public QObject
 public:
     static CKernel* GetInstance();
 
+    QAbstractItemModel *getDataModel(){return &m_analizeData;}
     int getBitErrorsDetected(){return m_iBitErrorsDetected;}
     int getBitErrorsMissed(){return m_iBitErrorsTotal - m_iBitErrorsDetected;}
     QString fileNameToPlayback(){return m_sFileNameToPlayback;}
@@ -110,7 +112,7 @@ private:
     CKernel& operator=(const CKernel &);
 
     void configureDevices(); // Передача настроек всем подключённым устройствам (напр. в начале эксперимента)
-    void comparePackets(const QByteArray &PacketOne, const QByteArray &pPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits);
+    void comparePackets(const QByteArray &PacketOne, const QByteArray &pPacketTwo, int *piErrorCounterBytes, int *piErrorCounterBits, bool bUpdateStat=false);
 
 private:
     static CKernel* m_pInstance;
@@ -161,6 +163,8 @@ private:
     bool m_bLogSave;
     QDataStream m_streamRawLogger;
     QTimer m_PlaybackTimer;
+
+    CModelAnalizeData m_analizeData;
 };
 
 #endif // CKERNEL_H

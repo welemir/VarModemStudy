@@ -30,7 +30,9 @@ SOURCES += main.cpp\
     dialogdiagnostics.cpp \
     ctransceiver.cpp \
     cstatuswidget.cpp \
-    dialogstatistics.cpp
+    dialogstatistics.cpp \
+    formbitserrorsinbytes.cpp \
+    modelanalizedata.cpp
 
 HEADERS  += mainwindow.h \
     ckernel.h \
@@ -51,14 +53,17 @@ HEADERS  += mainwindow.h \
     CommandCode.h \
     CommandCode_RadioModem.h \
     cstatuswidget.h \
-    dialogstatistics.h
+    dialogstatistics.h \
+    formbitserrorsinbytes.h \
+    modelanalizedata.h
 
 FORMS    += mainwindow.ui \
     dialogaboutprogram.ui \
     dialogsettings.ui \
     dialogdiagnostics.ui \
     cstatuswidget.ui \
-    dialogstatistics.ui
+    dialogstatistics.ui \
+    formbitserrorsinbytes.ui
 
 RESOURCES += \
     VarControl.qrc
