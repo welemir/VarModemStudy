@@ -257,8 +257,9 @@ void CKernel::slotNewCrcType(int iCRCTypeIndexNew)
 void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
-  // Очистка модели стотистики ошибок для нового эксперимента
+  // Очистка моделей стотистики для нового эксперимента
   m_analizeData.clear();
+  m_packetCompareData.clear();
 
   // Если определено имя файла воспроизведения - работаем в режиме воспроизведения
   if(!m_sFileNameToPlayback.isEmpty()){
@@ -453,6 +454,8 @@ void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
       comp.iErrorsByte = iErrorCounterBytes;
 
       packetNew.listSendCompare.insert(iErrorCounterBits, comp);
+      QModelIndex ind =  m_analizeData.index(m_packets_received/*packetNew.iStartBitNumber*/, i);
+      m_packetCompareData.setData(ind, iErrorCounterBits);
   }
 
   // Замена статиски совпадения на лучшую, если такая есть в окне поиска

@@ -32,7 +32,8 @@ SOURCES += main.cpp\
     cstatuswidget.cpp \
     dialogstatistics.cpp \
     formbitserrorsinbytes.cpp \
-    modelanalizedata.cpp
+    modelanalizedata.cpp \
+    formPacketsCompare.cpp
 
 HEADERS  += mainwindow.h \
     ckernel.h \
@@ -55,7 +56,8 @@ HEADERS  += mainwindow.h \
     cstatuswidget.h \
     dialogstatistics.h \
     formbitserrorsinbytes.h \
-    modelanalizedata.h
+    modelanalizedata.h \
+    formPacketsCompare.h
 
 FORMS    += mainwindow.ui \
     dialogaboutprogram.ui \
@@ -63,7 +65,8 @@ FORMS    += mainwindow.ui \
     dialogdiagnostics.ui \
     cstatuswidget.ui \
     dialogstatistics.ui \
-    formbitserrorsinbytes.ui
+    formbitserrorsinbytes.ui \
+    formPacketsCompare.ui
 
 RESOURCES += \
     VarControl.qrc

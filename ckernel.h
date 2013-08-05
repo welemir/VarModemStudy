@@ -42,6 +42,7 @@ public:
     static CKernel* GetInstance();
 
     QAbstractItemModel *getDataModel(){return &m_analizeData;}
+    QAbstractItemModel *getCompareModel(){return &m_packetCompareData;}
     int getBitErrorsDetected(){return m_iBitErrorsDetected;}
     int getBitErrorsMissed(){return m_iBitErrorsTotal - m_iBitErrorsDetected;}
     QString fileNameToPlayback(){return m_sFileNameToPlayback;}
@@ -165,6 +166,7 @@ private:
     QTimer m_PlaybackTimer;
 
     CModelAnalizeData m_analizeData;
+    CModelAnalizeData m_packetCompareData;
 };
 
 #endif // CKERNEL_H
