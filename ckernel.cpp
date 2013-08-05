@@ -258,9 +258,7 @@ void CKernel::slotStartOperation()
 {   
   emit signalTxInProgress(true);
   // Очистка модели стотистики ошибок для нового эксперимента
-  for(int i=0;i<9;i++){
-    m_analizeData.setData(m_analizeData.index(0,i), 0, Qt::EditRole);
-  }
+  m_analizeData.clear();
 
   // Если определено имя файла воспроизведения - работаем в режиме воспроизведения
   if(!m_sFileNameToPlayback.isEmpty()){
@@ -435,7 +433,6 @@ void CKernel::comparePackets(const QByteArray &baPacketOne, const QByteArray &ba
 
 void CKernel::slotNewPacketReceived(TReceivedPacketDescription packetNew)
 {
-
   int iPacketLength = packetNew.baData.length();
   if(m_baPacketsTx.length() <= m_iLastPacketRx)
       return;   // Принято пакетов больше чем передано

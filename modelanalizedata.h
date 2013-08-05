@@ -17,6 +17,7 @@ public:
   virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
   virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
+  void clear(); // Очистка данных модели для нового эксперимента
 signals:
   
 public slots:

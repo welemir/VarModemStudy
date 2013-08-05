@@ -41,3 +41,8 @@ int CModelAnalizeData::rowCount(const QModelIndex &parent/* = QModelIndex()*/) c
 int CModelAnalizeData::columnCount(const QModelIndex &parent/* = QModelIndex()*/) const{
   return m_iMaxColumnCount;
 }
+
+void CModelAnalizeData::clear(){
+  m_StatData.clear();
+  emit dataChanged(createIndex(0, 0), createIndex(0,0));
+}
